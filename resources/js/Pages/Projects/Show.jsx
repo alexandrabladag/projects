@@ -1372,6 +1372,126 @@ function Section({ title, children }) {
     );
 }
 
+// ── PAGES TAB ────────────────────────────────────────────────────────────────
+function PagesTab({ project, canManage }) {
+    const [showEditor, setShowEditor] = useState(false);
+    const [editingPage, setEditingPage] = useState(null);
+    const [copied, setCopied] = useState(null);
+    const pages = project.pages ?? [];
+
+    const { data, setData, post, put, processing, reset, errors } = useForm({ title: '', content: '' });
+
+    const openNew = () => { setEditingPage(null); reset(); setShowEditor(true); };
+    const openEdit = (page) => { setEditingPage(page); setData({ title: page.title, content: page.content ?? '' }); setShowEditor(true); };
+
+    const submit = () => {
+        if (editingPage) {
+            put(route('projects.pages.update', [project.id, editingPage.id]), { onSuccess: () => { setShowEditor(false); setEditingPage(null); } });
+        } else {
+            post(route('projects.pages.store', project.id), { onSuccess: () => { setShowEditor(false); reset(); } });
+        }
+    };
+
+    const deletePage = (page) => {
+        if (confirm(`Delete "${page.title}"?`)) {
+            router.delete(route('projects.pages.destroy', [project.id, page.id]));
+        }
+    };
+
+    const toggleShare = (page) => {
+        router.patch(route('projects.pages.toggle-share', [project.id, page.id]));
+    };
+
+    const copyLink = (page) => {
+        navigator.clipboard.writeText(`${window.location.origin}/page/${page.share_code}`);
+        setCopied(page.id);
+        setTimeout(() => setCopied(null), 2000);
+    };
+
+    const RichEditor = lazy(() => import('@/Components/RichEditor'));
+
+    return (
+        <>
+            <div className="flex justify-between items-center mb-5">
+                <h3 className="text-[17px] font-bold">Pages</h3>
+                {canManage && <Btn primary sm onClick={openNew}><Plus size={13} /> New Page</Btn>}
+            </div>
+
+            {pages.length === 0 && !showEditor && (
+                <div className="text-center py-14 text-[#6b7280]">
+                    <div className="mb-4 flex justify-center"><div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center"><FileText size={24} className="text-indigo-400" /></div></div>
+                    <div className="text-[14px] font-semibold text-black mb-1">No pages yet</div>
+                    <div className="text-[13px] text-[#6b7280] mb-4">Create pages to share meeting notes, specs, or updates</div>
+                    {canManage && <Btn primary onClick={openNew}><Plus size={15} /> Create First Page</Btn>}
+                </div>
+            )}
+
+            {/* Page list */}
+            {!showEditor && pages.length > 0 && (
+                <div className="space-y-3">
+                    {pages.map(page => (
+                        <div key={page.id} className="bg-white border border-[#e5e7eb] rounded-xl p-5 hover:shadow-sm transition-all">
+                            <div className="flex items-start justify-between mb-2">
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-[15px] font-bold text-black">{page.title}</div>
+                                    <div className="text-[11px] text-[#9ca3af] mt-0.5">
+                                        {page.creator?.name && <span>By {page.creator.name}</span>}
+                                        {page.updated_at && <span> · Updated {new Date(page.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    {page.is_shared && page.share_code && (
+                                        <Btn ghost sm onClick={() => copyLink(page)}>
+                                            {copied === page.id ? <><Check size={13} /> Copied</> : 'Copy Link'}
+                                        </Btn>
+                                    )}
+                                    {canManage && (
+                                        <>
+                                            <Btn ghost sm onClick={() => toggleShare(page)}>
+                                                {page.is_shared ? 'Unshare' : 'Share'}
+                                            </Btn>
+                                            <Btn ghost sm onClick={() => openEdit(page)}><Pencil size={13} /></Btn>
+                                            <button onClick={() => deletePage(page)} className="text-[#9ca3af] hover:text-red-500 transition-colors p-1.5"><Trash2 size={14} /></button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                            {page.content && (
+                                <div className="text-[12px] text-[#6b7280] line-clamp-2 leading-relaxed" dangerouslySetInnerHTML={{ __html: page.content.replace(/<[^>]*>/g, ' ').slice(0, 200) }} />
+                            )}
+                            {page.is_shared && page.share_code && (
+                                <div className="mt-3 text-[11px] text-[#4f6df5] bg-indigo-50 rounded-lg px-3 py-1.5 inline-block">
+                                    Shared: {window.location.origin}/page/{page.share_code}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Editor */}
+            {showEditor && (
+                <div className="bg-white border border-[#e5e7eb] rounded-xl p-5">
+                    <div className="mb-4">
+                        <FG label="Page Title" error={errors.title}>
+                            <input className={inputCls} value={data.title} onChange={e => setData('title', e.target.value)} placeholder="e.g. Meeting Notes — March 31" autoFocus />
+                        </FG>
+                    </div>
+                    <Suspense fallback={<div className="text-[13px] text-[#6b7280] p-4">Loading editor…</div>}>
+                        <RichEditor content={data.content} onChange={val => setData('content', val)} placeholder="Write your page content…" />
+                    </Suspense>
+                    <div className="flex justify-end gap-2 mt-4">
+                        <Btn ghost onClick={() => { setShowEditor(false); setEditingPage(null); }}><X size={13} /> Cancel</Btn>
+                        <Btn primary onClick={submit} disabled={processing || !data.title}>
+                            <Save size={13} /> {processing ? 'Saving…' : editingPage ? 'Update Page' : 'Create Page'}
+                        </Btn>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+}
+
 // ── MAIN SHOW PAGE ─────────────────────────────────────────────────────────────
 export default function Show({ project, canManage, nextInvoiceNumber, nextProposalNumber }) {
     const [tab, setTab] = useState('overview');
@@ -1386,6 +1506,7 @@ export default function Show({ project, canManage, nextInvoiceNumber, nextPropos
         { id: 'documents',  label: `Documents (${project.documents?.length ?? 0})`, icon: <FolderOpen size={15} /> },
         { id: 'timeline',   label: 'Timeline',    icon: <Clock size={15} /> },
         { id: 'tasks',      label: `Tasks (${project.tasks?.length ?? 0})`,        icon: <ListChecks size={15} /> },
+        { id: 'pages',      label: `Pages (${project.pages?.length ?? 0})`,        icon: <FileText size={15} /> },
     ];
 
     return (
@@ -1424,6 +1545,7 @@ export default function Show({ project, canManage, nextInvoiceNumber, nextPropos
             {tab === 'documents' && <DocumentsTab project={project} canManage={canManage} />}
             {tab === 'timeline'  && <TimelineTab  project={project} />}
             {tab === 'tasks'     && <TasksTab     project={project} canManage={canManage} />}
+            {tab === 'pages'     && <PagesTab     project={project} canManage={canManage} />}
         </AppLayout>
     );
 }

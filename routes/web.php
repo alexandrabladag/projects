@@ -24,8 +24,9 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-// ── Public Client Portal (no auth needed) ────────────────────────────────────
+// ── Public (no auth needed) ───────────────────────────────────────────────────
 Route::get('/p/{code}', [\App\Http\Controllers\PublicPortalController::class, 'show'])->name('portal.public');
+Route::get('/page/{code}', [\App\Http\Controllers\ProjectPageController::class, 'publicView'])->name('pages.public');
 
 // ── Client Portal (auth) ─────────────────────────────────────────────────────
 Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->group(function () {
@@ -81,6 +82,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('members',               [\App\Http\Controllers\ProjectMemberController::class, 'store'])->name('members.store');
         Route::delete('members/{member}',    [\App\Http\Controllers\ProjectMemberController::class, 'destroy'])->name('members.destroy');
+
+        Route::post('pages',                 [\App\Http\Controllers\ProjectPageController::class, 'store'])->name('pages.store');
+        Route::put('pages/{page}',           [\App\Http\Controllers\ProjectPageController::class, 'update'])->name('pages.update');
+        Route::delete('pages/{page}',        [\App\Http\Controllers\ProjectPageController::class, 'destroy'])->name('pages.destroy');
+        Route::patch('pages/{page}/share',   [\App\Http\Controllers\ProjectPageController::class, 'toggleShare'])->name('pages.toggle-share');
 
         Route::post('tasks',                 [TaskController::class, 'store'])->name('tasks.store');
         Route::put('tasks/{task}',           [TaskController::class, 'update'])->name('tasks.update');

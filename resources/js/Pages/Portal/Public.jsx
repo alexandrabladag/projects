@@ -10,7 +10,7 @@ import {
 const fmtDate = (s) => s ? new Date(s).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—';
 const fmtShort = (s) => s ? new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—';
 
-const PROJECT_PHASES = ['Discovery', 'Planning', 'Design', 'Development', 'Testing / QA', 'Staging', 'Deployment', 'Launch', 'Maintenance', 'Support'];
+const PROJECT_PHASES = ['Discovery', 'Planning', 'Design', 'Development', 'Testing / QA', 'Staging', 'Deployment', 'Launch'];
 
 export default function Public({ project, company, code }) {
     const cur = getCurrency(project.currency ?? 'USD');
@@ -30,7 +30,11 @@ export default function Public({ project, company, code }) {
     const progressColor = project.progress >= 90 ? 'from-emerald-500 to-emerald-400'
         : project.progress >= 50 ? 'from-[#4f6df5] to-[#6380f7]' : 'from-amber-400 to-amber-300';
 
-    const currentPhaseIdx = PROJECT_PHASES.findIndex(p => p === project.phase);
+    // Match phase loosely (e.g. "Design Phase" matches "Design")
+    const phaseLower = (project.phase ?? '').toLowerCase();
+    const currentPhaseIdx = PROJECT_PHASES.findIndex(p => phaseLower.includes(p.toLowerCase()) || p.toLowerCase().includes(phaseLower));
+    // If project is completed, all phases are done
+    const isCompleted = project.status === 'completed';
 
     return (
         <>
@@ -70,17 +74,21 @@ export default function Public({ project, company, code }) {
 
                         {/* Phase timeline */}
                         <div className="flex items-center justify-between">
-                            {PROJECT_PHASES.slice(0, 8).map((phase, i) => {
-                                const done = i < currentPhaseIdx;
-                                const active = i === currentPhaseIdx;
+                            {PROJECT_PHASES.map((phase, i) => {
+                                const done = isCompleted || i < currentPhaseIdx;
+                                const active = !isCompleted && i === currentPhaseIdx;
                                 return (
                                     <div key={phase} className="flex flex-col items-center flex-1">
-                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center mb-1.5 ${
-                                            done ? 'bg-emerald-100 text-emerald-500' : active ? 'bg-[#4f6df5] text-white' : 'bg-[#f0f0f0] text-[#d1d5db]'
-                                        }`}>
-                                            {done ? <CheckCircle size={14} /> : active ? <Circle size={10} fill="white" /> : <Circle size={10} />}
+                                        <div className="flex items-center w-full">
+                                            {i > 0 && <div className={`flex-1 h-0.5 ${done || active ? 'bg-emerald-300' : 'bg-[#e5e7eb]'}`} />}
+                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                                done ? 'bg-emerald-500 text-white' : active ? 'bg-[#4f6df5] text-white ring-4 ring-[#4f6df5]/20' : 'bg-[#f0f0f0] text-[#d1d5db]'
+                                            }`}>
+                                                {done ? <CheckCircle size={14} /> : active ? <Circle size={8} fill="white" /> : <Circle size={8} />}
+                                            </div>
+                                            {i < PROJECT_PHASES.length - 1 && <div className={`flex-1 h-0.5 ${done ? 'bg-emerald-300' : 'bg-[#e5e7eb]'}`} />}
                                         </div>
-                                        <span className={`text-[9px] text-center leading-tight ${active ? 'text-[#4f6df5] font-bold' : done ? 'text-emerald-600' : 'text-[#9ca3af]'}`}>{phase}</span>
+                                        <span className={`text-[9px] text-center leading-tight mt-1.5 ${active ? 'text-[#4f6df5] font-bold' : done ? 'text-emerald-600 font-medium' : 'text-[#9ca3af]'}`}>{phase}</span>
                                     </div>
                                 );
                             })}

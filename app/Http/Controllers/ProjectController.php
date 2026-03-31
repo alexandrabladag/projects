@@ -120,6 +120,7 @@ class ProjectController extends Controller
             'documents.uploader',
             'tasks',
             'members.client',
+            'pages.creator',
         ]);
 
         // Append computed attributes
