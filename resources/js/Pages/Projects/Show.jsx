@@ -1448,6 +1448,26 @@ function PagesTab({ project, canManage }) {
     const openNew = () => { setEditingPage(null); reset(); setShowEditor(true); };
     const openEdit = (page) => { setEditingPage(page); setData({ title: page.title, content: page.content ?? '' }); setShowEditor(true); };
 
+    const importHtmlFile = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const html = ev.target.result;
+            // Try to extract title from <title> tag or filename
+            const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+            const title = titleMatch ? titleMatch[1] : file.name.replace(/\.html?$/i, '');
+            // Extract body content if full HTML document
+            const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+            const content = bodyMatch ? bodyMatch[1].trim() : html;
+            setEditingPage(null);
+            setData({ title, content });
+            setShowEditor(true);
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+    };
+
     const submit = () => {
         if (editingPage) {
             put(route('projects.pages.update', [project.id, editingPage.id]), { onSuccess: () => { setShowEditor(false); setEditingPage(null); } });
@@ -1478,7 +1498,15 @@ function PagesTab({ project, canManage }) {
         <>
             <div className="flex justify-between items-center mb-5">
                 <h3 className="text-[17px] font-bold">Pages</h3>
-                {canManage && <Btn primary sm onClick={openNew}><Plus size={13} /> New Page</Btn>}
+                {canManage && (
+                    <div className="flex gap-2">
+                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#4b5563] border border-[#d1d5db] hover:bg-gray-100 cursor-pointer transition-all">
+                            <Upload size={13} /> Import HTML
+                            <input type="file" accept=".html,.htm" className="hidden" onChange={importHtmlFile} />
+                        </label>
+                        <Btn primary sm onClick={openNew}><Plus size={13} /> New Page</Btn>
+                    </div>
+                )}
             </div>
 
             {pages.length === 0 && !showEditor && (
