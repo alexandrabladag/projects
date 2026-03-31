@@ -1454,15 +1454,19 @@ function PagesTab({ project, canManage }) {
         const reader = new FileReader();
         reader.onload = (ev) => {
             const html = ev.target.result;
-            // Try to extract title from <title> tag or filename
             const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
             const title = titleMatch ? titleMatch[1] : file.name.replace(/\.html?$/i, '');
-            // Extract body content if full HTML document
-            const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-            const content = bodyMatch ? bodyMatch[1].trim() : html;
+            const isFullDoc = html.includes('<!DOCTYPE') || html.includes('<html');
+            // Keep full HTML (with styles) for full documents, extract body for fragments
+            const content = isFullDoc ? html : (html.match(/<body[^>]*>([\s\S]*)<\/body>/i)?.[1]?.trim() ?? html);
             setEditingPage(null);
             setData({ title, content });
-            setShowEditor(true);
+            // Skip editor for full HTML docs — save directly
+            if (isFullDoc) {
+                router.post(route('projects.pages.store', project.id), { title, content });
+            } else {
+                setShowEditor(true);
+            }
         };
         reader.readAsText(file);
         e.target.value = '';

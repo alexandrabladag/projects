@@ -1,6 +1,47 @@
+import { useRef, useEffect } from 'react';
 import { Head } from '@inertiajs/react';
 
 export default function PublicPage({ page, company }) {
+    const isFullHtml = (page.content ?? '').includes('<!DOCTYPE') || (page.content ?? '').includes('<html');
+    const iframeRef = useRef();
+
+    useEffect(() => {
+        if (isFullHtml && iframeRef.current) {
+            const doc = iframeRef.current.contentDocument;
+            doc.open();
+            doc.write(page.content);
+            doc.close();
+
+            // Auto-resize iframe to content height
+            const resize = () => {
+                if (iframeRef.current && doc.body) {
+                    iframeRef.current.style.height = doc.body.scrollHeight + 'px';
+                }
+            };
+            setTimeout(resize, 100);
+            setTimeout(resize, 500);
+            setTimeout(resize, 1500);
+            window.addEventListener('resize', resize);
+            return () => window.removeEventListener('resize', resize);
+        }
+    }, [isFullHtml, page.content]);
+
+    // Full HTML document — render standalone in iframe
+    if (isFullHtml) {
+        return (
+            <>
+                <Head title={page.title} />
+                <iframe
+                    ref={iframeRef}
+                    className="w-full border-0 min-h-screen"
+                    title={page.title}
+                    sandbox="allow-same-origin allow-scripts"
+                />
+            </>
+        );
+    }
+
+    // Simple content — render with wrapper
     return (
         <>
             <Head title={page.title} />
