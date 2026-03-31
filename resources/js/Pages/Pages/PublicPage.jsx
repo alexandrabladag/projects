@@ -8,6 +8,19 @@ export default function PublicPage({ page, company }) {
     useEffect(() => {
         if (isFullHtml && iframeRef.current) {
             const iframe = iframeRef.current;
+
+            // Write content directly into iframe document
+            const writeContent = () => {
+                try {
+                    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+                    doc.open();
+                    doc.write(page.content);
+                    doc.close();
+                } catch (e) {
+                    console.error('iframe write error:', e);
+                }
+            };
+
             const resize = () => {
                 try {
                     const doc = iframe.contentDocument || iframe.contentWindow?.document;
@@ -16,11 +29,21 @@ export default function PublicPage({ page, company }) {
                     }
                 } catch (e) {}
             };
+
+            writeContent();
+
+            // Resize after content loads
             iframe.onload = () => {
                 resize();
-                setTimeout(resize, 500);
-                setTimeout(resize, 2000);
+                setTimeout(resize, 300);
+                setTimeout(resize, 1000);
+                setTimeout(resize, 3000);
             };
+
+            // Also try resizing after a delay in case onload doesn't fire
+            setTimeout(resize, 500);
+            setTimeout(resize, 2000);
+
             window.addEventListener('resize', resize);
             return () => window.removeEventListener('resize', resize);
         }
@@ -33,7 +56,6 @@ export default function PublicPage({ page, company }) {
                 <Head title={page.title} />
                 <iframe
                     ref={iframeRef}
-                    srcDoc={page.content}
                     className="w-full border-0 min-h-screen"
                     title={page.title}
                 />
