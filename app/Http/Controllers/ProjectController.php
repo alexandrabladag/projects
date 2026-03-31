@@ -113,6 +113,7 @@ class ProjectController extends Controller
 
         $project->load([
             'manager',
+            'clientUser:id,name,email',
             'proposals',
             'invoices.items',
             'meetings',

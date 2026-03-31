@@ -147,6 +147,9 @@ function OverviewTab({ project, canManage, fmt }) {
             {/* Team / Contractors */}
             <TeamSection project={project} canManage={canManage} />
 
+            {/* Client Access */}
+            <ClientAccessSection project={project} canManage={canManage} />
+
             <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-4">
                     {/* Description */}
@@ -424,6 +427,78 @@ function TeamSection({ project, canManage }) {
                         </div>
                     ))}
                 </div>
+            )}
+        </div>
+    );
+}
+
+// ── CLIENT ACCESS SECTION ────────────────────────────────────────────────────
+function ClientAccessSection({ project, canManage }) {
+    const [showInvite, setShowInvite] = useState(false);
+    const { data, setData, post, processing, errors, reset } = useForm({ name: '', email: '' });
+
+    const submit = () => {
+        post(route('projects.client-access.store', project.id), {
+            onSuccess: () => { setShowInvite(false); reset(); },
+        });
+    };
+
+    const removeAccess = () => {
+        if (confirm('Remove client access from this project?')) {
+            router.delete(route('projects.client-access.destroy', project.id));
+        }
+    };
+
+    const clientUser = project.client_user;
+
+    return (
+        <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden mb-5">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e5e7eb]">
+                <span className="text-[16px] font-bold text-black">Client Portal Access</span>
+                {canManage && !clientUser && (
+                    <Btn ghost sm onClick={() => setShowInvite(!showInvite)}>
+                        {showInvite ? <><X size={13} /> Cancel</> : <><Plus size={13} /> Invite Client</>}
+                    </Btn>
+                )}
+            </div>
+
+            {showInvite && (
+                <div className="px-5 py-4 bg-[#fafbfc] border-b border-[#e5e7eb]">
+                    <p className="text-[12px] text-[#6b7280] mb-3">Create a client account or link an existing one. They'll be able to view this project's proposals, invoices, and meetings.</p>
+                    <div className="grid grid-cols-3 gap-3">
+                        <FG label="Client Name *" error={errors.name}>
+                            <input className={inputCls} value={data.name} onChange={e => setData('name', e.target.value)} placeholder="Full name" />
+                        </FG>
+                        <FG label="Client Email *" error={errors.email}>
+                            <input className={inputCls} type="email" value={data.email} onChange={e => setData('email', e.target.value)} placeholder="client@company.com" />
+                        </FG>
+                        <div className="flex items-end">
+                            <Btn primary sm onClick={submit} disabled={processing || !data.name || !data.email}>
+                                <Plus size={13} /> {processing ? 'Creating…' : 'Grant Access'}
+                            </Btn>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {clientUser ? (
+                <div className="flex items-center gap-3 px-5 py-4">
+                    <div className="w-9 h-9 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[12px] font-bold text-emerald-600 flex-shrink-0">
+                        {(clientUser.name ?? '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                        <div className="text-[13px] font-semibold text-black">{clientUser.name}</div>
+                        <div className="text-[11px] text-[#6b7280]">{clientUser.email} · Can view proposals, invoices & meetings</div>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full font-medium">Active</span>
+                    {canManage && (
+                        <button onClick={removeAccess} className="text-[#9ca3af] hover:text-red-500 transition-colors">
+                            <Trash2 size={14} />
+                        </button>
+                    )}
+                </div>
+            ) : (
+                !showInvite && <div className="px-5 py-5 text-center text-[13px] text-[#6b7280]">No client has access to this project yet</div>
             )}
         </div>
     );

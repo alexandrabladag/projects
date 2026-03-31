@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\PortalController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CompanyController;
@@ -15,7 +16,19 @@ use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/auth.php';
 
-Route::get('/', fn () => redirect()->route('dashboard'));
+Route::get('/', function () {
+    $user = auth()->user();
+    if ($user && $user->isClient()) {
+        return redirect()->route('portal.dashboard');
+    }
+    return redirect()->route('dashboard');
+});
+
+// ── Client Portal ────────────────────────────────────────────────────────────
+Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->group(function () {
+    Route::get('/',              [PortalController::class, 'dashboard'])->name('dashboard');
+    Route::get('/project/{project}', [PortalController::class, 'project'])->name('project');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
@@ -54,6 +67,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('documents',             [DocumentController::class, 'store'])->name('documents.store');
         Route::delete('documents/{document}',[DocumentController::class, 'destroy'])->name('documents.destroy');
+
+        Route::post('client-access',         [\App\Http\Controllers\ClientAccessController::class, 'store'])->name('client-access.store');
+        Route::delete('client-access',       [\App\Http\Controllers\ClientAccessController::class, 'destroy'])->name('client-access.destroy');
 
         Route::post('members',               [\App\Http\Controllers\ProjectMemberController::class, 'store'])->name('members.store');
         Route::delete('members/{member}',    [\App\Http\Controllers\ProjectMemberController::class, 'destroy'])->name('members.destroy');
