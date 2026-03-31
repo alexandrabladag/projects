@@ -73,6 +73,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('client-access',         [\App\Http\Controllers\ClientAccessController::class, 'store'])->name('client-access.store');
         Route::delete('client-access',       [\App\Http\Controllers\ClientAccessController::class, 'destroy'])->name('client-access.destroy');
+        Route::patch('portal-toggle',        [ProjectController::class, 'togglePortal'])->name('portal-toggle');
 
         Route::post('members',               [\App\Http\Controllers\ProjectMemberController::class, 'store'])->name('members.store');
         Route::delete('members/{member}',    [\App\Http\Controllers\ProjectMemberController::class, 'destroy'])->name('members.destroy');

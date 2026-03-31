@@ -197,6 +197,20 @@ class ProjectController extends Controller
             ->with('success', 'Project deleted.');
     }
 
+    public function togglePortal(Request $request, Project $project)
+    {
+        $this->authorize('update', $project);
+
+        if ($project->portal_enabled) {
+            $project->update(['portal_enabled' => false, 'portal_code' => null]);
+            return back()->with('success', 'Client portal disabled.');
+        }
+
+        $code = substr(md5($project->id . now()->timestamp . rand()), 0, 12);
+        $project->update(['portal_enabled' => true, 'portal_code' => $code]);
+        return back()->with('success', 'Client portal enabled.');
+    }
+
     public function updateProgress(Request $request, Project $project)
     {
         $this->authorize('update', $project);

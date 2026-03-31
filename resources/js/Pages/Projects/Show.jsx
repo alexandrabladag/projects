@@ -438,12 +438,7 @@ function ClientAccessSection({ project, canManage }) {
     const [copied, setCopied] = useState(false);
 
     const togglePortal = () => {
-        if (project.portal_enabled) {
-            router.patch(route('projects.update', project.id), { portal_enabled: false, portal_code: null });
-        } else {
-            const code = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
-            router.patch(route('projects.update', project.id), { portal_enabled: true, portal_code: code });
-        }
+        router.patch(route('projects.portal-toggle', project.id));
     };
 
     const copyLink = () => {
