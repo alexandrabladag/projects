@@ -7,20 +7,20 @@ export default function PublicPage({ page, company }) {
 
     useEffect(() => {
         if (isFullHtml && iframeRef.current) {
-            const doc = iframeRef.current.contentDocument;
-            doc.open();
-            doc.write(page.content);
-            doc.close();
-
-            // Auto-resize iframe to content height
+            const iframe = iframeRef.current;
             const resize = () => {
-                if (iframeRef.current && doc.body) {
-                    iframeRef.current.style.height = doc.body.scrollHeight + 'px';
-                }
+                try {
+                    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+                    if (doc?.body) {
+                        iframe.style.height = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight) + 50 + 'px';
+                    }
+                } catch (e) {}
             };
-            setTimeout(resize, 100);
-            setTimeout(resize, 500);
-            setTimeout(resize, 1500);
+            iframe.onload = () => {
+                resize();
+                setTimeout(resize, 500);
+                setTimeout(resize, 2000);
+            };
             window.addEventListener('resize', resize);
             return () => window.removeEventListener('resize', resize);
         }
@@ -33,9 +33,9 @@ export default function PublicPage({ page, company }) {
                 <Head title={page.title} />
                 <iframe
                     ref={iframeRef}
+                    srcDoc={page.content}
                     className="w-full border-0 min-h-screen"
                     title={page.title}
-                    sandbox="allow-same-origin allow-scripts"
                 />
             </>
         );
