@@ -18,7 +18,7 @@ const EyeIcon = ({ open }) => open ? (
 export default function Login({ status, canResetPassword }) {
     const [showPassword, setShowPassword] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm({
-        email: '',
+        login: '',
         password: '',
         remember: false,
     });
@@ -44,17 +44,17 @@ export default function Login({ status, canResetPassword }) {
             <form onSubmit={submit} className="space-y-4">
                 <div>
                     <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">
-                        Email Address
+                        Email or Username
                     </label>
                     <input
-                        type="email"
-                        value={data.email}
-                        onChange={e => setData('email', e.target.value)}
+                        type="text"
+                        value={data.login}
+                        onChange={e => setData('login', e.target.value)}
                         autoComplete="username"
                         className={inputCls}
-                        placeholder="you@company.com"
+                        placeholder="you@company.com or username"
                     />
-                    {errors.email && <p className="text-red-400 text-[12px] mt-1.5">{errors.email}</p>}
+                    {errors.login && <p className="text-red-400 text-[12px] mt-1.5">{errors.login}</p>}
                 </div>
 
                 <div>
