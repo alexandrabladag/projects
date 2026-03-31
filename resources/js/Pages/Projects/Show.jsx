@@ -4,7 +4,7 @@ import AppLayout, { Badge } from '@/Layouts/AppLayout';
 import currencies from '@/Utils/currencies';
 import {
     Pencil, Eye, Plus, Save, X, Check, Send, ChevronUp, ChevronDown,
-    FileText, Receipt, CalendarDays, FolderOpen, Clock, ListChecks,
+    FileText, Receipt, CalendarDays, Calendar, FolderOpen, Clock, ListChecks,
     Trash2, Download, Upload, CheckCircle, XCircle, AlertCircle,
 } from 'lucide-react';
 
@@ -434,71 +434,55 @@ function TeamSection({ project, canManage }) {
 
 // ── CLIENT ACCESS SECTION ────────────────────────────────────────────────────
 function ClientAccessSection({ project, canManage }) {
-    const [showInvite, setShowInvite] = useState(false);
-    const { data, setData, post, processing, errors, reset } = useForm({ name: '', email: '' });
+    const portalUrl = project.portal_code ? `${window.location.origin}/p/${project.portal_code}` : null;
+    const [copied, setCopied] = useState(false);
 
-    const submit = () => {
-        post(route('projects.client-access.store', project.id), {
-            onSuccess: () => { setShowInvite(false); reset(); },
-        });
-    };
-
-    const removeAccess = () => {
-        if (confirm('Remove client access from this project?')) {
-            router.delete(route('projects.client-access.destroy', project.id));
+    const togglePortal = () => {
+        if (project.portal_enabled) {
+            router.patch(route('projects.update', project.id), { portal_enabled: false, portal_code: null });
+        } else {
+            const code = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+            router.patch(route('projects.update', project.id), { portal_enabled: true, portal_code: code });
         }
     };
 
-    const clientUser = project.client_user;
+    const copyLink = () => {
+        navigator.clipboard.writeText(portalUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    if (!canManage) return null;
 
     return (
         <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden mb-5">
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e5e7eb]">
-                <span className="text-[16px] font-bold text-black">Client Portal Access</span>
-                {canManage && !clientUser && (
-                    <Btn ghost sm onClick={() => setShowInvite(!showInvite)}>
-                        {showInvite ? <><X size={13} /> Cancel</> : <><Plus size={13} /> Invite Client</>}
-                    </Btn>
-                )}
+                <span className="text-[15px] font-bold text-black">Client Portal</span>
+                <button
+                    onClick={togglePortal}
+                    className={`relative w-10 h-5 rounded-full transition-all ${project.portal_enabled ? 'bg-[#4f6df5]' : 'bg-[#d1d5db]'}`}
+                >
+                    <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${project.portal_enabled ? 'left-[22px]' : 'left-0.5'}`} />
+                </button>
             </div>
 
-            {showInvite && (
-                <div className="px-5 py-4 bg-[#fafbfc] border-b border-[#e5e7eb]">
-                    <p className="text-[12px] text-[#6b7280] mb-3">Create a client account or link an existing one. They'll be able to view this project's proposals, invoices, and meetings.</p>
-                    <div className="grid grid-cols-3 gap-3">
-                        <FG label="Client Name *" error={errors.name}>
-                            <input className={inputCls} value={data.name} onChange={e => setData('name', e.target.value)} placeholder="Full name" />
-                        </FG>
-                        <FG label="Client Email *" error={errors.email}>
-                            <input className={inputCls} type="email" value={data.email} onChange={e => setData('email', e.target.value)} placeholder="client@company.com" />
-                        </FG>
-                        <div className="flex items-end">
-                            <Btn primary sm onClick={submit} disabled={processing || !data.name || !data.email}>
-                                <Plus size={13} /> {processing ? 'Creating…' : 'Grant Access'}
-                            </Btn>
-                        </div>
+            {project.portal_enabled && portalUrl ? (
+                <div className="px-5 py-4">
+                    <p className="text-[12px] text-[#6b7280] mb-3">Share this private link with your client. No login required — they can view proposals, invoices, and meetings.</p>
+                    <div className="flex items-center gap-2">
+                        <input
+                            readOnly
+                            value={portalUrl}
+                            className="flex-1 bg-[#f3f4f6] border border-[#d1d5db] rounded-lg px-3.5 py-2 text-[12px] text-black font-mono"
+                            onClick={e => e.target.select()}
+                        />
+                        <Btn ghost sm onClick={copyLink}>
+                            {copied ? <><Check size={13} /> Copied</> : 'Copy Link'}
+                        </Btn>
                     </div>
-                </div>
-            )}
-
-            {clientUser ? (
-                <div className="flex items-center gap-3 px-5 py-4">
-                    <div className="w-9 h-9 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[12px] font-bold text-emerald-600 flex-shrink-0">
-                        {(clientUser.name ?? '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="flex-1">
-                        <div className="text-[13px] font-semibold text-black">{clientUser.name}</div>
-                        <div className="text-[11px] text-[#6b7280]">{clientUser.email} · Can view proposals, invoices & meetings</div>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full font-medium">Active</span>
-                    {canManage && (
-                        <button onClick={removeAccess} className="text-[#9ca3af] hover:text-red-500 transition-colors">
-                            <Trash2 size={14} />
-                        </button>
-                    )}
                 </div>
             ) : (
-                !showInvite && <div className="px-5 py-5 text-center text-[13px] text-[#6b7280]">No client has access to this project yet</div>
+                <div className="px-5 py-5 text-center text-[13px] text-[#6b7280]">Enable the toggle to generate a private client link</div>
             )}
         </div>
     );
@@ -1297,38 +1281,57 @@ function TasksTab({ project, canManage }) {
         <>
             <div className="flex justify-between items-center mb-5">
                 <h3 className="text-[17px] font-bold">Task List</h3>
-                {canManage && <Btn primary sm onClick={() => setShowModal(true)}>+ Add Task</Btn>}
+                {canManage && <Btn primary sm onClick={() => setShowModal(true)}><Plus size={13} /> Add Task</Btn>}
             </div>
-            <div className="flex gap-2 mb-5">
-                {['all','not-started','in-progress','review','completed'].map(s => (
-                    <button key={s} onClick={() => setFilter(s)} className={`px-3.5 py-1.5 rounded-full text-[12px] font-medium border transition-all ${filter === s ? 'bg-[#4f6df5]/10 border-[#4f6df5]/30 text-[#4f6df5]' : 'border-[#d1d5db] text-[#4b5563] hover:text-black hover:bg-gray-100'}`}>
-                        {s === 'all' ? 'All' : s === 'not-started' ? 'Not Started' : s === 'in-progress' ? 'In Progress' : s === 'review' ? 'Review' : 'Completed'}
+            <div className="flex bg-[#f3f4f6] rounded-lg p-0.5 mb-5 w-fit">
+                {[
+                    { key: 'all', label: 'All' },
+                    { key: 'not-started', label: 'To Do' },
+                    { key: 'in-progress', label: 'In Progress' },
+                    { key: 'review', label: 'Review' },
+                    { key: 'completed', label: 'Done' },
+                ].map(s => (
+                    <button key={s.key} onClick={() => setFilter(s.key)} className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all ${filter === s.key ? 'bg-white text-black shadow-sm' : 'text-[#6b7280] hover:text-black'}`}>
+                        {s.label}
                     </button>
                 ))}
             </div>
 
-            {filtered.length === 0 && <div className="text-center py-14 text-[#6b7280]"><div className="text-4xl mb-3 opacity-50">✅</div><div className="text-[14px] mb-5">No tasks found</div>{canManage && <Btn primary onClick={() => setShowModal(true)}>Add First Task</Btn>}</div>}
+            {filtered.length === 0 && (
+                <div className="text-center py-14 text-[#6b7280]">
+                    <div className="mb-4 flex justify-center"><div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center"><ListChecks size={24} className="text-indigo-400" /></div></div>
+                    <div className="text-[14px] font-semibold text-black mb-1">No tasks found</div>
+                    <div className="text-[13px] text-[#6b7280] mb-4">Add tasks to track work on this project</div>
+                    {canManage && <Btn primary onClick={() => setShowModal(true)}><Plus size={15} /> Add First Task</Btn>}
+                </div>
+            )}
 
             {Object.entries(byCategory).map(([cat, catTasks]) => (
                 <div key={cat} className="mb-5">
-                    <div className="text-[10.5px] tracking-[1.5px] uppercase text-[#6b7280] mb-2 pb-2 border-b border-[#e5e7eb]">{cat}</div>
+                    <div className="flex items-center gap-2 text-[10.5px] tracking-[1.5px] uppercase text-[#6b7280] mb-2 pb-2 border-b border-[#e5e7eb]">
+                        <ListChecks size={13} /> {cat} <span className="text-[#d1d5db]">({catTasks.length})</span>
+                    </div>
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                         {catTasks.map(t => (
-                            <div key={t.id} className="flex items-center gap-3 px-4 py-3.5 border-b border-[#e5e7eb] last:border-b-0">
+                            <div key={t.id} className="flex items-center gap-3 px-4 py-3 border-b border-[#f0f0f0] last:border-b-0 hover:bg-[#fafbfc] transition-colors">
                                 <button
                                     onClick={() => cycleStatus(t)}
-                                    className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all
-                                        ${t.status === 'completed' ? 'border-green-400 bg-green-400' : 'border-[#d1d5db] hover:border-[#4f6df5]'}`}
+                                    className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all
+                                        ${t.status === 'completed' ? 'border-emerald-400 bg-emerald-400' : t.status === 'in-progress' ? 'border-indigo-400 bg-indigo-50' : 'border-[#d1d5db] hover:border-[#4f6df5]'}`}
                                 >
-                                    {t.status === 'completed' && <span className="text-[#0b0d14] text-[10px] font-bold">✓</span>}
+                                    {t.status === 'completed' && <Check size={12} className="text-white" />}
+                                    {t.status === 'in-progress' && <div className="w-2 h-2 rounded-sm bg-indigo-400" />}
                                 </button>
-                                <div className="flex-1">
-                                    <div className={`text-[13.5px] ${t.status === 'completed' ? 'line-through text-[#6b7280]' : 'text-black'}`}>{t.title}</div>
-                                    <div className="text-[11.5px] text-[#6b7280]">{t.assignee}{t.due_date ? ` · Due ${fmtDate(t.due_date)}` : ''}</div>
+                                <div className="flex-1 min-w-0">
+                                    <div className={`text-[13px] ${t.status === 'completed' ? 'line-through text-[#9ca3af]' : 'text-black font-medium'}`}>{t.title}</div>
+                                    <div className="text-[11px] text-[#9ca3af] flex items-center gap-1.5">
+                                        {t.assignee && <span>{t.assignee}</span>}
+                                        {t.due_date && <><span>·</span><span className="flex items-center gap-0.5"><Calendar size={10} /> {fmtDate(t.due_date)}</span></>}
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1.5">
                                     <Badge status={t.priority} />
-                                    <Badge status={t.status} label={t.status === 'not-started' ? 'Not Started' : t.status === 'in-progress' ? 'In Progress' : t.status === 'review' ? 'Review' : 'Done'} />
+                                    <Badge status={t.status} label={t.status === 'not-started' ? 'To Do' : t.status === 'in-progress' ? 'In Progress' : t.status === 'review' ? 'Review' : 'Done'} />
                                 </div>
                             </div>
                         ))}
@@ -1337,7 +1340,7 @@ function TasksTab({ project, canManage }) {
             ))}
 
             {showModal && (
-                <Modal title="Add Task" subtitle={`For ${project.name}`} onClose={() => setShowModal(false)} footer={<><Btn ghost onClick={() => setShowModal(false)}>Cancel</Btn><Btn primary onClick={submit} disabled={processing}>{processing ? 'Adding…' : 'Add Task'}</Btn></>}>
+                <Modal title="Add Task" subtitle={`For ${project.name}`} onClose={() => setShowModal(false)} footer={<><Btn ghost onClick={() => setShowModal(false)}><X size={13} /> Cancel</Btn><Btn primary onClick={submit} disabled={processing}><Plus size={13} /> {processing ? 'Adding…' : 'Add Task'}</Btn></>}>
                     <div className="space-y-4 pb-2">
                         <FG label="Task Title *"><input className={inputCls} value={data.title} onChange={e => setData('title', e.target.value)} placeholder="What needs to be done?" /></FG>
                         <div className="grid grid-cols-2 gap-3">

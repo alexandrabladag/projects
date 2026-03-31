@@ -24,7 +24,10 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-// ── Client Portal ────────────────────────────────────────────────────────────
+// ── Public Client Portal (no auth needed) ────────────────────────────────────
+Route::get('/p/{code}', [\App\Http\Controllers\PublicPortalController::class, 'show'])->name('portal.public');
+
+// ── Client Portal (auth) ─────────────────────────────────────────────────────
 Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->group(function () {
     Route::get('/',              [PortalController::class, 'dashboard'])->name('dashboard');
     Route::get('/project/{project}', [PortalController::class, 'project'])->name('project');

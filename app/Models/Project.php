@@ -29,6 +29,8 @@ class Project extends Model
         'description',
         'tags',             // JSON array
         'client_id',
+        'portal_code',
+        'portal_enabled',
         'manager_id',
         'client_user_id',
     ];
