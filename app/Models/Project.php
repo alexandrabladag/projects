@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Project extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToWorkspace;
 
     protected $fillable = [
         'name',
@@ -21,11 +22,13 @@ class Project extends Model
         'start_date',
         'end_date',
         'budget',
+        'currency',
         'spent',
         'progress',         // 0-100
         'phase',
         'description',
         'tags',             // JSON array
+        'client_id',
         'manager_id',
         'client_user_id',
     ];
@@ -40,6 +43,11 @@ class Project extends Model
     ];
 
     // ── Relationships ──────────────────────────────────────────────────────────
+
+    public function clientRecord(): BelongsTo
+    {
+        return $this->belongsTo(Client::class, 'client_id');
+    }
 
     public function manager(): BelongsTo
     {
@@ -71,6 +79,11 @@ class Project extends Model
         return $this->hasMany(Document::class)->latest();
     }
 
+    public function members(): HasMany
+    {
+        return $this->hasMany(ProjectMember::class);
+    }
+
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
@@ -85,10 +98,14 @@ class Project extends Model
 
     public function scopeForUser($query, User $user)
     {
+        if ($user->isAdmin()) {
+            return $query;
+        }
         if ($user->isClient()) {
             return $query->where('client_user_id', $user->id);
         }
-        return $query;
+        // Managers only see projects they manage
+        return $query->where('manager_id', $user->id);
     }
 
     // ── Computed ──────────────────────────────────────────────────────────────

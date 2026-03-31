@@ -12,6 +12,12 @@ class MeetingController extends Controller
     {
         $this->authorize('update', $project);
 
+        // Convert comma-separated attendees string to array
+        if (is_string($request->attendees)) {
+            $parsed = array_values(array_filter(array_map('trim', explode(',', $request->attendees))));
+            $request->merge(['attendees' => count($parsed) ? $parsed : null]);
+        }
+
         $validated = $request->validate([
             'type'      => 'required|in:kickoff,review,checkin,presentation,discovery,other',
             'title'     => 'required|string|max:255',

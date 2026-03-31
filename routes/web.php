@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\InvoiceController;
@@ -18,6 +22,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('projects', ProjectController::class);
+    Route::resource('directory', ClientController::class)->parameters(['directory' => 'client'])->names('clients');
+    Route::post('directory/{client}/contacts', [ContactController::class, 'store'])->name('clients.contacts.store');
+    Route::put('contacts/{contact}', [ContactController::class, 'update'])->name('contacts.update');
+    Route::delete('contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');
+
+    Route::get('settings/company', [CompanyController::class, 'edit'])->name('company.edit');
+    Route::post('settings/company', [CompanyController::class, 'update'])->name('company.update');
+
+    Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('settings/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::patch('projects/{project}/progress', [ProjectController::class, 'updateProgress'])
         ->name('projects.progress')
@@ -39,6 +55,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('documents',             [DocumentController::class, 'store'])->name('documents.store');
         Route::delete('documents/{document}',[DocumentController::class, 'destroy'])->name('documents.destroy');
 
+        Route::post('members',               [\App\Http\Controllers\ProjectMemberController::class, 'store'])->name('members.store');
+        Route::delete('members/{member}',    [\App\Http\Controllers\ProjectMemberController::class, 'destroy'])->name('members.destroy');
+
         Route::post('tasks',                 [TaskController::class, 'store'])->name('tasks.store');
         Route::put('tasks/{task}',           [TaskController::class, 'update'])->name('tasks.update');
         Route::delete('tasks/{task}',        [TaskController::class, 'destroy'])->name('tasks.destroy');
@@ -46,6 +65,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::patch('proposals/{proposal}/status', [ProposalController::class, 'updateStatus'])
         ->name('proposals.status')->middleware('role:admin|manager');
+    Route::patch('invoices/{invoice}/payment',   [InvoiceController::class, 'recordPayment'])
+        ->name('invoices.payment');
     Route::patch('invoices/{invoice}/status',   [InvoiceController::class, 'updateStatus'])
         ->name('invoices.status')->middleware('role:admin|manager');
     Route::patch('meetings/{meeting}/status',   [MeetingController::class, 'updateStatus'])
@@ -54,4 +75,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('tasks.status');
     Route::get('documents/{document}/download', [DocumentController::class, 'download'])
         ->name('documents.download');
+
+    Route::get('invoices/{invoice}/view', [InvoiceController::class, 'show'])->name('invoices.view');
+    Route::get('proposals/{proposal}/view', [ProposalController::class, 'show'])->name('proposals.view');
 });

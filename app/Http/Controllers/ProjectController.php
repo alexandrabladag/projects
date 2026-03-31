@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
+use App\Models\Company;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -31,16 +33,27 @@ class ProjectController extends Controller
     {
         $this->authorize('create', Project::class);
 
-        return Inertia::render('Projects/Create');
+        return Inertia::render('Projects/Create', [
+            'clients' => Client::orderBy('name')->get(['id', 'name', 'type', 'contact_name', 'contact_email', 'contact_phone']),
+        ]);
     }
 
     public function store(Request $request)
     {
         $this->authorize('create', Project::class);
 
+        // Convert comma-separated tags string to array
+        if (is_string($request->tags)) {
+            $request->merge([
+                'tags' => array_values(array_filter(array_map('trim', explode(',', $request->tags)))),
+            ]);
+        }
+
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
-            'client'        => 'required|string|max:255',
+            'client_id'     => 'nullable|exists:clients,id',
+            'new_client_name' => 'required_without:client_id|nullable|string|max:255',
+            'client'        => 'nullable|string|max:255',
             'contact_name'  => 'nullable|string|max:255',
             'contact_email' => 'nullable|email|max:255',
             'contact_phone' => 'nullable|string|max:50',
@@ -48,20 +61,50 @@ class ProjectController extends Controller
             'start_date'    => 'nullable|date',
             'end_date'      => 'nullable|date|after_or_equal:start_date',
             'budget'        => 'nullable|numeric|min:0',
+            'currency'      => 'nullable|string|max:10',
             'description'   => 'nullable|string',
             'tags'          => 'nullable|array',
             'tags.*'        => 'string|max:50',
             'phase'         => 'nullable|string|max:100',
         ]);
 
+        // Handle inline client creation
+        $clientId = $validated['client_id'] ?? null;
+        $clientName = $validated['client'] ?? '';
+        $isNewClient = false;
+
+        if (!$clientId && !empty($validated['new_client_name'])) {
+            $newClient = Client::create([
+                'name'          => $validated['new_client_name'],
+                'contact_name'  => $validated['contact_name'] ?? null,
+                'contact_email' => $validated['contact_email'] ?? null,
+                'contact_phone' => $validated['contact_phone'] ?? null,
+                'type'          => 'client',
+            ]);
+            $clientId = $newClient->id;
+            $clientName = $newClient->name;
+            $isNewClient = true;
+        } elseif ($clientId && !$clientName) {
+            $clientName = Client::find($clientId)?->name ?? '';
+        }
+
+        unset($validated['client_id'], $validated['new_client_name']);
+
         $project = Project::create(array_merge($validated, [
+            'client'     => $clientName,
+            'client_id'  => $clientId,
             'manager_id' => $request->user()->id,
             'progress'   => 0,
             'spent'      => 0,
         ]));
 
+        $message = 'Project created successfully.';
+        if ($isNewClient) {
+            $message .= ' A new client record was created — please complete their details in Clients & Vendors.';
+        }
+
         return redirect()->route('projects.show', $project)
-            ->with('success', 'Project created successfully.');
+            ->with('success', $message);
     }
 
     public function show(Request $request, Project $project): Response
@@ -75,6 +118,7 @@ class ProjectController extends Controller
             'meetings',
             'documents.uploader',
             'tasks',
+            'members.client',
         ]);
 
         // Append computed attributes
@@ -91,9 +135,13 @@ class ProjectController extends Controller
             ['total' => $inv->total]
         ));
 
+        $company = Company::first();
+
         return Inertia::render('Projects/Show', [
-            'project'   => $projectData,
-            'canManage' => $request->user()->canManageProjects(),
+            'project'            => $projectData,
+            'canManage'          => $request->user()->canManageProjects(),
+            'nextInvoiceNumber'  => $company?->generateNumber('invoice') ?? 'INV-' . date('Y') . '-001',
+            'nextProposalNumber' => $company?->generateNumber('proposal') ?? 'PROP-' . date('Y') . '-001',
         ]);
     }
 
@@ -110,6 +158,12 @@ class ProjectController extends Controller
     {
         $this->authorize('update', $project);
 
+        if (is_string($request->tags)) {
+            $request->merge([
+                'tags' => array_values(array_filter(array_map('trim', explode(',', $request->tags)))),
+            ]);
+        }
+
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
             'client'        => 'required|string|max:255',
@@ -120,6 +174,7 @@ class ProjectController extends Controller
             'start_date'    => 'nullable|date',
             'end_date'      => 'nullable|date',
             'budget'        => 'nullable|numeric|min:0',
+            'currency'      => 'nullable|string|max:10',
             'spent'         => 'nullable|numeric|min:0',
             'description'   => 'nullable|string',
             'tags'          => 'nullable|array',

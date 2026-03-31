@@ -18,5 +18,18 @@
         "react-dom": "^18.3.1",
         "tailwindcss": "^3.4.13",
         "vite": "^6.0.3"
+    },
+    "dependencies": {
+        "@tiptap/extension-placeholder": "^3.21.0",
+        "@tiptap/extension-table": "^3.21.0",
+        "@tiptap/extension-table-cell": "^3.21.0",
+        "@tiptap/extension-table-header": "^3.21.0",
+        "@tiptap/extension-table-row": "^3.21.0",
+        "@tiptap/extension-text-align": "^3.21.0",
+        "@tiptap/extension-underline": "^3.21.0",
+        "@tiptap/react": "^3.21.0",
+        "@tiptap/starter-kit": "^3.21.0",
+        "html2pdf.js": "^0.14.0",
+        "lucide-react": "^1.7.0"
     }
 }

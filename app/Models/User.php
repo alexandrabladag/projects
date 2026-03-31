@@ -13,8 +13,15 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
+        'username',
         'email',
         'password',
+        'phone',
+        'company',
+        'job_title',
+        'workspace_id',
     ];
 
     protected $hidden = [
@@ -31,6 +38,16 @@ class User extends Authenticatable
     }
 
     // ── Relationships ──────────────────────────────────────────────────────────
+
+    public function workspace()
+    {
+        return $this->belongsTo(Workspace::class);
+    }
+
+    public function ownedWorkspace()
+    {
+        return $this->hasOne(Workspace::class, 'owner_id');
+    }
 
     /**
      * Projects where this user is the client contact.

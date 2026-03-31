@@ -1,19 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Jost:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg:      #0b0d14;
-  --surface: #11131d;
-  --card:    #171a28;
-  --border:  #1d2236;
-  --border2: #252b40;
-  --gold:    #c9a464;
-  --cream:   #e2dcd2;
-  --cream2:  #9a9180;
-  --muted:   #58607a;
+  --bg:      #f8f8f8;
+  --surface: #ffffff;
+  --card:    #ffffff;
+  --border:  #e5e7eb;
+  --border2: #d1d5db;
+  --gold:    #4f6df5;
+  --cream:   #000000;
+  --cream2:  #4b5563;
+  --muted:   #6b7280;
   --green:   #3ecf8e;
   --red:     #f56060;
   --blue:    #5b8dee;
@@ -24,21 +24,31 @@
 * { box-sizing: border-box; }
 
 body {
-  font-family: 'Jost', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   background: var(--bg);
   color: var(--cream);
 }
 
 h1, h2, h3, h4, .font-serif {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
 }
 
 ::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: var(--surface); }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+::-webkit-scrollbar-track { background: #f3f4f6; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
 
 /* Progress bar animation */
 .progress-fill { transition: width 0.5s ease; }
+
+/* Toast slide-in */
+@keyframes slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-slide-in { animation: slide-in 0.3s ease-out; }
 
 /* Inertia page transition */
 #nprogress .bar { background: var(--gold) !important; }

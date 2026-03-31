@@ -10,20 +10,20 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Jost', 'sans-serif'],
-                serif: ['Cormorant Garamond', 'serif'],
+                sans: ['Plus Jakarta Sans', 'sans-serif'],
+                serif: ['Plus Jakarta Sans', 'sans-serif'],
             },
             colors: {
                 app: {
-                    bg:      '#0b0d14',
-                    surface: '#11131d',
-                    card:    '#171a28',
-                    border:  '#1d2236',
-                    border2: '#252b40',
-                    gold:    '#c9a464',
-                    cream:   '#e2dcd2',
-                    cream2:  '#9a9180',
-                    muted:   '#58607a',
+                    bg:      '#f8f8f8',
+                    surface: '#ffffff',
+                    card:    '#ffffff',
+                    border:  '#e5e7eb',
+                    border2: '#d1d5db',
+                    gold:    '#4f6df5',
+                    cream:   '#000000',
+                    cream2:  '#4b5563',
+                    muted:   '#6b7280',
                     green:   '#3ecf8e',
                     red:     '#f56060',
                     blue:    '#5b8dee',

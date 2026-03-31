@@ -18,11 +18,22 @@ class Invoice extends Model
         'date',
         'due_date',
         'description',
+        'currency',
+        'received_currency',
+        'exchange_rate',
+        'received_amount',
+        'received_date',
+        'received_notes',
+        'payment_stage',
+        'payment_notes',
     ];
 
     protected $casts = [
-        'date'     => 'date',
-        'due_date' => 'date',
+        'date'            => 'date',
+        'due_date'        => 'date',
+        'received_date'   => 'date',
+        'exchange_rate'   => 'decimal:6',
+        'received_amount' => 'decimal:2',
     ];
 
     public function project(): BelongsTo
