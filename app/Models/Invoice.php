@@ -26,6 +26,8 @@ class Invoice extends Model
         'received_notes',
         'payment_stage',
         'payment_notes',
+        'signed_file_path',
+        'signed_file_name',
     ];
 
     protected $casts = [

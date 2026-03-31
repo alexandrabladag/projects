@@ -89,6 +89,25 @@ class ProposalController extends Controller
         return back()->with('success', 'Proposal updated.');
     }
 
+    public function uploadSignedFile(Request $request, Proposal $proposal)
+    {
+        $this->authorize('update', $proposal->project);
+
+        $request->validate(['file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240']);
+
+        if ($proposal->signed_file_path) {
+            \Storage::disk('public')->delete($proposal->signed_file_path);
+        }
+
+        $path = $request->file('file')->store('signed-proposals', 'public');
+        $proposal->update([
+            'signed_file_path' => $path,
+            'signed_file_name' => $request->file('file')->getClientOriginalName(),
+        ]);
+
+        return back()->with('success', 'Signed proposal uploaded.');
+    }
+
     public function updateStatus(Request $request, Proposal $proposal)
     {
         $this->authorize('update', $proposal->project);

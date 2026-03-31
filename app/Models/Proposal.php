@@ -34,6 +34,8 @@ class Proposal extends Model
         'prepared_by_title',
         'approved_by',
         'approved_by_title',
+        'signed_file_path',
+        'signed_file_name',
     ];
 
     protected $casts = [

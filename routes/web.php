@@ -95,6 +95,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::patch('proposals/{proposal}/status', [ProposalController::class, 'updateStatus'])
         ->name('proposals.status')->middleware('role:admin|manager');
+    Route::post('invoices/{invoice}/signed-file', [InvoiceController::class, 'uploadSignedFile'])->name('invoices.signed-file');
+    Route::post('proposals/{proposal}/signed-file', [ProposalController::class, 'uploadSignedFile'])->name('proposals.signed-file');
     Route::patch('invoices/{invoice}/payment',   [InvoiceController::class, 'recordPayment'])
         ->name('invoices.payment');
     Route::patch('invoices/{invoice}/status',   [InvoiceController::class, 'updateStatus'])

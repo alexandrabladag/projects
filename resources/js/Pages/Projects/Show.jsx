@@ -588,6 +588,15 @@ function ProposalTab({ project, canManage, nextNumber, fmt }) {
                                 <div className="text-[12px] text-[#6b7280] line-clamp-2 leading-relaxed mb-3 border-l-2 border-[#e5e7eb] pl-3">{pr.summary.slice(0, 200)}…</div>
                             )}
 
+                            {/* Signed file */}
+                            {pr.signed_file_path && (
+                                <div className="flex items-center gap-2 mb-3 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                                    <CheckCircle size={14} className="text-emerald-500" />
+                                    <span className="text-[12px] text-emerald-700 font-medium flex-1">Signed: {pr.signed_file_name}</span>
+                                    <a href={`/storage/${pr.signed_file_path}`} target="_blank" className="text-[12px] text-emerald-600 hover:text-emerald-800 font-medium">View</a>
+                                </div>
+                            )}
+
                             {/* Actions */}
                             <div className="flex items-center gap-2">
                                 <Link href={route('proposals.view', pr.id)}>
@@ -600,6 +609,16 @@ function ProposalTab({ project, canManage, nextNumber, fmt }) {
                                     <Btn ghost sm onClick={() => updateStatus(pr, statusCycle[pr.status])}>
                                         {pr.status === 'draft' ? <><Send size={13} /> Mark Sent</> : <><Check size={13} /> Mark Approved</>}
                                     </Btn>
+                                )}
+                                {canManage && pr.status !== 'draft' && (
+                                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#4b5563] border border-[#d1d5db] hover:bg-gray-100 cursor-pointer transition-all">
+                                        <Upload size={13} /> {pr.signed_file_path ? 'Replace Signed' : 'Upload Signed'}
+                                        <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={e => {
+                                            if (!e.target.files[0]) return;
+                                            const fd = new FormData(); fd.append('file', e.target.files[0]);
+                                            router.post(route('proposals.signed-file', pr.id), fd);
+                                        }} />
+                                    </label>
                                 )}
                             </div>
                         </div>
@@ -756,6 +775,16 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                                             Received {inv.received_currency} {Number(inv.received_amount).toLocaleString()}
                                         </span>
                                     )}
+                                    {canManage && inv.status !== 'draft' && (
+                                        <label className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium text-[#6b7280] border border-[#d1d5db] hover:bg-gray-100 cursor-pointer transition-all" onClick={e => e.stopPropagation()}>
+                                            <Upload size={12} /> {inv.signed_file_path ? 'Signed ✓' : 'Upload'}
+                                            <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={e => {
+                                                if (!e.target.files[0]) return;
+                                                const fd = new FormData(); fd.append('file', e.target.files[0]);
+                                                router.post(route('invoices.signed-file', inv.id), fd);
+                                            }} />
+                                        </label>
+                                    )}
                                     <span className="text-[#9ca3af]">{expanded === inv.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</span>
                                 </div>
                             </div>
@@ -787,6 +816,13 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                                             <span className="text-[16px] font-bold text-black">{fmt(inv.total)}</span>
                                         </div>
                                     </div>
+                                    {inv.signed_file_path && (
+                                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#e5e7eb]">
+                                            <CheckCircle size={14} className="text-emerald-500" />
+                                            <span className="text-[12px] text-emerald-700 font-medium flex-1">Signed: {inv.signed_file_name}</span>
+                                            <a href={`/storage/${inv.signed_file_path}`} target="_blank" className="text-[12px] text-emerald-600 hover:text-emerald-800 font-medium">View File</a>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -940,14 +976,31 @@ function PaymentModal({ invoice, onClose }) {
 // ── MEETINGS TAB ──────────────────────────────────────────────────────────────
 function MeetingsTab({ project, canManage }) {
     const [showModal, setShowModal] = useState(false);
+    const [editingMeeting, setEditingMeeting] = useState(null);
     const [filter, setFilter] = useState('all');
     const [kickoffNotes, setKickoffNotes] = useState(null);
     const meetings = project.meetings ?? [];
     const filtered = filter === 'all' ? meetings : meetings.filter(m => m.status === filter);
 
-    const { data, setData, post, processing, reset, errors } = useForm({
+    const { data, setData, post, put, processing, reset, errors } = useForm({
         type: 'kickoff', title: 'Project Kickoff Meeting', date: '', time: '', duration: '1 hr', location: '', attendees: '', notes: '',
     });
+
+    const openEdit = (m) => {
+        setEditingMeeting(m);
+        setKickoffNotes(null);
+        setData({
+            type: m.type ?? 'other',
+            title: m.title ?? '',
+            date: m.date ? m.date.slice(0, 10) : '',
+            time: m.time ?? '',
+            duration: m.duration ?? '',
+            location: m.location ?? '',
+            attendees: (m.attendees ?? []).join(', '),
+            notes: m.notes ?? '',
+        });
+        setShowModal(true);
+    };
 
     const typeToTitle = { kickoff:'Project Kickoff Meeting', review:'Project Review', checkin:'Monthly Check-in', presentation:'Client Presentation', discovery:'Discovery Session', other:'Meeting' };
     const submit = () => {
@@ -959,9 +1012,15 @@ function MeetingsTab({ project, canManage }) {
             notes: kickoffNotes,
         } : data;
 
-        router.post(route('projects.meetings.store', project.id), payload, {
-            onSuccess: () => { setShowModal(false); reset(); setKickoffNotes(null); },
-        });
+        if (editingMeeting) {
+            router.put(route('projects.meetings.update', [project.id, editingMeeting.id]), payload, {
+                onSuccess: () => { setShowModal(false); reset(); setEditingMeeting(null); },
+            });
+        } else {
+            router.post(route('projects.meetings.store', project.id), payload, {
+                onSuccess: () => { setShowModal(false); reset(); setKickoffNotes(null); },
+            });
+        }
     };
     const updateStatus = (m, status) => router.patch(route('meetings.status', m.id), { status });
 
@@ -1060,10 +1119,15 @@ function MeetingsTab({ project, canManage }) {
                                     {(m.attendees ?? []).length > 0 && <div className="text-[12px] text-[#6b7280]">👥 {m.attendees.join(', ')}</div>}
                                     {m.notes && <div className="mt-3 px-3 py-2.5 bg-[#f3f4f6] rounded-lg text-[12.5px] text-[#4b5563] leading-relaxed border-l-2 border-[#d1d5db]">{m.notes}</div>}
                                 </div>
-                                {canManage && m.status === 'scheduled' && (
+                                {canManage && (
                                     <div className="flex gap-2 flex-shrink-0">
-                                        <Btn ghost sm onClick={() => updateStatus(m, 'completed')}><CheckCircle size={13} /> Complete</Btn>
-                                        <Btn danger sm onClick={() => updateStatus(m, 'cancelled')}><XCircle size={13} /> Cancel</Btn>
+                                        <Btn ghost sm onClick={() => openEdit(m)}><Pencil size={13} /></Btn>
+                                        {m.status === 'scheduled' && (
+                                            <>
+                                                <Btn ghost sm onClick={() => updateStatus(m, 'completed')}><CheckCircle size={13} /> Complete</Btn>
+                                                <Btn danger sm onClick={() => updateStatus(m, 'cancelled')}><XCircle size={13} /> Cancel</Btn>
+                                            </>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -1073,7 +1137,7 @@ function MeetingsTab({ project, canManage }) {
             </div>
 
             {showModal && (
-                <Modal title="Schedule Meeting" subtitle={`For ${project.name}`} onClose={() => setShowModal(false)} footer={<><Btn ghost onClick={() => setShowModal(false)}>Cancel</Btn><Btn primary onClick={submit} disabled={processing}>{processing ? 'Scheduling…' : 'Schedule'}</Btn></>}>
+                <Modal title={editingMeeting ? 'Edit Meeting' : 'Schedule Meeting'} subtitle={`For ${project.name}`} onClose={() => { setShowModal(false); setEditingMeeting(null); setKickoffNotes(null); }} footer={<><Btn ghost onClick={() => { setShowModal(false); setEditingMeeting(null); }}><X size={13} /> Cancel</Btn><Btn primary onClick={submit} disabled={processing}><Save size={13} /> {processing ? 'Saving…' : editingMeeting ? 'Update' : 'Schedule'}</Btn></>}>
                     <div className="space-y-4 pb-2">
                         {kickoffNotes && (
                             <div className="bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-2.5 text-[12px] text-indigo-600">

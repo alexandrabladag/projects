@@ -88,6 +88,25 @@ class InvoiceController extends Controller
         return back()->with('success', 'Invoice updated.');
     }
 
+    public function uploadSignedFile(Request $request, Invoice $invoice)
+    {
+        $this->authorize('update', $invoice->project);
+
+        $request->validate(['file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240']);
+
+        if ($invoice->signed_file_path) {
+            \Storage::disk('public')->delete($invoice->signed_file_path);
+        }
+
+        $path = $request->file('file')->store('signed-invoices', 'public');
+        $invoice->update([
+            'signed_file_path' => $path,
+            'signed_file_name' => $request->file('file')->getClientOriginalName(),
+        ]);
+
+        return back()->with('success', 'Signed invoice uploaded.');
+    }
+
     public function recordPayment(Request $request, Invoice $invoice)
     {
         $this->authorize('update', $invoice->project);

@@ -35,9 +35,14 @@ class MeetingController extends Controller
         return back()->with('success', 'Meeting scheduled.');
     }
 
-    public function update(Request $request, Meeting $meeting)
+    public function update(Request $request, Project $project, Meeting $meeting)
     {
         $this->authorize('update', $meeting->project);
+
+        if (is_string($request->attendees)) {
+            $parsed = array_values(array_filter(array_map('trim', explode(',', $request->attendees))));
+            $request->merge(['attendees' => count($parsed) ? $parsed : null]);
+        }
 
         $validated = $request->validate([
             'title'     => 'required|string|max:255',
