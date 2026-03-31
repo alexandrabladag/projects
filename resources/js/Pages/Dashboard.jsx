@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import AppLayout, { Badge } from '@/Layouts/AppLayout';
 import { formatMoney, getCurrency } from '@/Utils/currencies';
+import { Briefcase, Wallet, Receipt, CircleDollarSign, ListChecks, ArrowRight, Calendar } from 'lucide-react';
 const fmtDate = (s) => {
     if (!s) return '—';
     return new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -23,58 +24,34 @@ export default function Dashboard({ stats, activeProjects, upcomingMeetings, rec
 
             {/* Stats Row */}
             <div className="grid grid-cols-5 gap-3 mb-7">
-                {/* Projects */}
-                <div className="bg-white border border-[#e5e7eb] rounded-xl p-4">
-                    <div className="text-[10px] tracking-[1.5px] uppercase text-[#9ca3af] font-medium mb-2">Projects</div>
-                    <div className="text-[24px] font-bold leading-none text-black">{stats.total_projects}</div>
-                    <div className="text-[11px] text-[#9ca3af] mt-1.5">{stats.active_projects} active</div>
-                </div>
-
-                {/* Total Budget — by currency */}
-                <div className="bg-white border border-[#e5e7eb] rounded-xl p-4">
-                    <div className="text-[10px] tracking-[1.5px] uppercase text-[#9ca3af] font-medium mb-2">Total Budget</div>
-                    {Object.entries(stats.budget_by_currency ?? {}).map(([code, amount]) => (
-                        <div key={code} className="text-[20px] font-bold leading-tight text-black">{formatMoney(amount, code)}</div>
-                    ))}
-                    {Object.keys(stats.budget_by_currency ?? {}).length === 0 && <div className="text-[20px] font-bold text-[#d1d5db]">—</div>}
-                    <div className="text-[11px] text-[#9ca3af] mt-1.5">Across all projects</div>
-                </div>
-
-                {/* Total Billed — by currency */}
-                <div className="bg-white border border-[#e5e7eb] rounded-xl p-4">
-                    <div className="text-[10px] tracking-[1.5px] uppercase text-[#9ca3af] font-medium mb-2">Total Billed</div>
-                    {Object.entries(stats.billed_by_currency ?? {}).map(([code, amount]) => (
-                        <div key={code} className="text-[20px] font-bold leading-tight text-indigo-600">{formatMoney(amount, code)}</div>
-                    ))}
-                    {Object.keys(stats.billed_by_currency ?? {}).length === 0 && <div className="text-[20px] font-bold text-[#d1d5db]">—</div>}
-                    <div className="text-[11px] text-[#9ca3af] mt-1.5">{stats.pending_invoices} pending</div>
-                </div>
-
-                {/* Received — by currency */}
-                <div className="bg-white border border-[#e5e7eb] rounded-xl p-4">
-                    <div className="text-[10px] tracking-[1.5px] uppercase text-[#9ca3af] font-medium mb-2">Received</div>
-                    {Object.entries(stats.received_by_currency ?? {}).map(([code, amount]) => (
-                        <div key={code} className="text-[20px] font-bold leading-tight text-emerald-600">{formatMoney(amount, code)}</div>
-                    ))}
-                    {Object.keys(stats.received_by_currency ?? {}).length === 0 && <div className="text-[20px] font-bold text-[#d1d5db]">—</div>}
-                    <div className="text-[11px] text-[#9ca3af] mt-1.5">Payments received</div>
-                </div>
-
-                {/* Open Tasks */}
-                <div className="bg-white border border-[#e5e7eb] rounded-xl p-4">
-                    <div className="text-[10px] tracking-[1.5px] uppercase text-[#9ca3af] font-medium mb-2">Open Tasks</div>
-                    <div className="text-[24px] font-bold leading-none text-black">{stats.open_tasks}</div>
-                    <div className="text-[11px] text-[#9ca3af] mt-1.5">Across projects</div>
-                </div>
+                {[
+                    { label: 'Projects', icon: <Briefcase size={16} />, iconBg: 'bg-indigo-50', iconColor: 'text-indigo-500', values: [{ v: stats.total_projects, c: 'text-black' }], sub: `${stats.active_projects} active` },
+                    { label: 'Total Budget', icon: <Wallet size={16} />, iconBg: 'bg-sky-50', iconColor: 'text-sky-500', values: Object.entries(stats.budget_by_currency ?? {}).map(([code, amount]) => ({ v: formatMoney(amount, code), c: 'text-black' })), sub: 'Across all projects' },
+                    { label: 'Total Billed', icon: <Receipt size={16} />, iconBg: 'bg-violet-50', iconColor: 'text-violet-500', values: Object.entries(stats.billed_by_currency ?? {}).map(([code, amount]) => ({ v: formatMoney(amount, code), c: 'text-indigo-600' })), sub: `${stats.pending_invoices} pending` },
+                    { label: 'Received', icon: <CircleDollarSign size={16} />, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-500', values: Object.entries(stats.received_by_currency ?? {}).map(([code, amount]) => ({ v: formatMoney(amount, code), c: 'text-emerald-600' })), sub: 'Payments received' },
+                    { label: 'Open Tasks', icon: <ListChecks size={16} />, iconBg: 'bg-amber-50', iconColor: 'text-amber-500', values: [{ v: stats.open_tasks, c: 'text-black' }], sub: 'Across projects' },
+                ].map((s, i) => (
+                    <div key={i} className="bg-white border border-[#e5e7eb] rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className={`w-7 h-7 rounded-lg ${s.iconBg} flex items-center justify-center ${s.iconColor}`}>{s.icon}</div>
+                            <div className="text-[10px] tracking-[1.5px] uppercase text-[#9ca3af] font-medium">{s.label}</div>
+                        </div>
+                        {s.values.length > 0
+                            ? s.values.map((val, j) => <div key={j} className={`text-[20px] font-bold leading-tight ${val.c}`}>{val.v}</div>)
+                            : <div className="text-[20px] font-bold text-[#d1d5db]">—</div>
+                        }
+                        <div className="text-[11px] text-[#9ca3af] mt-1.5">{s.sub}</div>
+                    </div>
+                ))}
             </div>
 
             <div className="grid grid-cols-2 gap-5 mb-5">
                 {/* Active Projects */}
                 <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                     <div className="flex items-center justify-between px-5 py-4 border-b border-[#e5e7eb]">
-                        <span className="font-serif text-[17px] font-semibold">Active Projects</span>
-                        <Link href={route('projects.index')} className="text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
-                            View All
+                        <span className="flex items-center gap-2 text-[16px] font-bold"><Briefcase size={16} className="text-indigo-500" /> Active Projects</span>
+                        <Link href={route('projects.index')} className="inline-flex items-center gap-1 text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
+                            View All <ArrowRight size={12} />
                         </Link>
                     </div>
                     <div>
@@ -108,7 +85,7 @@ export default function Dashboard({ stats, activeProjects, upcomingMeetings, rec
                 {/* Upcoming Meetings */}
                 <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                     <div className="px-5 py-4 border-b border-[#e5e7eb]">
-                        <span className="font-serif text-[17px] font-semibold">Upcoming Meetings</span>
+                        <span className="flex items-center gap-2 text-[16px] font-bold"><Calendar size={16} className="text-indigo-500" /> Upcoming Meetings</span>
                     </div>
                     <div className="px-5">
                         {upcomingMeetings.length === 0 && (
@@ -138,7 +115,7 @@ export default function Dashboard({ stats, activeProjects, upcomingMeetings, rec
             {/* Recent Invoices */}
             <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                 <div className="px-5 py-4 border-b border-[#e5e7eb]">
-                    <span className="font-serif text-[17px] font-semibold">Recent Invoice Activity</span>
+                    <span className="flex items-center gap-2 text-[16px] font-bold"><Receipt size={16} className="text-indigo-500" /> Recent Invoice Activity</span>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full">

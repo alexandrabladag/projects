@@ -1,6 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import currencies from '@/Utils/currencies';
+import { Building2, MapPin, Hash, Save } from 'lucide-react';
 
 export default function Company({ company }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -201,7 +202,7 @@ export default function Company({ company }) {
                             disabled={processing}
                             className="px-5 py-2.5 bg-[#4f6df5] hover:bg-[#6380f7] text-white font-semibold rounded-lg text-[13px] transition-all disabled:opacity-60"
                         >
-                            {processing ? 'Saving…' : 'Save Changes'}
+                            {processing ? 'Saving…' : <><Save size={14} /> Save Changes</>}
                         </button>
                     </div>
                 </form>

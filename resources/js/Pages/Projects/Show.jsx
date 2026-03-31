@@ -154,13 +154,13 @@ function OverviewTab({ project, canManage, fmt }) {
                 <div className="space-y-4">
                     {/* Description */}
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
-                        <div className="px-5 py-3.5 border-b border-[#e5e7eb]"><span className="font-serif text-[16px] font-semibold">Project Description</span></div>
+                        <div className="px-5 py-3.5 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Project Description</span></div>
                         <div className="px-5 py-4 text-[13.5px] text-[#4b5563] leading-relaxed">{project.description ?? '—'}</div>
                     </div>
 
                     {/* Client Info */}
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
-                        <div className="px-5 py-3.5 border-b border-[#e5e7eb]"><span className="font-serif text-[16px] font-semibold">Client Information</span></div>
+                        <div className="px-5 py-3.5 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Client Information</span></div>
                         <div className="px-5 py-4 grid grid-cols-2 gap-4">
                             {[
                                 { l: 'Contact', v: project.contact_name },
@@ -180,7 +180,7 @@ function OverviewTab({ project, canManage, fmt }) {
                 <div className="space-y-4">
                     {/* Financial */}
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
-                        <div className="px-5 py-3.5 border-b border-[#e5e7eb]"><span className="font-serif text-[16px] font-semibold">Financial Overview</span></div>
+                        <div className="px-5 py-3.5 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Financial Overview</span></div>
                         <div className="px-5 py-4">
                             <div className="grid grid-cols-2 gap-4 mb-4">
                                 {[
@@ -204,7 +204,7 @@ function OverviewTab({ project, canManage, fmt }) {
 
                     {/* Quick Summary */}
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
-                        <div className="px-5 py-3.5 border-b border-[#e5e7eb]"><span className="font-serif text-[16px] font-semibold">Quick Summary</span></div>
+                        <div className="px-5 py-3.5 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Quick Summary</span></div>
                         <div className="px-5 py-2">
                             {[
                                 { l: 'Proposals', v: `${project.proposals?.length ?? 0} total` },
@@ -712,7 +712,7 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
     return (
         <>
             <div className="flex justify-between items-center mb-5">
-                <h3 className="font-serif text-[18px] font-semibold">Invoices</h3>
+                <h3 className="text-[17px] font-bold">Invoices</h3>
                 {canManage && <Btn primary sm onClick={() => setShowModal(true)}><Plus size={13} /> New Invoice</Btn>}
             </div>
 
@@ -1043,7 +1043,7 @@ function MeetingsTab({ project, canManage }) {
     return (
         <>
             <div className="flex justify-between items-center mb-5">
-                <h3 className="font-serif text-[18px] font-semibold">Meetings</h3>
+                <h3 className="text-[17px] font-bold">Meetings</h3>
                 {canManage && (
                     <div className="flex gap-2">
                         <Btn ghost sm onClick={generateKickoffAgenda}><FileText size={13} /> Kickoff Agenda</Btn>
@@ -1139,7 +1139,7 @@ function DocumentsTab({ project, canManage }) {
     return (
         <>
             <div className="flex justify-between items-center mb-5">
-                <h3 className="font-serif text-[18px] font-semibold">Documents</h3>
+                <h3 className="text-[17px] font-bold">Documents</h3>
                 {canManage && <Btn primary sm onClick={() => setShowModal(true)}><Upload size={13} /> Add Document</Btn>}
             </div>
             <div className="flex gap-2 mb-5">
@@ -1211,7 +1211,7 @@ function TimelineTab({ project }) {
         <div className="grid grid-cols-2 gap-5">
             <div>
                 <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
-                    <div className="px-5 py-4 border-b border-[#e5e7eb]"><span className="font-serif text-[16px] font-semibold">Phase Timeline</span></div>
+                    <div className="px-5 py-4 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Phase Timeline</span></div>
                     <div className="px-5 py-5">
                         {phases.map((ph, i) => (
                             <div key={i} className="flex gap-4 pb-6 last:pb-0">
@@ -1233,7 +1233,7 @@ function TimelineTab({ project }) {
             </div>
             <div className="space-y-4">
                 <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
-                    <div className="px-5 py-4 border-b border-[#e5e7eb]"><span className="font-serif text-[16px] font-semibold">Key Dates</span></div>
+                    <div className="px-5 py-4 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Key Dates</span></div>
                     <div className="px-5 py-2">
                         {[
                             { l: 'Project Start', v: fmtDate(project.start_date), c: 'text-green-400' },
@@ -1249,7 +1249,7 @@ function TimelineTab({ project }) {
                     </div>
                 </div>
                 <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
-                    <div className="px-5 py-4 border-b border-[#e5e7eb]"><span className="font-serif text-[16px] font-semibold">Phase Progress</span></div>
+                    <div className="px-5 py-4 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Phase Progress</span></div>
                     <div className="px-5 py-4 space-y-3">
                         {phases.map((ph, i) => {
                             const pct = ph.done ? 100 : ph.active ? Math.min(99, project.progress) : 0;
@@ -1296,7 +1296,7 @@ function TasksTab({ project, canManage }) {
     return (
         <>
             <div className="flex justify-between items-center mb-5">
-                <h3 className="font-serif text-[18px] font-semibold">Task List</h3>
+                <h3 className="text-[17px] font-bold">Task List</h3>
                 {canManage && <Btn primary sm onClick={() => setShowModal(true)}>+ Add Task</Btn>}
             </div>
             <div className="flex gap-2 mb-5">

@@ -58,6 +58,10 @@ class ProposalController extends Controller
     {
         $this->authorize('update', $proposal->project);
 
+        if ($proposal->status !== 'draft') {
+            return back()->with('error', 'Only draft proposals can be edited.');
+        }
+
         $validated = $request->validate([
             'title'              => 'required|string|max:255',
             'amount'             => 'required|numeric|min:0',

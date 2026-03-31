@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
+import { Save, X } from 'lucide-react';
 
 const inputCls = 'w-full bg-[#f3f4f6] border border-[#d1d5db] rounded-lg px-3.5 py-2.5 text-[13px] text-black outline-none focus:border-[#4f6df5] transition-colors';
 
@@ -132,15 +133,15 @@ export default function Create({ client: existing }) {
                     </div>
 
                     <div className="flex justify-end gap-3 pt-2 border-t border-[#e5e7eb]">
-                        <Link href={route('clients.index')} className="px-4 py-2.5 rounded-lg text-[13px] text-[#6b7280] border border-[#d1d5db] hover:bg-gray-50 transition-colors">
-                            Cancel
+                        <Link href={route('clients.index')} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[13px] text-[#6b7280] border border-[#d1d5db] hover:bg-gray-50 transition-colors">
+                            <X size={14} /> Cancel
                         </Link>
                         <button
                             type="submit"
                             disabled={processing}
-                            className="px-5 py-2.5 bg-[#4f6df5] hover:bg-[#6380f7] text-white font-semibold rounded-lg text-[13px] transition-all disabled:opacity-60"
+                            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#4f6df5] hover:bg-[#6380f7] text-white font-semibold rounded-lg text-[13px] transition-all disabled:opacity-60"
                         >
-                            {processing ? 'Saving…' : isEdit ? `Update ${typeLabel}` : `Create ${typeLabel}`}
+                            <Save size={14} /> {processing ? 'Saving…' : isEdit ? `Update ${typeLabel}` : `Create ${typeLabel}`}
                         </button>
                     </div>
                 </form>

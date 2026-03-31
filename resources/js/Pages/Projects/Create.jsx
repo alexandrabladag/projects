@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import currencies from '@/Utils/currencies';
+import { Save, X, Plus, Info } from 'lucide-react';
 
 const inputCls = 'w-full bg-[#f3f4f6] border border-[#d1d5db] rounded-lg px-3.5 py-2.5 text-[13px] text-black outline-none focus:border-[#4f6df5] transition-colors';
 
@@ -96,7 +97,7 @@ export default function Create({ clients = [] }) {
                             <div className="col-span-2 bg-[#f0f4ff] border border-[#4f6df5]/20 rounded-xl p-4 space-y-3">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[#4f6df5] text-[14px]">✦</span>
+                                        <Plus size={14} className="text-[#4f6df5]" />
                                         <span className="text-[12px] font-semibold text-black">New Client</span>
                                     </div>
                                     <button
@@ -119,7 +120,7 @@ export default function Create({ clients = [] }) {
                                     {errors.new_client_name && <p className="text-red-400 text-[12px] mt-1">{errors.new_client_name}</p>}
                                 </div>
                                 <div className="flex items-start gap-2 text-[12px] text-[#4f6df5] bg-[#4f6df5]/10 rounded-lg px-3 py-2">
-                                    <span className="mt-0.5">ℹ</span>
+                                    <Info size={14} className="mt-0.5 flex-shrink-0" />
                                     <span>A client record will be created with basic info. You can complete their full details (address, tax ID, etc.) in <strong>Clients & Vendors</strong> after saving.</span>
                                 </div>
                             </div>
@@ -221,15 +222,15 @@ export default function Create({ clients = [] }) {
                     </div>
 
                     <div className="flex justify-end gap-3 pt-2 border-t border-[#e5e7eb]">
-                        <Link href={route('projects.index')} className="px-4 py-2.5 rounded-lg text-[13px] text-[#4b5563] border border-[#d1d5db] hover:bg-gray-100 transition-colors">
-                            Cancel
+                        <Link href={route('projects.index')} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[13px] text-[#4b5563] border border-[#d1d5db] hover:bg-gray-100 transition-colors">
+                            <X size={14} /> Cancel
                         </Link>
                         <button
                             type="submit"
                             disabled={processing}
-                            className="px-5 py-2.5 bg-[#4f6df5] hover:bg-[#6380f7] text-white font-semibold rounded-lg text-[13px] transition-all disabled:opacity-60"
+                            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#4f6df5] hover:bg-[#6380f7] text-white font-semibold rounded-lg text-[13px] transition-all disabled:opacity-60"
                         >
-                            {processing ? 'Creating…' : 'Create Project'}
+                            <Plus size={14} /> {processing ? 'Creating…' : 'Create Project'}
                         </button>
                     </div>
                 </form>

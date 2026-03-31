@@ -62,6 +62,10 @@ class InvoiceController extends Controller
     {
         $this->authorize('update', $invoice->project);
 
+        if ($invoice->status !== 'draft') {
+            return back()->with('error', 'Only draft invoices can be edited.');
+        }
+
         $validated = $request->validate([
             'due_date'    => 'nullable|date',
             'description' => 'nullable|string|max:255',
