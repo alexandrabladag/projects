@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use App\Models\Project;
 use Inertia\Inertia;
 
@@ -13,7 +14,7 @@ class PublicPortalController extends Controller
             ->where('portal_enabled', true)
             ->firstOrFail();
 
-        $project->load(['proposals', 'invoices.items', 'meetings']);
+        $project->load(['proposals', 'invoices.items', 'meetings', 'tasks']);
 
         $projectData = array_merge($project->toArray(), [
             'total_billed' => $project->total_billed,
@@ -25,8 +26,17 @@ class PublicPortalController extends Controller
             ['total' => $inv->total]
         ));
 
+        $company = Company::first();
+
         return Inertia::render('Portal/Public', [
             'project' => $projectData,
+            'company' => $company ? [
+                'name'      => $company->name,
+                'logo_path' => $company->logo_path,
+                'email'     => $company->email,
+                'phone'     => $company->phone,
+                'website'   => $company->website,
+            ] : null,
             'code'    => $code,
         ]);
     }
