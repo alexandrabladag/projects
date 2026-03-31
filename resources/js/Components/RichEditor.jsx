@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -11,7 +12,7 @@ import {
     Bold, Italic, Underline as UnderlineIcon, Strikethrough,
     Heading1, Heading2, Heading3, List, ListOrdered, Quote,
     Table as TableIcon, AlignLeft, AlignCenter, AlignRight,
-    Undo, Redo, Minus, Pilcrow, PenLine,
+    Undo, Redo, Minus, Pilcrow, PenLine, Code,
 } from 'lucide-react';
 
 function ToolbarBtn({ onClick, active, disabled, children, title }) {
@@ -37,6 +38,8 @@ function Divider() {
 }
 
 export default function RichEditor({ content, onChange, placeholder = 'Start writing…' }) {
+    const [showSource, setShowSource] = useState(false);
+    const [htmlSource, setHtmlSource] = useState('');
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
@@ -171,10 +174,41 @@ export default function RichEditor({ content, onChange, placeholder = 'Start wri
                 <ToolbarBtn onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo">
                     <Redo size={15} />
                 </ToolbarBtn>
+
+                <Divider />
+
+                <ToolbarBtn
+                    onClick={() => {
+                        if (showSource) {
+                            // Apply HTML back to editor
+                            editor.commands.setContent(htmlSource);
+                            onChange(htmlSource);
+                            setShowSource(false);
+                        } else {
+                            setHtmlSource(editor.getHTML());
+                            setShowSource(true);
+                        }
+                    }}
+                    active={showSource}
+                    title="HTML Source Code"
+                >
+                    <Code size={15} />
+                </ToolbarBtn>
             </div>
 
-            {/* Editor */}
-            <EditorContent editor={editor} />
+            {/* Visual Editor */}
+            {!showSource && <EditorContent editor={editor} />}
+
+            {/* HTML Source Editor */}
+            {showSource && (
+                <textarea
+                    value={htmlSource}
+                    onChange={e => setHtmlSource(e.target.value)}
+                    className="w-full min-h-[300px] px-4 py-3 font-mono text-[12px] text-black bg-[#fafbfc] outline-none resize-y leading-relaxed"
+                    spellCheck={false}
+                    placeholder="<h1>Your HTML here...</h1>"
+                />
+            )}
 
             {/* Styles for the editor content */}
             <style>{`
