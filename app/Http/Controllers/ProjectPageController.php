@@ -65,6 +65,15 @@ class ProjectPageController extends Controller
     public function publicView(string $code)
     {
         $page = ProjectPage::where('share_code', $code)->where('is_shared', true)->firstOrFail();
+
+        // Full HTML document — serve directly as raw HTML
+        $isFullHtml = str_contains($page->content ?? '', '<!DOCTYPE') || str_contains($page->content ?? '', '<html');
+
+        if ($isFullHtml) {
+            return response($page->content, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+        }
+
+        // Simple content — render with Inertia wrapper
         $page->load('project');
         $company = Company::first();
 
