@@ -46,6 +46,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/company', [CompanyController::class, 'edit'])->name('company.edit');
     Route::post('settings/company', [CompanyController::class, 'update'])->name('company.update');
 
+    Route::get('settings/transfer', [\App\Http\Controllers\WorkspaceTransferController::class, 'index'])->name('workspace.transfer');
+    Route::get('settings/export', [\App\Http\Controllers\WorkspaceTransferController::class, 'export'])->name('workspace.export');
+    Route::post('settings/import', [\App\Http\Controllers\WorkspaceTransferController::class, 'import'])->name('workspace.import');
+
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('settings/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
