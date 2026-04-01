@@ -93,6 +93,8 @@ class ProjectController extends Controller
 
             unset($validated['client_id'], $validated['new_client_name']);
 
+            $validated['budget'] = $validated['budget'] ?? 0;
+
             $project = Project::create(array_merge($validated, [
                 'client'     => $clientName,
                 'client_id'  => $clientId,
