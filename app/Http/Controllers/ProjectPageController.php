@@ -71,32 +71,6 @@ class ProjectPageController extends Controller
     {
         $page = ProjectPage::where('share_code', $code)->where('is_shared', true)->firstOrFail();
 
-        // Password protection
-        if ($page->password) {
-            $token = md5($page->id . $page->password . 'salt');
-
-            // Check if unlocked via token in URL
-            if ($request->query('token') === $token) {
-                // Passed — continue to render
-            } elseif ($request->isMethod('post')) {
-                if ($request->input('password') === $page->password) {
-                    $url = route('pages.public', $code) . '?token=' . $token;
-                    return Inertia::location($url);
-                }
-                return Inertia::render('Pages/PasswordGate', [
-                    'code' => $code,
-                    'title' => $page->title,
-                    'error' => 'Incorrect password.',
-                ]);
-            } else {
-                return Inertia::render('Pages/PasswordGate', [
-                    'code' => $code,
-                    'title' => $page->title,
-                    'error' => null,
-                ]);
-            }
-        }
-
         // Full HTML document — serve directly as raw HTML
         $isFullHtml = str_contains($page->content ?? '', '<!DOCTYPE') || str_contains($page->content ?? '', '<html');
 
