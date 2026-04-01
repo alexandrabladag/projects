@@ -46,9 +46,9 @@ export default function Public({ project, company, code }) {
                     <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             {company?.logo_path && <img src={`/storage/${company.logo_path}`} alt="" className="h-7" />}
-                            <span className="text-[14px] font-bold text-black">{company?.name ?? 'Project Portal'}</span>
+                            <span className="text-[14px] font-bold text-black">Project Portal</span>
                         </div>
-                        {company?.email && <span className="text-[12px] text-[#9ca3af]">{company.email}</span>}
+                        <span className="text-[13px] font-medium text-[#4b5563]">{project.client}</span>
                     </div>
                 </header>
 
