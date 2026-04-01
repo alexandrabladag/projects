@@ -19,8 +19,12 @@ class ProjectPageController extends Controller
             'content' => 'nullable|string',
         ]);
 
+        // Auto-generate a simple 6-char password
+        $password = strtoupper(substr(md5(rand()), 0, 6));
+
         $project->pages()->create(array_merge($validated, [
             'created_by' => $request->user()->id,
+            'password'   => $password,
         ]));
 
         return back()->with('success', 'Page created.');
