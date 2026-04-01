@@ -67,6 +67,19 @@ export default function Public({ project, company, code }) {
                         )}
                     </div>
 
+                    {/* Launch date */}
+                    {project.launch_date && (
+                        <div className="bg-gradient-to-r from-[#4f6df5] to-[#6380f7] rounded-2xl p-5 mb-6 text-white flex items-center justify-between shadow-sm">
+                            <div>
+                                <div className="text-[11px] uppercase tracking-wider opacity-70 font-medium">🚀 Target Launch</div>
+                                <div className="text-[22px] font-extrabold mt-0.5">{fmtDate(project.launch_date)}</div>
+                            </div>
+                            <div className="text-right opacity-80">
+                                <div className="text-[13px]">{Math.max(0, Math.round((new Date(project.launch_date) - new Date()) / (1000*60*60*24)))} days away</div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Project Details */}
                     <div className="grid grid-cols-2 gap-4 mb-8">
                         {/* Contact & Project Info */}
@@ -74,10 +87,9 @@ export default function Public({ project, company, code }) {
                             <h3 className="text-[14px] font-bold text-black mb-4">Project Details</h3>
                             <div className="space-y-3">
                                 {[
-                                    { l: 'Phase', v: project.phase },
+                                    { l: 'Current Phase', v: project.phase },
                                     { l: 'Start Date', v: fmtDate(project.start_date) },
                                     { l: 'End Date', v: fmtDate(project.end_date) },
-                                    { l: 'Currency', v: project.currency ?? 'USD' },
                                 ].map(({ l, v }) => v && (
                                     <div key={l} className="flex justify-between text-[13px]">
                                         <span className="text-[#9ca3af]">{l}</span>
@@ -145,19 +157,6 @@ export default function Public({ project, company, code }) {
                             })}
                         </div>
                     </div>
-
-                    {/* Launch date */}
-                    {project.launch_date && (
-                        <div className="bg-gradient-to-r from-[#4f6df5] to-[#6380f7] rounded-2xl p-5 mb-6 text-white flex items-center justify-between shadow-sm">
-                            <div>
-                                <div className="text-[11px] uppercase tracking-wider opacity-70 font-medium">🚀 Target Launch</div>
-                                <div className="text-[22px] font-extrabold mt-0.5">{fmtDate(project.launch_date)}</div>
-                            </div>
-                            <div className="text-right opacity-80">
-                                <div className="text-[13px]">{Math.max(0, Math.round((new Date(project.launch_date) - new Date()) / (1000*60*60*24)))} days away</div>
-                            </div>
-                        </div>
-                    )}
 
                     {/* Stats */}
                     <div className="grid grid-cols-4 gap-4 mb-8">
