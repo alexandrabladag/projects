@@ -56,7 +56,8 @@ export default function Public({ project, company, code }) {
                     {/* Hero */}
                     <div className="text-center mb-10">
                         <Badge status={project.status} />
-                        <h1 className="text-[32px] font-extrabold text-black mt-3 leading-tight">{project.name}</h1>
+                        <h2 className="text-[16px] font-semibold text-[#6b7280] mt-3">{project.client}</h2>
+                        <h1 className="text-[32px] font-extrabold text-black mt-1 leading-tight">{project.name}</h1>
                         {project.description && (
                             <p className="text-[15px] text-[#6b7280] mt-3 max-w-2xl mx-auto leading-relaxed">{project.description}</p>
                         )}
