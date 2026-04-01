@@ -104,23 +104,41 @@ export default function Public({ project, company, code }) {
                             </div>
                         </div>
 
-                        {/* Main Contact */}
+                        {/* Contacts */}
                         <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 shadow-sm">
-                            <h3 className="text-[14px] font-bold text-black mb-4">Your Project Contact</h3>
-                            <div className="flex items-start gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-[#4f6df5]/10 flex items-center justify-center text-[16px] font-bold text-[#4f6df5] flex-shrink-0">
-                                    {(project.contact_name ?? '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                                </div>
-                                <div>
-                                    {project.contact_name && <div className="text-[15px] font-semibold text-black">{project.contact_name}</div>}
-                                    {project.contact_email && (
-                                        <a href={`mailto:${project.contact_email}`} className="text-[13px] text-[#4f6df5] hover:text-[#6380f7] block mt-0.5">{project.contact_email}</a>
-                                    )}
-                                    {project.contact_phone && (
-                                        <a href={`tel:${project.contact_phone}`} className="text-[13px] text-[#6b7280] block mt-0.5">{project.contact_phone}</a>
-                                    )}
-                                    {project.client && <div className="text-[12px] text-[#9ca3af] mt-2">{project.client}</div>}
-                                </div>
+                            <h3 className="text-[14px] font-bold text-black mb-4">Contacts</h3>
+                            <div className="space-y-4">
+                                {/* Project Lead */}
+                                {project.lead && (
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-[#4f6df5]/10 flex items-center justify-center text-[14px] font-bold text-[#4f6df5] flex-shrink-0">
+                                            {project.lead.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <div className="text-[13px] font-semibold text-black">{project.lead.name}</div>
+                                            <div className="text-[11px] text-[#4f6df5] font-medium">Project Lead</div>
+                                            {project.lead.email && <a href={`mailto:${project.lead.email}`} className="text-[12px] text-[#6b7280] block mt-0.5">{project.lead.email}</a>}
+                                            {project.lead.phone && <a href={`tel:${project.lead.phone}`} className="text-[12px] text-[#6b7280] block">{project.lead.phone}</a>}
+                                            {company?.name && <div className="text-[11px] text-[#9ca3af] mt-1">{company.name}</div>}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Client Contact */}
+                                {project.contact_name && (
+                                    <div className={`flex items-start gap-3 ${project.lead ? 'pt-4 border-t border-[#f0f0f0]' : ''}`}>
+                                        <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-[14px] font-bold text-emerald-500 flex-shrink-0">
+                                            {project.contact_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <div className="text-[13px] font-semibold text-black">{project.contact_name}</div>
+                                            <div className="text-[11px] text-emerald-600 font-medium">Client Contact</div>
+                                            {project.contact_email && <a href={`mailto:${project.contact_email}`} className="text-[12px] text-[#6b7280] block mt-0.5">{project.contact_email}</a>}
+                                            {project.contact_phone && <a href={`tel:${project.contact_phone}`} className="text-[12px] text-[#6b7280] block">{project.contact_phone}</a>}
+                                            {project.client && <div className="text-[11px] text-[#9ca3af] mt-1">{project.client}</div>}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
