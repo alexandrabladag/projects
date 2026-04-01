@@ -125,16 +125,19 @@ class ProjectController extends Controller
             'meetings',
             'documents.uploader',
             'tasks',
+            'bills.vendor',
             'members.client',
             'pages.creator',
         ]);
 
         // Append computed attributes
         $projectData = array_merge($project->toArray(), [
-            'budget_percent'   => $project->budget_percent,
-            'total_billed'     => $project->total_billed,
-            'total_paid'       => $project->total_paid,
-            'budget_remaining' => $project->budget_remaining,
+            'budget_percent'     => $project->budget_percent,
+            'total_billed'       => $project->total_billed,
+            'total_paid'         => $project->total_paid,
+            'budget_remaining'   => $project->budget_remaining,
+            'total_bills'        => $project->total_bills,
+            'total_bills_paid'   => $project->total_bills_paid,
         ]);
 
         // Append invoice totals

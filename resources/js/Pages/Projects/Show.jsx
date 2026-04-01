@@ -182,12 +182,14 @@ function OverviewTab({ project, canManage, fmt }) {
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                         <div className="px-5 py-3.5 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Financial Overview</span></div>
                         <div className="px-5 py-4">
-                            <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div className="grid grid-cols-3 gap-4 mb-4">
                                 {[
                                     { l: 'Project Budget', v: fmt(project.budget), serif: true },
-                                    { l: 'Total Spent', v: fmt(project.spent), serif: true, warn: budgetPct > 90 },
-                                    { l: 'Total Billed', v: fmt(project.total_billed) },
+                                    { l: 'Spent (Bills)', v: fmt(project.spent), serif: true, warn: budgetPct > 90 },
+                                    { l: 'Billed to Client', v: fmt(project.total_billed) },
                                     { l: 'Received', v: fmt(project.total_paid), green: true },
+                                    { l: 'Vendor Bills', v: fmt(project.total_bills) },
+                                    { l: 'Bills Paid', v: fmt(project.total_bills_paid), green: true },
                                 ].map(({ l, v, serif, warn, green }) => (
                                     <div key={l}>
                                         <div className="text-[10px] tracking-[1.5px] uppercase text-[#6b7280] mb-1">{l}</div>
@@ -1436,6 +1438,172 @@ function Section({ title, children }) {
     );
 }
 
+// ── BILLS TAB (Vendor/Contractor Invoices) ───────────────────────────────────
+function BillsTab({ project, canManage, fmt }) {
+    const [showModal, setShowModal] = useState(false);
+    const bills = project.bills ?? [];
+    const { props } = usePage();
+    const allClients = props.clients ?? [];
+    const vendors = allClients.filter(c => c.type === 'vendor' || c.type === 'contractor');
+
+    const totalBills = bills.reduce((s, b) => s + parseFloat(b.amount ?? 0), 0);
+    const totalPaid = bills.filter(b => b.status === 'paid').reduce((s, b) => s + parseFloat(b.amount ?? 0), 0);
+    const totalPending = bills.filter(b => b.status !== 'paid').reduce((s, b) => s + parseFloat(b.amount ?? 0), 0);
+
+    const { data, setData, post, processing, reset, errors } = useForm({
+        client_id: '', number: '', amount: '', currency: project.currency ?? 'USD',
+        date: new Date().toISOString().slice(0, 10), due_date: '',
+        description: '', category: '', notes: '', file: null,
+    });
+
+    const submit = () => {
+        post(route('projects.bills.store', project.id), {
+            forceFormData: true,
+            onSuccess: () => { setShowModal(false); reset(); },
+        });
+    };
+
+    const updateStatus = (bill, status) => {
+        router.patch(route('projects.bills.update', [project.id, bill.id]), { status });
+    };
+
+    const deleteBill = (bill) => {
+        if (confirm('Delete this bill?')) {
+            router.delete(route('projects.bills.destroy', [project.id, bill.id]));
+        }
+    };
+
+    const statusColors = { pending: 'border-l-amber-400', approved: 'border-l-indigo-400', paid: 'border-l-emerald-400' };
+
+    return (
+        <>
+            <div className="flex justify-between items-center mb-5">
+                <h3 className="text-[17px] font-bold">Vendor & Contractor Bills</h3>
+                {canManage && <Btn primary sm onClick={() => setShowModal(true)}><Plus size={13} /> Add Bill</Btn>}
+            </div>
+
+            {/* Summary */}
+            <div className="grid grid-cols-3 gap-3 mb-6">
+                {[
+                    { l: 'Total Bills', v: fmt(totalBills), icon: <Receipt size={16} />, bg: 'bg-indigo-50 border-indigo-100', iconC: 'text-indigo-500', textC: 'text-indigo-700' },
+                    { l: 'Paid', v: fmt(totalPaid), icon: <Check size={16} />, bg: 'bg-emerald-50 border-emerald-100', iconC: 'text-emerald-500', textC: 'text-emerald-700' },
+                    { l: 'Pending', v: fmt(totalPending), icon: <Clock size={16} />, bg: totalPending > 0 ? 'bg-amber-50 border-amber-100' : 'bg-gray-50 border-gray-100', iconC: totalPending > 0 ? 'text-amber-500' : 'text-gray-400', textC: totalPending > 0 ? 'text-amber-700' : 'text-gray-600' },
+                ].map(({ l, v, icon, bg, iconC, textC }) => (
+                    <div key={l} className={`${bg} border rounded-xl p-4 flex items-center gap-3`}>
+                        <div className={`w-9 h-9 rounded-lg bg-white flex items-center justify-center ${iconC} shadow-sm`}>{icon}</div>
+                        <div>
+                            <div className="text-[10px] tracking-[1.5px] uppercase text-[#6b7280] font-medium">{l}</div>
+                            <div className={`text-[20px] font-bold ${textC} leading-tight`}>{v}</div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {bills.length === 0 && !showModal && (
+                <div className="text-center py-14 text-[#6b7280]">
+                    <div className="mb-4 flex justify-center"><div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center"><Receipt size={24} className="text-indigo-400" /></div></div>
+                    <div className="text-[14px] font-semibold text-black mb-1">No bills yet</div>
+                    <div className="text-[13px] text-[#6b7280] mb-4">Track invoices from vendors and contractors</div>
+                    {canManage && <Btn primary onClick={() => setShowModal(true)}><Plus size={15} /> Add First Bill</Btn>}
+                </div>
+            )}
+
+            {/* Bill list */}
+            <div className="space-y-3">
+                {bills.map(bill => (
+                    <div key={bill.id} className={`bg-white border border-[#e5e7eb] ${statusColors[bill.status] ?? ''} border-l-[3px] rounded-xl p-5`}>
+                        <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2.5 mb-0.5">
+                                    {bill.vendor && <span className="text-[13px] font-semibold text-black">{bill.vendor.name}</span>}
+                                    {bill.number && <span className="text-[12px] font-mono text-[#6b7280]">#{bill.number}</span>}
+                                    <Badge status={bill.status} />
+                                    {bill.category && <span className="text-[10px] px-2 py-0.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-500 font-medium">{bill.category}</span>}
+                                </div>
+                                <div className="text-[12px] text-[#6b7280]">
+                                    {bill.description}
+                                    {bill.due_date && <span> · Due {fmtDate(bill.due_date)}</span>}
+                                </div>
+                            </div>
+                            <div className="text-right flex-shrink-0 ml-4">
+                                <div className="text-[18px] font-bold text-black">{fmt(bill.amount)}</div>
+                                <div className="text-[11px] text-[#9ca3af]">{fmtDate(bill.date)}</div>
+                            </div>
+                        </div>
+
+                        {/* File */}
+                        {bill.file_path && (
+                            <div className="flex items-center gap-2 mb-3 bg-[#fafbfc] border border-[#e5e7eb] rounded-lg px-3 py-2">
+                                <FileText size={14} className="text-[#6b7280]" />
+                                <span className="text-[12px] text-[#4b5563] flex-1">{bill.file_name}</span>
+                                <a href={`/storage/${bill.file_path}`} target="_blank" className="text-[12px] text-[#4f6df5] font-medium">View</a>
+                            </div>
+                        )}
+
+                        {bill.notes && <div className="text-[12px] text-[#6b7280] mb-3 italic">{bill.notes}</div>}
+
+                        {/* Actions */}
+                        {canManage && (
+                            <div className="flex items-center gap-2">
+                                {bill.status === 'pending' && (
+                                    <Btn ghost sm onClick={() => updateStatus(bill, 'approved')}><Check size={13} /> Approve</Btn>
+                                )}
+                                {bill.status === 'approved' && (
+                                    <Btn ghost sm onClick={() => updateStatus(bill, 'paid')}><Check size={13} /> Mark Paid</Btn>
+                                )}
+                                {bill.status === 'paid' && (
+                                    <span className="text-[11px] text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full font-medium">
+                                        Paid {bill.paid_date ? fmtDate(bill.paid_date) : ''}
+                                    </span>
+                                )}
+                                <button onClick={() => deleteBill(bill)} className="text-[#9ca3af] hover:text-red-500 transition-colors p-1.5 ml-auto"><Trash2 size={14} /></button>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Add Bill Modal */}
+            {showModal && (
+                <Modal title="Add Vendor/Contractor Bill" subtitle={`For ${project.name}`} large onClose={() => setShowModal(false)} footer={
+                    <><Btn ghost onClick={() => setShowModal(false)}><X size={13} /> Cancel</Btn>
+                    <Btn primary onClick={submit} disabled={processing}><Plus size={13} /> {processing ? 'Adding…' : 'Add Bill'}</Btn></>
+                }>
+                    <div className="space-y-4 pb-2">
+                        <div className="grid grid-cols-2 gap-3">
+                            <FG label="Vendor / Contractor" error={errors.client_id}>
+                                <select className={inputCls} value={data.client_id} onChange={e => setData('client_id', e.target.value)}>
+                                    <option value="">Select...</option>
+                                    {vendors.map(v => <option key={v.id} value={v.id}>{v.name} ({v.type})</option>)}
+                                </select>
+                            </FG>
+                            <FG label="Their Invoice #"><input className={inputCls} value={data.number} onChange={e => setData('number', e.target.value)} placeholder="e.g. VND-001" /></FG>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            <FG label="Amount *" error={errors.amount}><input className={inputCls} type="number" step="0.01" value={data.amount} onChange={e => setData('amount', e.target.value)} placeholder="0.00" /></FG>
+                            <FG label="Currency">
+                                <select className={inputCls} value={data.currency} onChange={e => setData('currency', e.target.value)}>
+                                    {['USD','PHP','JPY','EUR','GBP','SGD','AUD','THB','VND','IDR','MYR'].map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </FG>
+                            <FG label="Category"><input className={inputCls} value={data.category} onChange={e => setData('category', e.target.value)} placeholder="e.g. Design, Dev" /></FG>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <FG label="Bill Date *" error={errors.date}><input className={inputCls} type="date" value={data.date} onChange={e => setData('date', e.target.value)} /></FG>
+                            <FG label="Due Date"><input className={inputCls} type="date" value={data.due_date} onChange={e => setData('due_date', e.target.value)} /></FG>
+                        </div>
+                        <FG label="Description"><input className={inputCls} value={data.description} onChange={e => setData('description', e.target.value)} placeholder="What is this bill for?" /></FG>
+                        <FG label="Notes"><textarea className={`${inputCls} resize-y`} rows={2} value={data.notes} onChange={e => setData('notes', e.target.value)} placeholder="Payment terms, bank details, etc." /></FG>
+                        <FG label="Attach Invoice File">
+                            <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setData('file', e.target.files[0])} className="text-[13px] text-[#6b7280]" />
+                        </FG>
+                    </div>
+                </Modal>
+            )}
+        </>
+    );
+}
+
 // ── PAGES TAB ────────────────────────────────────────────────────────────────
 function PagesTab({ project, canManage }) {
     const [showEditor, setShowEditor] = useState(false);
@@ -1621,6 +1789,7 @@ export default function Show({ project, canManage, nextInvoiceNumber, nextPropos
         { id: 'documents',  label: `Documents (${project.documents?.length ?? 0})`, icon: <FolderOpen size={15} /> },
         { id: 'timeline',   label: 'Timeline',    icon: <Clock size={15} /> },
         { id: 'tasks',      label: `Tasks (${project.tasks?.length ?? 0})`,        icon: <ListChecks size={15} /> },
+        { id: 'bills',      label: `Bills (${project.bills?.length ?? 0})`,        icon: <Receipt size={15} /> },
         { id: 'pages',      label: `Pages (${project.pages?.length ?? 0})`,        icon: <FileText size={15} /> },
     ];
 
@@ -1660,6 +1829,7 @@ export default function Show({ project, canManage, nextInvoiceNumber, nextPropos
             {tab === 'documents' && <DocumentsTab project={project} canManage={canManage} />}
             {tab === 'timeline'  && <TimelineTab  project={project} />}
             {tab === 'tasks'     && <TasksTab     project={project} canManage={canManage} />}
+            {tab === 'bills'     && <BillsTab     project={project} canManage={canManage} fmt={fmt} />}
             {tab === 'pages'     && <PagesTab     project={project} canManage={canManage} />}
         </AppLayout>
     );

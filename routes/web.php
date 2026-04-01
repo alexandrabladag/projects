@@ -89,6 +89,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('pages/{page}',        [\App\Http\Controllers\ProjectPageController::class, 'destroy'])->name('pages.destroy');
         Route::patch('pages/{page}/share',   [\App\Http\Controllers\ProjectPageController::class, 'toggleShare'])->name('pages.toggle-share');
 
+        Route::post('bills',                 [\App\Http\Controllers\BillController::class, 'store'])->name('bills.store');
+        Route::patch('bills/{bill}',         [\App\Http\Controllers\BillController::class, 'update'])->name('bills.update');
+        Route::delete('bills/{bill}',        [\App\Http\Controllers\BillController::class, 'destroy'])->name('bills.destroy');
+
         Route::post('tasks',                 [TaskController::class, 'store'])->name('tasks.store');
         Route::put('tasks/{task}',           [TaskController::class, 'update'])->name('tasks.update');
         Route::delete('tasks/{task}',        [TaskController::class, 'destroy'])->name('tasks.destroy');

@@ -87,6 +87,11 @@ class Project extends Model
         return $this->hasMany(ProjectMember::class);
     }
 
+    public function bills(): HasMany
+    {
+        return $this->hasMany(Bill::class)->orderBy('date', 'desc');
+    }
+
     public function pages(): HasMany
     {
         return $this->hasMany(ProjectPage::class);
@@ -139,5 +144,15 @@ class Project extends Model
         return $this->invoices
             ->where('status', 'paid')
             ->sum(fn ($inv) => $inv->total);
+    }
+
+    public function getTotalBillsAttribute(): float
+    {
+        return $this->bills->sum('amount');
+    }
+
+    public function getTotalBillsPaidAttribute(): float
+    {
+        return $this->bills->where('status', 'paid')->sum('amount');
     }
 }
