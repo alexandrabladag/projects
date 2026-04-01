@@ -67,6 +67,52 @@ export default function Public({ project, company, code }) {
                         )}
                     </div>
 
+                    {/* Project Details */}
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                        {/* Contact & Project Info */}
+                        <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 shadow-sm">
+                            <h3 className="text-[14px] font-bold text-black mb-4">Project Details</h3>
+                            <div className="space-y-3">
+                                {[
+                                    { l: 'Phase', v: project.phase },
+                                    { l: 'Start Date', v: fmtDate(project.start_date) },
+                                    { l: 'End Date', v: fmtDate(project.end_date) },
+                                    { l: 'Currency', v: project.currency ?? 'USD' },
+                                ].map(({ l, v }) => v && (
+                                    <div key={l} className="flex justify-between text-[13px]">
+                                        <span className="text-[#9ca3af]">{l}</span>
+                                        <span className="font-medium text-black">{v}</span>
+                                    </div>
+                                ))}
+                                {(project.tags ?? []).length > 0 && (
+                                    <div className="pt-2 flex flex-wrap gap-1.5">
+                                        {project.tags.map(t => <span key={t} className="text-[10px] px-2 py-0.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-500 font-medium">{t}</span>)}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Main Contact */}
+                        <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 shadow-sm">
+                            <h3 className="text-[14px] font-bold text-black mb-4">Your Project Contact</h3>
+                            <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-[#4f6df5]/10 flex items-center justify-center text-[16px] font-bold text-[#4f6df5] flex-shrink-0">
+                                    {(project.contact_name ?? '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                                </div>
+                                <div>
+                                    {project.contact_name && <div className="text-[15px] font-semibold text-black">{project.contact_name}</div>}
+                                    {project.contact_email && (
+                                        <a href={`mailto:${project.contact_email}`} className="text-[13px] text-[#4f6df5] hover:text-[#6380f7] block mt-0.5">{project.contact_email}</a>
+                                    )}
+                                    {project.contact_phone && (
+                                        <a href={`tel:${project.contact_phone}`} className="text-[13px] text-[#6b7280] block mt-0.5">{project.contact_phone}</a>
+                                    )}
+                                    {company?.name && <div className="text-[12px] text-[#9ca3af] mt-2">{company.name}</div>}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Progress Card */}
                     <div className="bg-white rounded-2xl border border-[#e5e7eb] p-8 mb-8 shadow-sm">
                         <div className="flex items-center justify-between mb-2">
