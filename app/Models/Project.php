@@ -24,6 +24,8 @@ class Project extends Model
         'end_date',
         'budget',
         'currency',
+        'tax_type',
+        'tax_rate',
         'spent',
         'progress',         // 0-100
         'phase',
@@ -32,6 +34,7 @@ class Project extends Model
         'client_id',
         'portal_code',
         'portal_enabled',
+        'launch_date',
         'manager_id',
         'client_user_id',
     ];
@@ -39,7 +42,9 @@ class Project extends Model
     protected $casts = [
         'start_date'  => 'date',
         'end_date'    => 'date',
+        'launch_date' => 'date',
         'budget'      => 'decimal:2',
+        'tax_rate'    => 'decimal:2',
         'spent'       => 'decimal:2',
         'progress'    => 'integer',
         'tags'        => 'array',

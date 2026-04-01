@@ -84,7 +84,10 @@ function OverviewTab({ project, canManage, fmt }) {
         contact_name: project.contact_name ?? '', contact_email: project.contact_email ?? '', contact_phone: project.contact_phone ?? '',
         status: project.status ?? 'active', start_date: project.start_date ? project.start_date.slice(0, 10) : '',
         end_date: project.end_date ? project.end_date.slice(0, 10) : '',
-        budget: project.budget ?? '', currency: project.currency ?? 'USD', description: project.description ?? '',
+        launch_date: project.launch_date ? project.launch_date.slice(0, 10) : '',
+        budget: project.budget ?? '', currency: project.currency ?? 'USD',
+        tax_type: project.tax_type ?? '', tax_rate: project.tax_rate ?? 0,
+        description: project.description ?? '',
         tags: (project.tags ?? []).join(', '), phase: project.phase ?? 'Discovery',
     });
 
@@ -341,9 +344,29 @@ function OverviewTab({ project, canManage, fmt }) {
                                 </div>
                             </div>
                         </FG>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 gap-3">
                             <FG label="Start Date"><input className={inputCls} type="date" value={editForm.data.start_date} onChange={e => editForm.setData('start_date', e.target.value)} /></FG>
                             <FG label="End Date"><input className={inputCls} type="date" value={editForm.data.end_date} onChange={e => editForm.setData('end_date', e.target.value)} /></FG>
+                            <FG label="Launch Date"><input className={inputCls} type="date" value={editForm.data.launch_date} onChange={e => editForm.setData('launch_date', e.target.value)} /></FG>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <FG label="Tax Type">
+                                <select className={inputCls} value={editForm.data.tax_type} onChange={e => editForm.setData('tax_type', e.target.value)}>
+                                    <option value="">No Tax</option>
+                                    <option value="vat">VAT (Value Added Tax)</option>
+                                    <option value="gst">GST (Goods & Services Tax)</option>
+                                    <option value="sales_tax">Sales Tax</option>
+                                    <option value="withholding">Withholding Tax</option>
+                                    <option value="consumption">Consumption Tax (Japan)</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </FG>
+                            <FG label="Tax Rate (%)">
+                                <div className="relative">
+                                    <input className={`${inputCls} pr-8`} type="number" step="0.01" min="0" max="100" value={editForm.data.tax_rate} onChange={e => editForm.setData('tax_rate', e.target.value)} placeholder="0" />
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-[#9ca3af]">%</span>
+                                </div>
+                            </FG>
                         </div>
                         <FG label="Description">
                             <textarea className={`${inputCls} resize-y min-h-[120px]`} value={editForm.data.description} onChange={e => editForm.setData('description', e.target.value)} placeholder="Project overview and goals…" />

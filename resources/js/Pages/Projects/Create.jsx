@@ -15,7 +15,8 @@ export default function Create({ clients = [] }) {
     const { data, setData, post, processing, errors } = useForm({
         name: '', client_id: '', new_client_name: '', client: '',
         contact_name: '', contact_email: '', contact_phone: '',
-        status: 'active', start_date: '', end_date: '',
+        status: 'active', start_date: '', end_date: '', launch_date: '',
+        tax_type: '', tax_rate: 0,
         budget: '', currency: baseCurrency, description: '', tags: '', phase: 'Discovery',
     });
 
@@ -206,6 +207,22 @@ export default function Create({ clients = [] }) {
                         </div>
                         {field('Start Date', 'start_date', 'date', '', true)}
                         {field('End Date', 'end_date', 'date', '', true)}
+                        {field('Launch Date', 'launch_date', 'date', '', true)}
+
+                        {/* Tax */}
+                        <div>
+                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">Tax Type</label>
+                            <select value={data.tax_type} onChange={e => setData('tax_type', e.target.value)} className={inputCls}>
+                                <option value="">No Tax</option>
+                                <option value="vat">VAT</option>
+                                <option value="gst">GST</option>
+                                <option value="sales_tax">Sales Tax</option>
+                                <option value="withholding">Withholding Tax</option>
+                                <option value="consumption">Consumption Tax (Japan)</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        {field('Tax Rate (%)', 'tax_rate', 'number', '0', true)}
 
                         <div className="col-span-2">
                             <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">Description</label>
