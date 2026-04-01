@@ -146,8 +146,7 @@ export default function Public({ project, company, code }) {
                         </div>
                     </div>
 
-                    {/* Stats */}
-                    {/* Launch date highlight */}
+                    {/* Launch date */}
                     {project.launch_date && (
                         <div className="bg-gradient-to-r from-[#4f6df5] to-[#6380f7] rounded-2xl p-5 mb-6 text-white flex items-center justify-between shadow-sm">
                             <div>
@@ -160,6 +159,7 @@ export default function Public({ project, company, code }) {
                         </div>
                     )}
 
+                    {/* Stats */}
                     <div className="grid grid-cols-4 gap-4 mb-8">
                         {[
                             { label: 'Timeline', value: `${fmtShort(project.start_date)} — ${fmtShort(project.end_date)}`, icon: <Clock size={16} />, bg: 'bg-sky-50', ic: 'text-sky-500' },
