@@ -6,7 +6,9 @@ use App\Models\Client;
 use App\Models\Company;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -68,35 +70,39 @@ class ProjectController extends Controller
             'phase'         => 'nullable|string|max:100',
         ]);
 
-        // Handle inline client creation
-        $clientId = $validated['client_id'] ?? null;
-        $clientName = $validated['client'] ?? '';
-        $isNewClient = false;
+        // Handle inline client creation + project creation in a transaction
+        [$project, $isNewClient] = DB::transaction(function () use ($validated, $request) {
+            $clientId = $validated['client_id'] ?? null;
+            $clientName = $validated['client'] ?? '';
+            $isNewClient = false;
 
-        if (!$clientId && !empty($validated['new_client_name'])) {
-            $newClient = Client::create([
-                'name'          => $validated['new_client_name'],
-                'contact_name'  => $validated['contact_name'] ?? null,
-                'contact_email' => $validated['contact_email'] ?? null,
-                'contact_phone' => $validated['contact_phone'] ?? null,
-                'type'          => 'client',
-            ]);
-            $clientId = $newClient->id;
-            $clientName = $newClient->name;
-            $isNewClient = true;
-        } elseif ($clientId && !$clientName) {
-            $clientName = Client::find($clientId)?->name ?? '';
-        }
+            if (!$clientId && !empty($validated['new_client_name'])) {
+                $newClient = Client::create([
+                    'name'          => $validated['new_client_name'],
+                    'contact_name'  => $validated['contact_name'] ?? null,
+                    'contact_email' => $validated['contact_email'] ?? null,
+                    'contact_phone' => $validated['contact_phone'] ?? null,
+                    'type'          => 'client',
+                ]);
+                $clientId = $newClient->id;
+                $clientName = $newClient->name;
+                $isNewClient = true;
+            } elseif ($clientId && !$clientName) {
+                $clientName = Client::find($clientId)?->name ?? '';
+            }
 
-        unset($validated['client_id'], $validated['new_client_name']);
+            unset($validated['client_id'], $validated['new_client_name']);
 
-        $project = Project::create(array_merge($validated, [
-            'client'     => $clientName,
-            'client_id'  => $clientId,
-            'manager_id' => $request->user()->id,
-            'progress'   => 0,
-            'spent'      => 0,
-        ]));
+            $project = Project::create(array_merge($validated, [
+                'client'     => $clientName,
+                'client_id'  => $clientId,
+                'manager_id' => $request->user()->id,
+                'progress'   => 0,
+                'spent'      => 0,
+            ]));
+
+            return [$project, $isNewClient];
+        });
 
         $message = 'Project created successfully.';
         if ($isNewClient) {
@@ -174,7 +180,7 @@ class ProjectController extends Controller
             'contact_phone' => 'nullable|string|max:50',
             'status'        => 'required|in:active,completed,on-hold',
             'start_date'    => 'nullable|date',
-            'end_date'      => 'nullable|date',
+            'end_date'      => 'nullable|date|after_or_equal:start_date',
             'budget'        => 'nullable|numeric|min:0',
             'currency'      => 'nullable|string|max:10',
             'spent'         => 'nullable|numeric|min:0',
@@ -207,7 +213,7 @@ class ProjectController extends Controller
             return back()->with('success', 'Client portal disabled.');
         }
 
-        $code = substr(md5($project->id . now()->timestamp . rand()), 0, 12);
+        $code = Str::random(20);
         $project->update(['portal_enabled' => true, 'portal_code' => $code]);
         return back()->with('success', 'Client portal enabled.');
     }

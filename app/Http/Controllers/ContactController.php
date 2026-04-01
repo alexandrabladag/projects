@@ -10,6 +10,8 @@ class ContactController extends Controller
 {
     public function store(Request $request, Client $client)
     {
+        $this->authorize('update', $client);
+
         $validated = $request->validate([
             'name'       => 'required|string|max:255',
             'role'       => 'nullable|string|max:255',
@@ -30,6 +32,8 @@ class ContactController extends Controller
 
     public function update(Request $request, Contact $contact)
     {
+        $this->authorize('update', $contact->client);
+
         $validated = $request->validate([
             'name'       => 'required|string|max:255',
             'role'       => 'nullable|string|max:255',
@@ -50,6 +54,8 @@ class ContactController extends Controller
 
     public function destroy(Contact $contact)
     {
+        $this->authorize('update', $contact->client);
+
         $contact->delete();
 
         return back()->with('success', 'Contact removed.');

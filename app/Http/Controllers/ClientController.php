@@ -24,6 +24,8 @@ class ClientController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', Client::class);
+
         $validated = $request->validate([
             'type'           => 'required|in:client,vendor,contractor',
             'name'           => 'required|string|max:255',
@@ -67,6 +69,8 @@ class ClientController extends Controller
 
     public function update(Request $request, Client $client)
     {
+        $this->authorize('update', $client);
+
         $validated = $request->validate([
             'type'           => 'required|in:client,vendor,contractor',
             'name'           => 'required|string|max:255',
@@ -93,6 +97,8 @@ class ClientController extends Controller
 
     public function destroy(Client $client)
     {
+        $this->authorize('delete', $client);
+
         $client->delete();
 
         return redirect()->route('clients.index')
