@@ -70,7 +70,12 @@ class ProjectPageController extends Controller
         $isFullHtml = str_contains($page->content ?? '', '<!DOCTYPE') || str_contains($page->content ?? '', '<html');
 
         if ($isFullHtml) {
-            return response($page->content, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+            // Inject noindex to block SEO
+            $html = str_replace('<head>', '<head><meta name="robots" content="noindex, nofollow">', $page->content);
+            return response($html, 200, [
+                'Content-Type' => 'text/html; charset=UTF-8',
+                'X-Robots-Tag' => 'noindex, nofollow',
+            ]);
         }
 
         // Simple content — render with Inertia wrapper
