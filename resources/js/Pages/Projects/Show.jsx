@@ -5,7 +5,7 @@ import currencies from '@/Utils/currencies';
 import {
     Pencil, Eye, Plus, Save, X, Check, Send, ChevronUp, ChevronDown,
     FileText, Receipt, CalendarDays, Calendar, FolderOpen, Clock, ListChecks,
-    Trash2, Download, Upload, CheckCircle, XCircle, AlertCircle, Lock,
+    Trash2, Download, Upload, CheckCircle, XCircle, AlertCircle, Lock, Code,
 } from 'lucide-react';
 
 const RichEditor = lazy(() => import('@/Components/RichEditor'));
@@ -1239,74 +1239,91 @@ function DocumentsTab({ project, canManage }) {
 function TimelineTab({ project }) {
     const today = new Date();
     const start = new Date(project.start_date);
-    const end   = new Date(project.end_date);
+    const end = new Date(project.end_date);
+    const daysTotal = Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24)));
+    const daysElapsed = Math.round((today - start) / (1000 * 60 * 60 * 24));
     const daysLeft = Math.max(0, Math.round((end - today) / (1000 * 60 * 60 * 24)));
+    const isCompleted = project.status === 'completed';
+    const isOverdue = !isCompleted && today > end;
 
-    const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); return r.toISOString().slice(0, 10); };
-
-    const phases = [
-        { name: 'Discovery & Brief',      from: project.start_date, to: addDays(project.start_date, 14),  desc: 'Initial client meetings, requirements gathering, and project brief approval.', done: project.progress >= 10 },
-        { name: 'Strategy & Planning',     from: addDays(project.start_date, 14), to: addDays(project.start_date, 45), desc: 'Strategic framework, timeline confirmation, resource allocation.', done: project.progress >= 30 },
-        { name: 'Design & Development',    from: addDays(project.start_date, 45), to: addDays(project.start_date, 120), desc: 'Core creative or development work. Regular client check-ins and milestone reviews.', active: project.progress < 75, done: project.progress >= 75 },
-        { name: 'Client Review & Revisions', from: addDays(project.start_date, 120), to: addDays(project.start_date, 155), desc: 'Structured feedback rounds, revisions, and formal approval.', active: project.progress >= 75 && project.progress < 90, done: project.progress >= 90 },
-        { name: 'Final Delivery',          from: addDays(project.start_date, 155), to: project.end_date,  desc: 'Final file delivery, handover documentation, and project closure.', done: project.progress === 100 },
-    ];
+    // Use actual PROJECT_PHASES and match to project.phase
+    const phaseNames = PROJECT_PHASES.map(p => p.name);
+    const currentIdx = phaseNames.findIndex(p => (project.phase ?? '').toLowerCase().includes(p.toLowerCase()) || p.toLowerCase().includes((project.phase ?? '').toLowerCase()));
 
     return (
-        <div className="grid grid-cols-2 gap-5">
-            <div>
-                <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
-                    <div className="px-5 py-4 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Phase Timeline</span></div>
-                    <div className="px-5 py-5">
-                        {phases.map((ph, i) => (
-                            <div key={i} className="flex gap-4 pb-6 last:pb-0">
-                                <div className="flex flex-col items-center w-7 flex-shrink-0">
-                                    <div className={`w-3 h-3 rounded-full border-2 flex-shrink-0 mt-0.5 ${ph.done ? 'border-green-400 bg-green-400' : ph.active ? 'border-[#4f6df5] bg-[#4f6df5]' : 'border-[#d1d5db] bg-white'}`} />
-                                    {i < phases.length - 1 && <div className="w-px flex-1 bg-[#e5e7eb] mt-1" />}
-                                </div>
-                                <div className="flex-1 pt-0">
-                                    <div className="text-[10.5px] text-[#6b7280] mb-1">{fmtDate(ph.from)} → {fmtDate(ph.to)}</div>
-                                    <div className="text-[13.5px] font-medium text-black mb-1">
-                                        {ph.name} {ph.done ? <span className="text-green-400 text-[11px]">✓</span> : ph.active ? <span className="text-[#4f6df5] text-[11px]">← Current</span> : ''}
-                                    </div>
-                                    <div className="text-[12px] text-[#6b7280] leading-relaxed">{ph.desc}</div>
-                                </div>
-                            </div>
-                        ))}
+        <div className="space-y-5">
+            {/* Progress overview card */}
+            <div className="bg-white border border-[#e5e7eb] rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <div className="text-[18px] font-bold text-black">{project.progress}% Complete</div>
+                        <div className="text-[13px] text-[#6b7280]">{isCompleted ? 'Project completed' : isOverdue ? 'Project overdue' : `${daysLeft} days remaining`}</div>
                     </div>
+                    <Badge status={isOverdue ? 'overdue' : project.status} />
+                </div>
+                <div className="h-3 bg-[#f0f0f0] rounded-full overflow-hidden mb-6">
+                    <div className={`h-full rounded-full progress-fill bg-gradient-to-r ${isCompleted ? 'from-emerald-500 to-emerald-400' : isOverdue ? 'from-red-500 to-red-400' : 'from-[#4f6df5] to-[#6380f7]'}`} style={{ width: `${project.progress}%` }} />
+                </div>
+
+                {/* Phase stepper */}
+                <div className="flex items-start">
+                    {PROJECT_PHASES.map((ph, i) => {
+                        const done = isCompleted || i < currentIdx;
+                        const active = !isCompleted && i === currentIdx;
+                        return (
+                            <div key={ph.name} className="flex-1 flex flex-col items-center">
+                                <div className="flex items-center w-full">
+                                    {i > 0 && <div className={`flex-1 h-0.5 ${done || active ? 'bg-emerald-300' : 'bg-[#e5e7eb]'}`} />}
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-bold ${
+                                        done ? 'bg-emerald-500 text-white' : active ? 'bg-[#4f6df5] text-white ring-4 ring-[#4f6df5]/20' : 'bg-[#f0f0f0] text-[#9ca3af]'
+                                    }`}>
+                                        {done ? <CheckCircle size={14} /> : i + 1}
+                                    </div>
+                                    {i < PROJECT_PHASES.length - 1 && <div className={`flex-1 h-0.5 ${done ? 'bg-emerald-300' : 'bg-[#e5e7eb]'}`} />}
+                                </div>
+                                <span className={`text-[9px] text-center leading-tight mt-2 px-1 ${active ? 'text-[#4f6df5] font-bold' : done ? 'text-emerald-600' : 'text-[#9ca3af]'}`}>{ph.name}</span>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
-            <div className="space-y-4">
+
+            <div className="grid grid-cols-2 gap-5">
+                {/* Key Dates */}
                 <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                     <div className="px-5 py-4 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Key Dates</span></div>
                     <div className="px-5 py-2">
                         {[
-                            { l: 'Project Start', v: fmtDate(project.start_date), c: 'text-green-400' },
-                            { l: 'Planned End', v: fmtDate(project.end_date), c: end < today ? 'text-red-400' : 'text-black' },
-                            { l: 'Days Remaining', v: `${daysLeft} days`, c: daysLeft < 14 ? 'text-orange-400' : 'text-black' },
-                            { l: 'Current Phase', v: project.phase, c: 'text-[#4f6df5]' },
-                        ].map(({ l, v, c }) => (
-                            <div key={l} className="flex justify-between py-3 border-b border-[#e5e7eb] last:border-b-0 text-[13px]">
-                                <span className="text-[#6b7280]">{l}</span>
-                                <span className={`font-medium ${c}`}>{v}</span>
+                            { l: 'Start Date', v: fmtDate(project.start_date), icon: <Calendar size={13} className="text-emerald-500" /> },
+                            { l: 'End Date', v: fmtDate(project.end_date), icon: <Calendar size={13} className={isOverdue ? 'text-red-500' : 'text-[#4f6df5]'} /> },
+                            { l: 'Days Elapsed', v: `${Math.max(0, daysElapsed)} of ${daysTotal} days`, icon: <Clock size={13} className="text-[#6b7280]" /> },
+                            { l: 'Current Phase', v: project.phase, icon: <CheckCircle size={13} className="text-[#4f6df5]" /> },
+                        ].map(({ l, v, icon }) => (
+                            <div key={l} className="flex items-center gap-3 py-3 border-b border-[#f0f0f0] last:border-b-0 text-[13px]">
+                                {icon}
+                                <span className="text-[#6b7280] flex-1">{l}</span>
+                                <span className="font-medium text-black">{v}</span>
                             </div>
                         ))}
                     </div>
                 </div>
+
+                {/* Phase List */}
                 <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
-                    <div className="px-5 py-4 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Phase Progress</span></div>
-                    <div className="px-5 py-4 space-y-3">
-                        {phases.map((ph, i) => {
-                            const pct = ph.done ? 100 : ph.active ? Math.min(99, project.progress) : 0;
+                    <div className="px-5 py-4 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Phase Checklist</span></div>
+                    <div className="px-5 py-3">
+                        {PROJECT_PHASES.map((ph, i) => {
+                            const done = isCompleted || i < currentIdx;
+                            const active = !isCompleted && i === currentIdx;
                             return (
-                                <div key={i}>
-                                    <div className="flex justify-between text-[12px] text-[#6b7280] mb-1.5">
-                                        <span className="truncate pr-2">{ph.name}</span>
-                                        <span className={ph.done ? 'text-green-400' : ph.active ? 'text-[#4f6df5]' : 'text-[#d1d5db]'}>{ph.done ? 'Complete' : ph.active ? 'In Progress' : 'Upcoming'}</span>
+                                <div key={ph.name} className={`flex items-center gap-3 py-2.5 border-b border-[#f0f0f0] last:border-b-0 ${active ? 'bg-indigo-50 -mx-5 px-5 rounded-lg' : ''}`}>
+                                    <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${
+                                        done ? 'bg-emerald-500 text-white' : active ? 'bg-[#4f6df5] text-white' : 'bg-[#f0f0f0] text-[#d1d5db]'
+                                    }`}>
+                                        {done ? <Check size={12} /> : active ? <div className="w-2 h-2 rounded-sm bg-white" /> : <span className="text-[10px]">{i + 1}</span>}
                                     </div>
-                                    <div className="h-1.5 bg-[#d1d5db] rounded-full overflow-hidden">
-                                        <div className="h-full rounded-full progress-fill" style={{ width: `${pct}%`, background: ph.done ? '#3ecf8e' : ph.active ? 'linear-gradient(90deg,#4f6df5,#6380f7)' : '#d1d5db' }} />
-                                    </div>
+                                    <span className={`text-[13px] flex-1 ${done ? 'text-[#9ca3af] line-through' : active ? 'text-[#4f6df5] font-semibold' : 'text-[#4b5563]'}`}>{ph.name}</span>
+                                    <span className="text-[11px] text-[#9ca3af]">{ph.progress}%</span>
                                 </div>
                             );
                         })}
@@ -1690,61 +1707,69 @@ function PagesTab({ project, canManage }) {
 
             {/* Page list */}
             {!showEditor && pages.length > 0 && (
-                <div className="space-y-3">
-                    {pages.map(page => (
-                        <div key={page.id} className="bg-white border border-[#e5e7eb] rounded-xl p-5 hover:shadow-sm transition-all">
-                            <div className="flex items-start justify-between mb-2">
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-[15px] font-bold text-black">{page.title}</div>
-                                    <div className="text-[11px] text-[#9ca3af] mt-0.5">
-                                        {page.creator?.name && <span>By {page.creator.name}</span>}
-                                        {page.updated_at && <span> · Updated {new Date(page.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                <div className="grid grid-cols-2 gap-4">
+                    {pages.map(page => {
+                        const isHtml = (page.content ?? '').includes('<!DOCTYPE') || (page.content ?? '').includes('<html');
+                        return (
+                            <div key={page.id} className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden hover:shadow-md hover:border-[#4f6df5]/30 transition-all group">
+                                {/* Preview bar */}
+                                <div className={`h-1.5 ${isHtml ? 'bg-gradient-to-r from-violet-500 to-indigo-500' : 'bg-gradient-to-r from-[#4f6df5] to-[#6380f7]'}`} />
+
+                                <div className="p-5">
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isHtml ? 'bg-violet-50 text-violet-500' : 'bg-indigo-50 text-indigo-500'}`}>
+                                            {isHtml ? <Code size={18} /> : <FileText size={18} />}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-[14px] font-bold text-black group-hover:text-[#4f6df5] transition-colors truncate">{page.title}</div>
+                                            <div className="text-[11px] text-[#9ca3af] mt-0.5 flex items-center gap-1.5">
+                                                {page.creator?.name && <span>{page.creator.name}</span>}
+                                                {page.updated_at && <span>· {new Date(page.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                                                {isHtml && <span className="text-[9px] px-1.5 py-0.5 bg-violet-50 text-violet-500 rounded font-medium">HTML</span>}
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex items-center gap-1.5">
+
+                                    {/* Content preview */}
+                                    {page.content && !isHtml && (
+                                        <div className="text-[12px] text-[#6b7280] line-clamp-2 leading-relaxed mb-3" dangerouslySetInnerHTML={{ __html: page.content.replace(/<[^>]*>/g, ' ').slice(0, 150) }} />
+                                    )}
+                                    {isHtml && (
+                                        <div className="text-[12px] text-[#6b7280] mb-3 bg-[#fafbfc] rounded-lg px-3 py-2 border border-[#f0f0f0] font-mono line-clamp-2">Full HTML document with styles</div>
+                                    )}
+
+                                    {/* Share link */}
                                     {page.is_shared && page.share_code && (
-                                        <Btn ghost sm onClick={() => copyLink(page)}>
-                                            {copied === page.id ? <><Check size={13} /> Copied</> : 'Copy Link'}
-                                        </Btn>
-                                    )}
-                                    {canManage && (
-                                        <>
-                                            <Btn ghost sm onClick={() => toggleShare(page)}>
-                                                {page.is_shared ? 'Unshare' : 'Share'}
-                                            </Btn>
-                                            <Btn ghost sm onClick={() => openEdit(page)}><Pencil size={13} /></Btn>
-                                            <button onClick={() => deletePage(page)} className="text-[#9ca3af] hover:text-red-500 transition-colors p-1.5"><Trash2 size={14} /></button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                            {page.content && (
-                                <div className="text-[12px] text-[#6b7280] line-clamp-2 leading-relaxed" dangerouslySetInnerHTML={{ __html: page.content.replace(/<[^>]*>/g, ' ').slice(0, 200) }} />
-                            )}
-                            {page.is_shared && page.share_code && (
-                                <div className="mt-3 flex items-center gap-3 flex-wrap">
-                                    <div className="text-[11px] text-[#4f6df5] bg-indigo-50 rounded-lg px-3 py-1.5">
-                                        {window.location.origin}/page/{page.share_code}
-                                    </div>
-                                    {canManage && (
-                                        <div className="flex items-center gap-1.5">
-                                            <Lock size={12} className="text-[#9ca3af]" />
-                                            <input
-                                                type="text"
-                                                defaultValue={page.password ?? ''}
-                                                placeholder="No password"
-                                                onBlur={e => {
-                                                    const val = e.target.value.trim();
-                                                    if (val !== (page.password ?? '')) {
-                                                        router.put(route('projects.pages.update', [project.id, page.id]), { title: page.title, content: page.content, password: val || null });
-                                                    }
-                                                }}
-                                                className="bg-[#f3f4f6] border border-[#d1d5db] rounded-md px-2 py-1 text-[11px] text-black w-28 outline-none focus:border-[#4f6df5]"
-                                            />
+                                        <div className="flex items-center gap-2 mb-3 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
+                                            <div className="text-[11px] text-[#4f6df5] font-mono flex-1 truncate">/page/{page.share_code}</div>
+                                            <button onClick={() => copyLink(page)} className="text-[11px] text-[#4f6df5] font-medium flex-shrink-0">
+                                                {copied === page.id ? '✓ Copied' : 'Copy'}
+                                            </button>
                                         </div>
                                     )}
+
+                                    {/* Actions */}
+                                    <div className="flex items-center gap-1.5 pt-3 border-t border-[#f0f0f0]">
+                                        {page.is_shared && page.share_code && (
+                                            <a href={`/page/${page.share_code}`} target="_blank" className="inline-flex items-center gap-1 text-[12px] text-[#4f6df5] font-medium hover:text-[#6380f7]">
+                                                <Eye size={13} /> View
+                                            </a>
+                                        )}
+                                        <div className="flex-1" />
+                                        {canManage && (
+                                            <>
+                                                <Btn ghost sm onClick={() => toggleShare(page)}>
+                                                    {page.is_shared ? <><Lock size={12} /> Shared</> : 'Share'}
+                                                </Btn>
+                                                {!isHtml && <Btn ghost sm onClick={() => openEdit(page)}><Pencil size={13} /></Btn>}
+                                                <button onClick={() => deletePage(page)} className="text-[#9ca3af] hover:text-red-500 transition-colors p-1.5"><Trash2 size={14} /></button>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
-                            )}
+                            </div>
+                        );
+                    })}
                         </div>
                     ))}
                 </div>
