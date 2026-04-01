@@ -314,7 +314,7 @@ function OverviewTab({ project, canManage, fmt }) {
                             <FG label="Contact Email"><input className={inputCls} type="email" value={editForm.data.contact_email} onChange={e => editForm.setData('contact_email', e.target.value)} /></FG>
                             <FG label="Contact Phone"><input className={inputCls} value={editForm.data.contact_phone} onChange={e => editForm.setData('contact_phone', e.target.value)} /></FG>
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 gap-3">
                             <FG label="Status">
                                 <select className={inputCls} value={editForm.data.status} onChange={e => editForm.setData('status', e.target.value)}>
                                     <option value="active">Active</option>
@@ -327,15 +327,20 @@ function OverviewTab({ project, canManage, fmt }) {
                                     {PROJECT_PHASES.map(ph => <option key={ph.name} value={ph.name}>{ph.name}</option>)}
                                 </select>
                             </FG>
-                            <FG label="Budget" error={editForm.errors.budget}>
-                                <div className="flex gap-2">
-                                    <select value={editForm.data.currency} onChange={e => editForm.setData('currency', e.target.value)} className={`${inputCls} w-[110px] flex-shrink-0 text-[12px]`}>
-                                        {currencies.map(c => <option key={c.code} value={c.code}>{c.code} ({c.symbol})</option>)}
-                                    </select>
-                                    <input className={inputCls} type="number" value={editForm.data.budget} onChange={e => editForm.setData('budget', e.target.value)} />
-                                </div>
-                            </FG>
                         </div>
+                        <FG label="Budget" error={editForm.errors.budget}>
+                            <div className="flex gap-2">
+                                <select value={editForm.data.currency} onChange={e => editForm.setData('currency', e.target.value)} className={`${inputCls} w-[180px] flex-shrink-0`}>
+                                    {currencies.map(c => <option key={c.code} value={c.code}>{c.country} — {c.name} ({c.symbol})</option>)}
+                                </select>
+                                <div className="relative flex-1">
+                                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-[#6b7280]">
+                                        {(currencies.find(c => c.code === editForm.data.currency) ?? currencies[0]).symbol}
+                                    </span>
+                                    <input className={`${inputCls} pl-8 text-[16px] font-semibold`} type="number" value={editForm.data.budget} onChange={e => editForm.setData('budget', e.target.value)} placeholder="0.00" />
+                                </div>
+                            </div>
+                        </FG>
                         <div className="grid grid-cols-2 gap-3">
                             <FG label="Start Date"><input className={inputCls} type="date" value={editForm.data.start_date} onChange={e => editForm.setData('start_date', e.target.value)} /></FG>
                             <FG label="End Date"><input className={inputCls} type="date" value={editForm.data.end_date} onChange={e => editForm.setData('end_date', e.target.value)} /></FG>
