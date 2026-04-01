@@ -1775,7 +1775,14 @@ function PagesTab({ project, canManage }) {
 
 // ── MAIN SHOW PAGE ─────────────────────────────────────────────────────────────
 export default function Show({ project, canManage, nextInvoiceNumber, nextProposalNumber }) {
-    const [tab, setTab] = useState('overview');
+    // Sync tab with URL hash
+    const validTabs = ['overview','proposal','invoices','meetings','documents','timeline','tasks','bills','pages'];
+    const hashTab = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '';
+    const [tab, setTabState] = useState(validTabs.includes(hashTab) ? hashTab : 'overview');
+    const setTab = (t) => {
+        setTabState(t);
+        window.history.replaceState(null, '', `#${t}`);
+    };
     const projectCur = getCurrency(project.currency ?? 'USD');
     const fmt = (n) => formatMoney(n, projectCur.code);
 
