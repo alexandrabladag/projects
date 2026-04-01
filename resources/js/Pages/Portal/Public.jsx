@@ -218,7 +218,7 @@ export default function Public({ project, company, code }) {
                                                                     ? <div className="w-4 h-4 rounded-full border-2 border-[#4f6df5] flex items-center justify-center flex-shrink-0"><div className="w-2 h-2 rounded-full bg-[#4f6df5]" /></div>
                                                                     : <Circle size={16} className="text-[#d1d5db] flex-shrink-0" />
                                                             }
-                                                            <span className={`text-[13px] flex-1 ${t.status === 'completed' ? 'text-[#9ca3af] line-through' : 'text-black'}`}>{t.title}</span>
+                                                            <span className={`text-[13px] flex-1 ${t.status === 'completed' ? 'text-emerald-600' : 'text-black'}`}>{t.title}</span>
                                                             {t.due_date && <span className="text-[11px] text-[#9ca3af]">{new Date(t.due_date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>}
                                                             <Badge status={t.status} label={t.status==='completed'?'Done':t.status==='in-progress'?'In Progress':t.status==='review'?'Review':'To Do'} />
                                                         </div>
