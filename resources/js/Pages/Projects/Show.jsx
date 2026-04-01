@@ -1770,8 +1770,6 @@ function PagesTab({ project, canManage }) {
                             </div>
                         );
                     })}
-                        </div>
-                    ))}
                 </div>
             )}
 
