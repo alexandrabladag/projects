@@ -133,48 +133,82 @@ export default function Public({ project, company, code }) {
                         </div>
                     )}
 
-                    {/* Tasks Progress by Phase */}
+                    {/* Work Progress — Phases & Tasks */}
                     {tasks.length > 0 && (() => {
-                        // Group tasks by category
+                        const phaseInfo = {
+                            'Phase 1 — Architecture & Planning': { duration: '2 weeks', note: 'Approval checkpoint before Phase 2', scope: ['Sitemap redesign & IA restructuring','Taxonomy modeling (CPTs, categories, tags, series)','URL restructuring strategy','301 redirect mapping plan','Wireframes: Top Page, Archive, Detail, About','Cleanup plan for unnecessary content'] },
+                            'Phase 2 — Design & Development': { duration: '5–6 weeks', note: 'Approval checkpoint before Phase 3', scope: ['Header & branding','Mega menu (hover-triggered, visual)','Search + Recommended Keywords','Carousel (image/WebM, CMS-controlled)','Latest Updates section','Featured Industrial Parks section','Link Block System (3 columns)','Archive + detail templates (all CPTs)','ACF-based CMS flags & custom fields','Footer, policy pages, CSS reference page'] },
+                            'Phase 3 — Migration & Redirects': { duration: '1–2 weeks', note: 'Only approved content migrated', scope: ['Content inventory review','Migration into CPT/taxonomy structure','Country taxonomy assignment','301 redirect implementation','Redirect integrity testing'] },
+                            'Phase 4 — QA & Launch': { duration: '1–2 weeks', note: 'Target: June 2026', scope: ['Cross-browser & mobile testing','CMS validation (flags, ACF, carousel)','Redirect integrity verification','Deployment to client server','System structure documentation'] },
+                        };
                         const byCategory = {};
-                        tasks.forEach(t => {
-                            const cat = t.category || 'General';
-                            if (!byCategory[cat]) byCategory[cat] = [];
-                            byCategory[cat].push(t);
-                        });
+                        tasks.forEach(t => { const cat = t.category || 'General'; if (!byCategory[cat]) byCategory[cat] = []; byCategory[cat].push(t); });
+                        const phaseColors = ['from-[#4f6df5] to-[#6380f7]','from-violet-500 to-indigo-500','from-amber-500 to-orange-400','from-emerald-500 to-teal-400'];
 
                         return (
                             <div className="mb-8">
-                                {/* Overall summary */}
-                                <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 mb-4 shadow-sm">
+                                <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 mb-6 shadow-sm">
                                     <div className="flex items-center justify-between mb-3">
-                                        <h2 className="text-[16px] font-bold text-black">Project Tasks</h2>
-                                        <span className="text-[13px] text-[#6b7280]">{completedTasks} of {totalTasks} completed</span>
+                                        <h2 className="text-[18px] font-bold text-black">Work Progress</h2>
+                                        <div className="text-right">
+                                            <span className="text-[22px] font-extrabold text-[#4f6df5]">{totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0}%</span>
+                                            <div className="text-[11px] text-[#9ca3af]">{completedTasks} of {totalTasks} tasks</div>
+                                        </div>
                                     </div>
                                     <div className="h-3 bg-[#f0f0f0] rounded-full overflow-hidden">
                                         <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 progress-fill" style={{ width: `${totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0}%` }} />
                                     </div>
                                 </div>
 
-                                {/* Tasks grouped by phase */}
-                                <div className="space-y-4">
-                                    {Object.entries(byCategory).map(([cat, catTasks]) => {
+                                {/* Phases */}
+                                <div className="space-y-5">
+                                    {Object.entries(byCategory).map(([cat, catTasks], idx) => {
                                         const done = catTasks.filter(t => t.status === 'completed').length;
+                                        const inProgress = catTasks.filter(t => t.status === 'in-progress').length;
                                         const pct = Math.round((done / catTasks.length) * 100);
+                                        const info = phaseInfo[cat] ?? {};
+                                        const color = phaseColors[idx % phaseColors.length];
+                                        const isAllDone = pct === 100;
+                                        const isActive = inProgress > 0 || (done > 0 && !isAllDone);
+                                        const dates = catTasks.filter(t => t.due_date).map(t => new Date(t.due_date));
+                                        const earliest = dates.length ? new Date(Math.min(...dates)) : null;
+                                        const latest = dates.length ? new Date(Math.max(...dates)) : null;
+                                        const dateRange = earliest && latest
+                                            ? `${earliest.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${latest.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`
+                                            : '';
+
                                         return (
                                             <div key={cat} className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden shadow-sm">
-                                                {/* Phase header */}
-                                                <div className="px-6 py-4 border-b border-[#f0f0f0]">
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <span className="text-[14px] font-bold text-black">{cat}</span>
-                                                        <span className="text-[12px] text-[#6b7280]">{done}/{catTasks.length} done</span>
+                                                <div className={`bg-gradient-to-r ${isAllDone ? 'from-emerald-500 to-emerald-400' : color} px-6 py-5 text-white`}>
+                                                    <div className="flex items-start justify-between">
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Phase {idx+1}</span>
+                                                                {info.duration && <span className="text-[10px] opacity-60">· {info.duration}</span>}
+                                                                {isAllDone && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-medium">Complete</span>}
+                                                                {isActive && !isAllDone && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-medium">In Progress</span>}
+                                                            </div>
+                                                            <div className="text-[16px] font-bold">{cat.replace(/^Phase \d+ — /,'')}</div>
+                                                            {dateRange && <div className="text-[12px] opacity-70 mt-0.5">{dateRange}</div>}
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <div className="text-[24px] font-extrabold">{pct}%</div>
+                                                            <div className="text-[11px] opacity-70">{done}/{catTasks.length}</div>
+                                                        </div>
                                                     </div>
-                                                    <div className="h-1.5 bg-[#f0f0f0] rounded-full overflow-hidden">
-                                                        <div className={`h-full rounded-full progress-fill ${pct === 100 ? 'bg-emerald-400' : 'bg-[#4f6df5]'}`} style={{ width: `${pct}%` }} />
+                                                    <div className="h-1.5 bg-white/20 rounded-full overflow-hidden mt-3">
+                                                        <div className="h-full rounded-full bg-white/80 progress-fill" style={{width:`${pct}%`}} />
                                                     </div>
                                                 </div>
-
-                                                {/* Task list */}
+                                                {info.note && <div className="px-6 py-2.5 bg-[#fafbfc] border-b border-[#f0f0f0] text-[12px] text-[#6b7280] italic">{info.note}</div>}
+                                                {info.scope && (
+                                                    <div className="px-6 py-3 border-b border-[#f0f0f0]">
+                                                        <div className="text-[10px] uppercase tracking-wider text-[#9ca3af] font-medium mb-2">Scope</div>
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {info.scope.map((s,i) => <span key={i} className="text-[11px] px-2 py-0.5 bg-[#f3f4f6] border border-[#e5e7eb] rounded-full text-[#4b5563]">{s}</span>)}
+                                                        </div>
+                                                    </div>
+                                                )}
                                                 <div className="px-6 py-2">
                                                     {catTasks.map(t => (
                                                         <div key={t.id} className="flex items-center gap-3 py-2.5 border-b border-[#f8f8f8] last:border-b-0">
@@ -185,8 +219,8 @@ export default function Public({ project, company, code }) {
                                                                     : <Circle size={16} className="text-[#d1d5db] flex-shrink-0" />
                                                             }
                                                             <span className={`text-[13px] flex-1 ${t.status === 'completed' ? 'text-[#9ca3af] line-through' : 'text-black'}`}>{t.title}</span>
-                                                            {t.due_date && <span className="text-[11px] text-[#9ca3af]">{new Date(t.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
-                                                            <Badge status={t.status} label={t.status === 'completed' ? 'Done' : t.status === 'in-progress' ? 'In Progress' : t.status === 'review' ? 'Review' : 'To Do'} />
+                                                            {t.due_date && <span className="text-[11px] text-[#9ca3af]">{new Date(t.due_date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>}
+                                                            <Badge status={t.status} label={t.status==='completed'?'Done':t.status==='in-progress'?'In Progress':t.status==='review'?'Review':'To Do'} />
                                                         </div>
                                                     ))}
                                                 </div>
