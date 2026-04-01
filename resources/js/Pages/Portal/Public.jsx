@@ -56,7 +56,14 @@ export default function Public({ project, company, code }) {
                     {/* Hero */}
                     <div className="text-center mb-10">
                         <Badge status={project.status} />
-                        <h2 className="text-[16px] font-semibold text-[#6b7280] mt-3">{project.client}</h2>
+                        <h2 className="text-[16px] font-semibold text-[#6b7280] mt-3">
+                            {project.client}
+                            {project.client_record?.website && (
+                                <a href={project.client_record.website.startsWith('http') ? project.client_record.website : `https://${project.client_record.website}`} target="_blank" className="text-[13px] font-normal text-[#4f6df5] hover:text-[#6380f7] ml-2">
+                                    {project.client_record.website.replace(/^https?:\/\//, '')}
+                                </a>
+                            )}
+                        </h2>
                         <h1 className="text-[32px] font-extrabold text-black mt-1 leading-tight">{project.name}</h1>
                         {project.description && (
                             <p className="text-[15px] text-[#6b7280] mt-3 max-w-2xl mx-auto leading-relaxed">{project.description}</p>

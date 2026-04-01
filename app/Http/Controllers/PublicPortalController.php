@@ -14,7 +14,7 @@ class PublicPortalController extends Controller
             ->where('portal_enabled', true)
             ->firstOrFail();
 
-        $project->load(['proposals', 'invoices.items', 'meetings', 'tasks']);
+        $project->load(['proposals', 'invoices.items', 'meetings', 'tasks', 'clientRecord']);
 
         $projectData = array_merge($project->toArray(), [
             'total_billed' => $project->total_billed,
