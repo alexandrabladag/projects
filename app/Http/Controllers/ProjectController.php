@@ -67,6 +67,7 @@ class ProjectController extends Controller
             'currency'      => 'nullable|string|max:10',
             'tax_type'      => 'nullable|string|max:50',
             'tax_rate'      => 'nullable|numeric|min:0|max:100',
+            'lead_id'       => 'nullable|exists:team_members,id',
             'description'   => 'nullable|string',
             'tags'          => 'nullable|array',
             'tags.*'        => 'string|max:50',
@@ -124,6 +125,7 @@ class ProjectController extends Controller
 
         $project->load([
             'manager',
+            'lead',
             'clientUser:id,name,email',
             'proposals',
             'invoices.items',
@@ -194,6 +196,7 @@ class ProjectController extends Controller
             'currency'      => 'nullable|string|max:10',
             'tax_type'      => 'nullable|string|max:50',
             'tax_rate'      => 'nullable|numeric|min:0|max:100',
+            'lead_id'       => 'nullable|exists:team_members,id',
             'spent'         => 'nullable|numeric|min:0',
             'description'   => 'nullable|string',
             'tags'          => 'nullable|array',

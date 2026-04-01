@@ -48,6 +48,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/company', [CompanyController::class, 'edit'])->name('company.edit');
     Route::post('settings/company', [CompanyController::class, 'update'])->name('company.update');
 
+    Route::get('settings/team', [\App\Http\Controllers\TeamMemberController::class, 'index'])->name('team.index');
+    Route::post('settings/team', [\App\Http\Controllers\TeamMemberController::class, 'store'])->name('team.store');
+    Route::put('settings/team/{teamMember}', [\App\Http\Controllers\TeamMemberController::class, 'update'])->name('team.update');
+    Route::delete('settings/team/{teamMember}', [\App\Http\Controllers\TeamMemberController::class, 'destroy'])->name('team.destroy');
+
     Route::get('settings/transfer', [\App\Http\Controllers\WorkspaceTransferController::class, 'index'])->name('workspace.transfer');
     Route::get('settings/export', [\App\Http\Controllers\WorkspaceTransferController::class, 'export'])->name('workspace.export');
     Route::post('settings/import', [\App\Http\Controllers\WorkspaceTransferController::class, 'import'])->name('workspace.import');

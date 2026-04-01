@@ -36,6 +36,7 @@ class Project extends Model
         'portal_enabled',
         'launch_date',
         'manager_id',
+        'lead_id',
         'client_user_id',
     ];
 
@@ -60,6 +61,11 @@ class Project extends Model
     public function manager(): BelongsTo
     {
         return $this->belongsTo(User::class, 'manager_id');
+    }
+
+    public function lead(): BelongsTo
+    {
+        return $this->belongsTo(TeamMember::class, 'lead_id');
     }
 
     public function clientUser(): BelongsTo

@@ -87,6 +87,7 @@ function OverviewTab({ project, canManage, fmt }) {
         launch_date: project.launch_date ? project.launch_date.slice(0, 10) : '',
         budget: project.budget ?? '', currency: project.currency ?? 'USD',
         tax_type: project.tax_type ?? '', tax_rate: project.tax_rate ?? 0,
+        lead_id: project.lead_id ?? '',
         description: project.description ?? '',
         tags: (project.tags ?? []).join(', '), phase: project.phase ?? 'Discovery',
     });
@@ -109,7 +110,10 @@ function OverviewTab({ project, canManage, fmt }) {
                 <div className="flex justify-between items-start mb-4">
                     <div>
                         <h2 className="font-serif text-[28px] font-semibold text-black leading-snug">{project.name}</h2>
-                        <p className="text-[14px] text-[#6b7280] mt-1">{project.client} · {project.contact_name}</p>
+                        <p className="text-[14px] text-[#6b7280] mt-1">
+                            {project.client} · {project.contact_name}
+                            {project.lead && <span> · Lead: <span className="text-[#4f6df5] font-medium">{project.lead.name}</span></span>}
+                        </p>
                         <div className="flex gap-2 flex-wrap mt-2.5">
                             <Badge status={project.status} />
                             <span className="text-[11px] px-2 py-0.5 bg-indigo-50 border border-indigo-200 rounded-full text-indigo-600 font-medium">{project.phase}</span>
@@ -368,6 +372,14 @@ function OverviewTab({ project, canManage, fmt }) {
                                 </div>
                             </FG>
                         </div>
+                        <FG label="Project Lead (Your Company)">
+                            <select className={inputCls} value={editForm.data.lead_id} onChange={e => editForm.setData('lead_id', e.target.value)}>
+                                <option value="">No lead assigned</option>
+                                {(usePage().props.teamMembers ?? []).map(m => (
+                                    <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>
+                                ))}
+                            </select>
+                        </FG>
                         <FG label="Description">
                             <textarea className={`${inputCls} resize-y min-h-[120px]`} value={editForm.data.description} onChange={e => editForm.setData('description', e.target.value)} placeholder="Project overview and goals…" />
                         </FG>
@@ -1350,7 +1362,7 @@ function TimelineTab({ project }) {
                                     }`}>
                                         {done ? <Check size={12} /> : active ? <div className="w-2 h-2 rounded-sm bg-white" /> : <span className="text-[10px]">{i + 1}</span>}
                                     </div>
-                                    <span className={`text-[13px] flex-1 ${done ? 'text-[#9ca3af] line-through' : active ? 'text-[#4f6df5] font-semibold' : 'text-[#4b5563]'}`}>{ph.name}</span>
+                                    <span className={`text-[13px] flex-1 ${done ? 'text-emerald-600' : active ? 'text-[#4f6df5] font-semibold' : 'text-[#4b5563]'}`}>{ph.name}</span>
                                     <span className="text-[11px] text-[#9ca3af]">{ph.progress}%</span>
                                 </div>
                             );
@@ -1429,7 +1441,7 @@ function TasksTab({ project, canManage }) {
                                     {t.status === 'in-progress' && <div className="w-2 h-2 rounded-sm bg-indigo-400" />}
                                 </button>
                                 <div className="flex-1 min-w-0">
-                                    <div className={`text-[13px] ${t.status === 'completed' ? 'line-through text-[#9ca3af]' : 'text-black font-medium'}`}>{t.title}</div>
+                                    <div className={`text-[13px] ${t.status === 'completed' ? 'text-emerald-600' : 'text-black font-medium'}`}>{t.title}</div>
                                     <div className="text-[11px] text-[#9ca3af] flex items-center gap-1.5">
                                         {t.assignee && <span>{t.assignee}</span>}
                                         {t.due_date && <><span>·</span><span className="flex items-center gap-0.5"><Calendar size={10} /> {fmtDate(t.due_date)}</span></>}

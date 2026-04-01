@@ -53,6 +53,11 @@ class HandleInertiaRequests extends Middleware
                 'location' => $request->url(),
             ],
 
+            // Team members for dropdowns
+            'teamMembers' => fn () => $user
+                ? \App\Models\TeamMember::where('is_active', true)->orderBy('name')->get(['id', 'name', 'role'])
+                : [],
+
             // Base currency from company settings
             'baseCurrency' => fn () => $user
                 ? (Company::first()?->base_currency ?? 'USD')
