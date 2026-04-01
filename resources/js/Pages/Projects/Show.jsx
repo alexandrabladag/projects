@@ -330,8 +330,8 @@ function OverviewTab({ project, canManage, fmt }) {
                         </div>
                         <FG label="Budget" error={editForm.errors.budget}>
                             <div className="flex gap-2">
-                                <select value={editForm.data.currency} onChange={e => editForm.setData('currency', e.target.value)} className={`${inputCls} w-[180px] flex-shrink-0`}>
-                                    {currencies.map(c => <option key={c.code} value={c.code}>{c.country} — {c.name} ({c.symbol})</option>)}
+                                <select value={editForm.data.currency} onChange={e => editForm.setData('currency', e.target.value)} className={`${inputCls} w-[220px] flex-shrink-0 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_0.75rem_center]`}>
+                                    {currencies.map(c => <option key={c.code} value={c.code}>{c.code} — {c.country} ({c.symbol})</option>)}
                                 </select>
                                 <div className="relative flex-1">
                                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-[#6b7280]">
