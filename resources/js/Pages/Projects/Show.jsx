@@ -1664,8 +1664,6 @@ function PagesTab({ project, canManage }) {
         setTimeout(() => setCopied(null), 2000);
     };
 
-    const RichEditor = lazy(() => import('@/Components/RichEditor'));
-
     return (
         <>
             <div className="flex justify-between items-center mb-5">
