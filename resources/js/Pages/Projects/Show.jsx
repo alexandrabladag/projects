@@ -129,15 +129,16 @@ function OverviewTab({ project, canManage, fmt }) {
                 </div>
 
                 {/* Quick Stats */}
-                <div className="grid grid-cols-4 border-t border-[#e5e7eb] pt-4 gap-0">
+                <div className={`grid ${project.launch_date ? 'grid-cols-5' : 'grid-cols-4'} border-t border-[#e5e7eb] pt-4 gap-0`}>
                     {[
                         { label: 'Progress', value: `${project.progress}%` },
                         { label: 'Budget', value: `${fmt(project.spent)} / ${fmt(project.budget)}` },
                         { label: 'Timeline', value: `${fmtDate(project.start_date)} – ${fmtDate(project.end_date)}` },
                         { label: 'Phase', value: project.phase },
-                    ].map((s, i) => (
-                        <div key={i} className={`text-center py-1 ${i < 3 ? 'border-r border-[#e5e7eb]' : ''}`}>
-                            <div className="text-[16px] font-medium text-black">{s.value}</div>
+                        ...(project.launch_date ? [{ label: '🚀 Launch', value: fmtDate(project.launch_date), highlight: true }] : []),
+                    ].map((s, i, arr) => (
+                        <div key={i} className={`text-center py-1 ${i < arr.length - 1 ? 'border-r border-[#e5e7eb]' : ''}`}>
+                            <div className={`text-[16px] font-medium ${s.highlight ? 'text-[#4f6df5] font-bold' : 'text-black'}`}>{s.value}</div>
                             <div className="text-[11px] text-[#6b7280] mt-1">{s.label}</div>
                         </div>
                     ))}
@@ -305,89 +306,129 @@ function OverviewTab({ project, canManage, fmt }) {
                 </Modal>
             )}
 
-            {/* Edit Project Modal */}
+            {/* Edit Project Modal — wide */}
             {showEditModal && (
-                <Modal title="Edit Project" subtitle={project.name} large onClose={() => setShowEditModal(false)} footer={
-                    <><Btn ghost onClick={() => setShowEditModal(false)}><X size={13} /> Cancel</Btn>
-                    <Btn primary onClick={saveEdit} disabled={editForm.processing}><Save size={13} /> Save Changes</Btn></>
-                }>
-                    <div className="space-y-4 pb-2">
-                        <div className="grid grid-cols-2 gap-3">
-                            <FG label="Project Name *" error={editForm.errors.name}><input className={inputCls} value={editForm.data.name} onChange={e => editForm.setData('name', e.target.value)} /></FG>
-                            <FG label="Client / Company" error={editForm.errors.client}><input className={inputCls} value={editForm.data.client} onChange={e => editForm.setData('client', e.target.value)} /></FG>
-                        </div>
-                        <div className="grid grid-cols-3 gap-3">
-                            <FG label="Contact Name"><input className={inputCls} value={editForm.data.contact_name} onChange={e => editForm.setData('contact_name', e.target.value)} /></FG>
-                            <FG label="Contact Email"><input className={inputCls} type="email" value={editForm.data.contact_email} onChange={e => editForm.setData('contact_email', e.target.value)} /></FG>
-                            <FG label="Contact Phone"><input className={inputCls} value={editForm.data.contact_phone} onChange={e => editForm.setData('contact_phone', e.target.value)} /></FG>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <FG label="Status">
-                                <select className={inputCls} value={editForm.data.status} onChange={e => editForm.setData('status', e.target.value)}>
-                                    <option value="active">Active</option>
-                                    <option value="on-hold">On Hold</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                            </FG>
-                            <FG label="Phase">
-                                <select className={inputCls} value={editForm.data.phase} onChange={e => editForm.setData('phase', e.target.value)}>
-                                    {PROJECT_PHASES.map(ph => <option key={ph.name} value={ph.name}>{ph.name}</option>)}
-                                </select>
-                            </FG>
-                        </div>
-                        <FG label="Budget" error={editForm.errors.budget}>
-                            <div className="flex gap-2">
-                                <select value={editForm.data.currency} onChange={e => editForm.setData('currency', e.target.value)} className={`${inputCls} w-[220px] flex-shrink-0 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_0.75rem_center]`}>
-                                    {currencies.map(c => <option key={c.code} value={c.code}>{c.code} — {c.country} ({c.symbol})</option>)}
-                                </select>
-                                <div className="relative flex-1">
-                                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-[#6b7280]">
-                                        {(currencies.find(c => c.code === editForm.data.currency) ?? currencies[0]).symbol}
-                                    </span>
-                                    <input className={`${inputCls} pl-8 text-[16px] font-semibold`} type="number" value={editForm.data.budget} onChange={e => editForm.setData('budget', e.target.value)} placeholder="0.00" />
-                                </div>
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-5" onClick={e => { if (e.target === e.currentTarget) setShowEditModal(false); }}>
+                    <div className="bg-white border border-[#d1d5db] rounded-2xl w-full max-w-[900px] flex flex-col max-h-[92vh]">
+                        <div className="flex justify-between items-start p-6 pb-4 flex-shrink-0">
+                            <div>
+                                <div className="text-[21px] font-bold text-black">Edit Project</div>
+                                <div className="text-[12px] text-[#6b7280] mt-1">{project.name}</div>
                             </div>
-                        </FG>
-                        <div className="grid grid-cols-3 gap-3">
-                            <FG label="Start Date"><input className={inputCls} type="date" value={editForm.data.start_date} onChange={e => editForm.setData('start_date', e.target.value)} /></FG>
-                            <FG label="End Date"><input className={inputCls} type="date" value={editForm.data.end_date} onChange={e => editForm.setData('end_date', e.target.value)} /></FG>
-                            <FG label="Launch Date"><input className={inputCls} type="date" value={editForm.data.launch_date} onChange={e => editForm.setData('launch_date', e.target.value)} /></FG>
+                            <button onClick={() => setShowEditModal(false)} className="text-[#6b7280] hover:text-black text-[22px] leading-none transition-colors">×</button>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <FG label="Tax Type">
-                                <select className={inputCls} value={editForm.data.tax_type} onChange={e => editForm.setData('tax_type', e.target.value)}>
-                                    <option value="">No Tax</option>
-                                    <option value="vat">VAT (Value Added Tax)</option>
-                                    <option value="gst">GST (Goods & Services Tax)</option>
-                                    <option value="sales_tax">Sales Tax</option>
-                                    <option value="withholding">Withholding Tax</option>
-                                    <option value="consumption">Consumption Tax (Japan)</option>
-                                    <option value="custom">Custom</option>
-                                </select>
+                        <div className="px-6 pb-4 overflow-y-auto flex-1">
+                    <div className="space-y-5 pb-2">
+                        {/* Section: General */}
+                        <div>
+                            <div className="text-[11px] tracking-[1px] uppercase text-[#9ca3af] font-medium mb-3 flex items-center gap-3">General <span className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                            <div className="grid grid-cols-2 gap-3 mb-3">
+                                <FG label="Project Name *" error={editForm.errors.name}><input className={inputCls} value={editForm.data.name} onChange={e => editForm.setData('name', e.target.value)} /></FG>
+                                <FG label="Client / Company" error={editForm.errors.client}><input className={inputCls} value={editForm.data.client} onChange={e => editForm.setData('client', e.target.value)} /></FG>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3">
+                                <FG label="Status">
+                                    <select className={inputCls} value={editForm.data.status} onChange={e => editForm.setData('status', e.target.value)}>
+                                        <option value="active">Active</option>
+                                        <option value="on-hold">On Hold</option>
+                                        <option value="completed">Completed</option>
+                                    </select>
+                                </FG>
+                                <FG label="Phase">
+                                    <select className={inputCls} value={editForm.data.phase} onChange={e => editForm.setData('phase', e.target.value)}>
+                                        {PROJECT_PHASES.map(ph => <option key={ph.name} value={ph.name}>{ph.name}</option>)}
+                                    </select>
+                                </FG>
+                                <FG label="Project Lead">
+                                    <select className={inputCls} value={editForm.data.lead_id} onChange={e => editForm.setData('lead_id', e.target.value)}>
+                                        <option value="">No lead assigned</option>
+                                        {(usePage().props.teamMembers ?? []).map(m => (
+                                            <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>
+                                        ))}
+                                    </select>
+                                </FG>
+                            </div>
+                        </div>
+
+                        {/* Section: Client Contact */}
+                        <div>
+                            <div className="text-[11px] tracking-[1px] uppercase text-[#9ca3af] font-medium mb-3 flex items-center gap-3">Client Contact <span className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                            <div className="grid grid-cols-3 gap-3">
+                                <FG label="Contact Name"><input className={inputCls} value={editForm.data.contact_name} onChange={e => editForm.setData('contact_name', e.target.value)} /></FG>
+                                <FG label="Contact Email"><input className={inputCls} type="email" value={editForm.data.contact_email} onChange={e => editForm.setData('contact_email', e.target.value)} /></FG>
+                                <FG label="Contact Phone"><input className={inputCls} value={editForm.data.contact_phone} onChange={e => editForm.setData('contact_phone', e.target.value)} /></FG>
+                            </div>
+                        </div>
+
+                        {/* Section: Timeline */}
+                        <div>
+                            <div className="text-[11px] tracking-[1px] uppercase text-[#9ca3af] font-medium mb-3 flex items-center gap-3">Timeline <span className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                            <div className="grid grid-cols-3 gap-3">
+                                <FG label="Start Date"><input className={inputCls} type="date" value={editForm.data.start_date} onChange={e => editForm.setData('start_date', e.target.value)} /></FG>
+                                <FG label="End Date"><input className={inputCls} type="date" value={editForm.data.end_date} onChange={e => editForm.setData('end_date', e.target.value)} /></FG>
+                                <FG label="🚀 Launch Date">
+                                    <input className={`${inputCls} border-[#4f6df5]/30 bg-indigo-50/50`} type="date" value={editForm.data.launch_date} onChange={e => editForm.setData('launch_date', e.target.value)} />
+                                </FG>
+                            </div>
+                        </div>
+
+                        {/* Section: Budget & Tax */}
+                        <div>
+                            <div className="text-[11px] tracking-[1px] uppercase text-[#9ca3af] font-medium mb-3 flex items-center gap-3">Budget & Tax <span className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                            <div className="grid grid-cols-2 gap-3 mb-3">
+                                <FG label="Currency">
+                                    <select className={inputCls} value={editForm.data.currency} onChange={e => editForm.setData('currency', e.target.value)}>
+                                        {currencies.map(c => <option key={c.code} value={c.code}>{c.code} — {c.country} ({c.symbol})</option>)}
+                                    </select>
+                                </FG>
+                                <FG label="Budget" error={editForm.errors.budget}>
+                                    <div className="relative">
+                                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-[#6b7280]">
+                                            {(currencies.find(c => c.code === editForm.data.currency) ?? currencies[0]).symbol}
+                                        </span>
+                                        <input className={`${inputCls} pl-8 text-[16px] font-semibold`} type="number" value={editForm.data.budget} onChange={e => editForm.setData('budget', e.target.value)} placeholder="0.00" />
+                                    </div>
+                                </FG>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <FG label="Tax Type">
+                                    <select className={inputCls} value={editForm.data.tax_type} onChange={e => editForm.setData('tax_type', e.target.value)}>
+                                        <option value="">No Tax</option>
+                                        <option value="vat">VAT (Value Added Tax)</option>
+                                        <option value="gst">GST (Goods & Services Tax)</option>
+                                        <option value="sales_tax">Sales Tax</option>
+                                        <option value="withholding">Withholding Tax</option>
+                                        <option value="consumption">Consumption Tax (Japan)</option>
+                                        <option value="custom">Custom</option>
+                                    </select>
+                                </FG>
+                                <FG label="Tax Rate (%)">
+                                    <div className="relative">
+                                        <input className={`${inputCls} pr-8`} type="number" step="0.01" min="0" max="100" value={editForm.data.tax_rate} onChange={e => editForm.setData('tax_rate', e.target.value)} placeholder="0" />
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-[#9ca3af]">%</span>
+                                    </div>
+                                </FG>
+                            </div>
+                        </div>
+
+                        {/* Section: Details */}
+                        <div>
+                            <div className="text-[11px] tracking-[1px] uppercase text-[#9ca3af] font-medium mb-3 flex items-center gap-3">Details <span className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                            <FG label="Description">
+                                <textarea className={`${inputCls} resize-y min-h-[100px]`} value={editForm.data.description} onChange={e => editForm.setData('description', e.target.value)} placeholder="Project overview and goals…" />
                             </FG>
-                            <FG label="Tax Rate (%)">
-                                <div className="relative">
-                                    <input className={`${inputCls} pr-8`} type="number" step="0.01" min="0" max="100" value={editForm.data.tax_rate} onChange={e => editForm.setData('tax_rate', e.target.value)} placeholder="0" />
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-[#9ca3af]">%</span>
-                                </div>
+                            <FG label="Tags (comma-separated)" error={editForm.errors.tags}>
+                                <input className={inputCls} value={editForm.data.tags} onChange={e => editForm.setData('tags', e.target.value)} placeholder="e.g. Branding, Design, Marketing" />
                             </FG>
                         </div>
-                        <FG label="Project Lead (Your Company)">
-                            <select className={inputCls} value={editForm.data.lead_id} onChange={e => editForm.setData('lead_id', e.target.value)}>
-                                <option value="">No lead assigned</option>
-                                {(usePage().props.teamMembers ?? []).map(m => (
-                                    <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>
-                                ))}
-                            </select>
-                        </FG>
-                        <FG label="Description">
-                            <textarea className={`${inputCls} resize-y min-h-[120px]`} value={editForm.data.description} onChange={e => editForm.setData('description', e.target.value)} placeholder="Project overview and goals…" />
-                        </FG>
-                        <FG label="Tags (comma-separated)" error={editForm.errors.tags}>
-                            <input className={inputCls} value={editForm.data.tags} onChange={e => editForm.setData('tags', e.target.value)} placeholder="e.g. Branding, Design, Marketing" />
-                        </FG>
                     </div>
-                </Modal>
+                        </div>
+                        <div className="flex justify-end gap-2.5 p-6 pt-4 flex-shrink-0 border-t border-[#e5e7eb]">
+                            <Btn ghost onClick={() => setShowEditModal(false)}><X size={13} /> Cancel</Btn>
+                            <Btn primary onClick={saveEdit} disabled={editForm.processing}><Save size={13} /> Save Changes</Btn>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

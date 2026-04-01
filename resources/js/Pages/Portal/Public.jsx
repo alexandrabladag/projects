@@ -147,6 +147,19 @@ export default function Public({ project, company, code }) {
                     </div>
 
                     {/* Stats */}
+                    {/* Launch date highlight */}
+                    {project.launch_date && (
+                        <div className="bg-gradient-to-r from-[#4f6df5] to-[#6380f7] rounded-2xl p-5 mb-6 text-white flex items-center justify-between shadow-sm">
+                            <div>
+                                <div className="text-[11px] uppercase tracking-wider opacity-70 font-medium">🚀 Target Launch</div>
+                                <div className="text-[22px] font-extrabold mt-0.5">{fmtDate(project.launch_date)}</div>
+                            </div>
+                            <div className="text-right opacity-80">
+                                <div className="text-[13px]">{Math.max(0, Math.round((new Date(project.launch_date) - new Date()) / (1000*60*60*24)))} days away</div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-4 gap-4 mb-8">
                         {[
                             { label: 'Timeline', value: `${fmtShort(project.start_date)} — ${fmtShort(project.end_date)}`, icon: <Clock size={16} />, bg: 'bg-sky-50', ic: 'text-sky-500' },
