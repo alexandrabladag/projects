@@ -107,7 +107,7 @@ export default function Public({ project, company, code }) {
                                     {project.contact_phone && (
                                         <a href={`tel:${project.contact_phone}`} className="text-[13px] text-[#6b7280] block mt-0.5">{project.contact_phone}</a>
                                     )}
-                                    {company?.name && <div className="text-[12px] text-[#9ca3af] mt-2">{company.name}</div>}
+                                    {project.client && <div className="text-[12px] text-[#9ca3af] mt-2">{project.client}</div>}
                                 </div>
                             </div>
                         </div>
@@ -299,7 +299,20 @@ export default function Public({ project, company, code }) {
                                             <Badge status={pr.status} />
                                         </div>
                                     </div>
-                                    <div className="mt-4">
+                                    {/* Signed file — show prominently if available */}
+                                    {pr.signed_file_path && (
+                                        <div className="mt-3 flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
+                                            <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
+                                            <div className="flex-1">
+                                                <div className="text-[13px] font-medium text-emerald-700">Signed Proposal</div>
+                                                <div className="text-[11px] text-emerald-600">{pr.signed_file_name}</div>
+                                            </div>
+                                            <a href={`/storage/${pr.signed_file_path}`} target="_blank" className="inline-flex items-center gap-1 text-[12px] text-emerald-700 font-semibold bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-lg transition-colors">
+                                                View Document
+                                            </a>
+                                        </div>
+                                    )}
+                                    <div className="mt-3 flex items-center gap-3">
                                         <Link href={route('proposals.view', pr.id)} className="inline-flex items-center gap-1 text-[13px] text-[#4f6df5] font-medium hover:text-[#6380f7] transition-colors">
                                             View Full Proposal <ArrowRight size={14} />
                                         </Link>
