@@ -80,7 +80,8 @@ class ProjectPageController extends Controller
                 // Passed — continue to render
             } elseif ($request->isMethod('post')) {
                 if ($request->input('password') === $page->password) {
-                    return redirect()->to(route('pages.public', $code) . '?token=' . $token);
+                    $url = route('pages.public', $code) . '?token=' . $token;
+                    return Inertia::location($url);
                 }
                 return Inertia::render('Pages/PasswordGate', [
                     'code' => $code,
