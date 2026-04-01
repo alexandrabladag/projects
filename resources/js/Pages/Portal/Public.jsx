@@ -133,29 +133,70 @@ export default function Public({ project, company, code }) {
                         </div>
                     )}
 
-                    {/* Tasks Progress */}
-                    {tasks.length > 0 && (
-                        <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 mb-8 shadow-sm">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-[16px] font-bold text-black">Work Progress</h2>
-                                <span className="text-[13px] text-[#6b7280]">{completedTasks} of {totalTasks} tasks completed</span>
-                            </div>
-                            <div className="space-y-1.5">
-                                {tasks.map(t => (
-                                    <div key={t.id} className="flex items-center gap-3 py-2">
-                                        {t.status === 'completed'
-                                            ? <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
-                                            : t.status === 'in-progress'
-                                                ? <div className="w-4 h-4 rounded-full border-2 border-[#4f6df5] flex items-center justify-center flex-shrink-0"><div className="w-2 h-2 rounded-full bg-[#4f6df5]" /></div>
-                                                : <Circle size={16} className="text-[#d1d5db] flex-shrink-0" />
-                                        }
-                                        <span className={`text-[13px] flex-1 ${t.status === 'completed' ? 'text-[#9ca3af] line-through' : 'text-black'}`}>{t.title}</span>
-                                        <Badge status={t.status} label={t.status === 'completed' ? 'Done' : t.status === 'in-progress' ? 'In Progress' : 'Upcoming'} />
+                    {/* Tasks Progress by Phase */}
+                    {tasks.length > 0 && (() => {
+                        // Group tasks by category
+                        const byCategory = {};
+                        tasks.forEach(t => {
+                            const cat = t.category || 'General';
+                            if (!byCategory[cat]) byCategory[cat] = [];
+                            byCategory[cat].push(t);
+                        });
+
+                        return (
+                            <div className="mb-8">
+                                {/* Overall summary */}
+                                <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 mb-4 shadow-sm">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h2 className="text-[16px] font-bold text-black">Project Tasks</h2>
+                                        <span className="text-[13px] text-[#6b7280]">{completedTasks} of {totalTasks} completed</span>
                                     </div>
-                                ))}
+                                    <div className="h-3 bg-[#f0f0f0] rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 progress-fill" style={{ width: `${totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0}%` }} />
+                                    </div>
+                                </div>
+
+                                {/* Tasks grouped by phase */}
+                                <div className="space-y-4">
+                                    {Object.entries(byCategory).map(([cat, catTasks]) => {
+                                        const done = catTasks.filter(t => t.status === 'completed').length;
+                                        const pct = Math.round((done / catTasks.length) * 100);
+                                        return (
+                                            <div key={cat} className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden shadow-sm">
+                                                {/* Phase header */}
+                                                <div className="px-6 py-4 border-b border-[#f0f0f0]">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className="text-[14px] font-bold text-black">{cat}</span>
+                                                        <span className="text-[12px] text-[#6b7280]">{done}/{catTasks.length} done</span>
+                                                    </div>
+                                                    <div className="h-1.5 bg-[#f0f0f0] rounded-full overflow-hidden">
+                                                        <div className={`h-full rounded-full progress-fill ${pct === 100 ? 'bg-emerald-400' : 'bg-[#4f6df5]'}`} style={{ width: `${pct}%` }} />
+                                                    </div>
+                                                </div>
+
+                                                {/* Task list */}
+                                                <div className="px-6 py-2">
+                                                    {catTasks.map(t => (
+                                                        <div key={t.id} className="flex items-center gap-3 py-2.5 border-b border-[#f8f8f8] last:border-b-0">
+                                                            {t.status === 'completed'
+                                                                ? <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
+                                                                : t.status === 'in-progress'
+                                                                    ? <div className="w-4 h-4 rounded-full border-2 border-[#4f6df5] flex items-center justify-center flex-shrink-0"><div className="w-2 h-2 rounded-full bg-[#4f6df5]" /></div>
+                                                                    : <Circle size={16} className="text-[#d1d5db] flex-shrink-0" />
+                                                            }
+                                                            <span className={`text-[13px] flex-1 ${t.status === 'completed' ? 'text-[#9ca3af] line-through' : 'text-black'}`}>{t.title}</span>
+                                                            {t.due_date && <span className="text-[11px] text-[#9ca3af]">{new Date(t.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                                                            <Badge status={t.status} label={t.status === 'completed' ? 'Done' : t.status === 'in-progress' ? 'In Progress' : t.status === 'review' ? 'Review' : 'To Do'} />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        );
+                    })()}
 
                     {/* Proposals */}
                     {proposals.length > 0 && (
