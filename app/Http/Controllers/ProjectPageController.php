@@ -73,21 +73,21 @@ class ProjectPageController extends Controller
 
         // Password protection
         if ($page->password) {
-            $sessionKey = 'page_unlocked_' . $page->id;
+            $token = md5($page->id . $page->password . 'salt');
 
-            if ($request->isMethod('post')) {
+            // Check if unlocked via token in URL
+            if ($request->query('token') === $token) {
+                // Passed — continue to render
+            } elseif ($request->isMethod('post')) {
                 if ($request->input('password') === $page->password) {
-                    session([$sessionKey => true]);
-                    return redirect()->route('pages.public', $code);
+                    return redirect()->to(route('pages.public', $code) . '?token=' . $token);
                 }
                 return Inertia::render('Pages/PasswordGate', [
                     'code' => $code,
                     'title' => $page->title,
                     'error' => 'Incorrect password.',
                 ]);
-            }
-
-            if (!session($sessionKey)) {
+            } else {
                 return Inertia::render('Pages/PasswordGate', [
                     'code' => $code,
                     'title' => $page->title,
