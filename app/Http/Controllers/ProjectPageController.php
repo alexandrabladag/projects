@@ -31,8 +31,9 @@ class ProjectPageController extends Controller
         $this->authorize('update', $project);
 
         $validated = $request->validate([
-            'title'   => 'required|string|max:255',
-            'content' => 'nullable|string',
+            'title'    => 'required|string|max:255',
+            'content'  => 'nullable|string',
+            'password' => 'nullable|string|max:100',
         ]);
 
         $page->update($validated);
@@ -62,15 +63,39 @@ class ProjectPageController extends Controller
     }
 
     // Public view (no auth)
-    public function publicView(string $code)
+    public function publicView(Request $request, string $code)
     {
         $page = ProjectPage::where('share_code', $code)->where('is_shared', true)->firstOrFail();
+
+        // Password protection
+        if ($page->password) {
+            $sessionKey = 'page_unlocked_' . $page->id;
+
+            if ($request->isMethod('post')) {
+                if ($request->input('password') === $page->password) {
+                    session([$sessionKey => true]);
+                    return redirect()->route('pages.public', $code);
+                }
+                return Inertia::render('Pages/PasswordGate', [
+                    'code' => $code,
+                    'title' => $page->title,
+                    'error' => 'Incorrect password.',
+                ]);
+            }
+
+            if (!session($sessionKey)) {
+                return Inertia::render('Pages/PasswordGate', [
+                    'code' => $code,
+                    'title' => $page->title,
+                    'error' => null,
+                ]);
+            }
+        }
 
         // Full HTML document — serve directly as raw HTML
         $isFullHtml = str_contains($page->content ?? '', '<!DOCTYPE') || str_contains($page->content ?? '', '<html');
 
         if ($isFullHtml) {
-            // Inject noindex to block SEO
             $html = str_replace('<head>', '<head><meta name="robots" content="noindex, nofollow">', $page->content);
             return response($html, 200, [
                 'Content-Type' => 'text/html; charset=UTF-8',

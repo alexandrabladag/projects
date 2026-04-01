@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProjectPage extends Model
 {
-    protected $fillable = ['project_id', 'title', 'content', 'share_code', 'is_shared', 'created_by'];
+    protected $fillable = ['project_id', 'title', 'content', 'share_code', 'is_shared', 'password', 'created_by'];
 
     protected $casts = ['is_shared' => 'boolean'];
 

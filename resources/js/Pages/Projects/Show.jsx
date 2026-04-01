@@ -5,7 +5,7 @@ import currencies from '@/Utils/currencies';
 import {
     Pencil, Eye, Plus, Save, X, Check, Send, ChevronUp, ChevronDown,
     FileText, Receipt, CalendarDays, Calendar, FolderOpen, Clock, ListChecks,
-    Trash2, Download, Upload, CheckCircle, XCircle, AlertCircle,
+    Trash2, Download, Upload, CheckCircle, XCircle, AlertCircle, Lock,
 } from 'lucide-react';
 
 const RichEditor = lazy(() => import('@/Components/RichEditor'));
@@ -1556,8 +1556,27 @@ function PagesTab({ project, canManage }) {
                                 <div className="text-[12px] text-[#6b7280] line-clamp-2 leading-relaxed" dangerouslySetInnerHTML={{ __html: page.content.replace(/<[^>]*>/g, ' ').slice(0, 200) }} />
                             )}
                             {page.is_shared && page.share_code && (
-                                <div className="mt-3 text-[11px] text-[#4f6df5] bg-indigo-50 rounded-lg px-3 py-1.5 inline-block">
-                                    Shared: {window.location.origin}/page/{page.share_code}
+                                <div className="mt-3 flex items-center gap-3 flex-wrap">
+                                    <div className="text-[11px] text-[#4f6df5] bg-indigo-50 rounded-lg px-3 py-1.5">
+                                        {window.location.origin}/page/{page.share_code}
+                                    </div>
+                                    {canManage && (
+                                        <div className="flex items-center gap-1.5">
+                                            <Lock size={12} className="text-[#9ca3af]" />
+                                            <input
+                                                type="text"
+                                                defaultValue={page.password ?? ''}
+                                                placeholder="No password"
+                                                onBlur={e => {
+                                                    const val = e.target.value.trim();
+                                                    if (val !== (page.password ?? '')) {
+                                                        router.put(route('projects.pages.update', [project.id, page.id]), { title: page.title, content: page.content, password: val || null });
+                                                    }
+                                                }}
+                                                className="bg-[#f3f4f6] border border-[#d1d5db] rounded-md px-2 py-1 text-[11px] text-black w-28 outline-none focus:border-[#4f6df5]"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

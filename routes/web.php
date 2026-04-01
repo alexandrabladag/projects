@@ -27,6 +27,7 @@ Route::get('/', function () {
 // ── Public (no auth needed) ───────────────────────────────────────────────────
 Route::get('/p/{code}', [\App\Http\Controllers\PublicPortalController::class, 'show'])->name('portal.public');
 Route::get('/page/{code}', [\App\Http\Controllers\ProjectPageController::class, 'publicView'])->name('pages.public');
+Route::post('/page/{code}', [\App\Http\Controllers\ProjectPageController::class, 'publicView']);
 
 // ── Client Portal (auth) ─────────────────────────────────────────────────────
 Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->group(function () {
