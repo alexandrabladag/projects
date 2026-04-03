@@ -10,11 +10,11 @@ export default function TeamMembers({ members }) {
     const [editing, setEditing] = useState(null);
 
     const { data, setData, post, put, processing, reset, errors } = useForm({
-        name: '', email: '', phone: '', role: '', department: '',
+        name: '', email: '', phone: '', role: '', department: '', pay_type: 'monthly', rate: '', rate_currency: 'PHP',
     });
 
     const openNew = () => { setEditing(null); reset(); setShowForm(true); };
-    const openEdit = (m) => { setEditing(m); setData({ name: m.name, email: m.email ?? '', phone: m.phone ?? '', role: m.role ?? '', department: m.department ?? '' }); setShowForm(true); };
+    const openEdit = (m) => { setEditing(m); setData({ name: m.name, email: m.email ?? '', phone: m.phone ?? '', role: m.role ?? '', department: m.department ?? '', pay_type: m.pay_type ?? 'monthly', rate: m.rate ?? '', rate_currency: m.rate_currency ?? 'PHP' }); setShowForm(true); };
 
     const submit = (e) => {
         e.preventDefault();
@@ -69,6 +69,26 @@ export default function TeamMembers({ members }) {
                                 <input className={inputCls} value={data.department} onChange={e => setData('department', e.target.value)} placeholder="e.g. Engineering" />
                             </div>
                         </div>
+                        <div className="grid grid-cols-3 gap-3 mb-4">
+                            <div>
+                                <label className="block text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-2">Pay Type</label>
+                                <select className={inputCls} value={data.pay_type} onChange={e => setData('pay_type', e.target.value)}>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="hourly">Hourly</option>
+                                    <option value="fixed">Fixed / Per Project</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-2">Rate</label>
+                                <input className={inputCls} type="number" step="0.01" value={data.rate} onChange={e => setData('rate', e.target.value)} placeholder="0.00" />
+                            </div>
+                            <div>
+                                <label className="block text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-2">Currency</label>
+                                <select className={inputCls} value={data.rate_currency} onChange={e => setData('rate_currency', e.target.value)}>
+                                    {['PHP','USD','JPY','EUR','GBP','SGD','AUD'].map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                        </div>
                         <div className="flex justify-end gap-2">
                             <button type="button" onClick={() => { setShowForm(false); setEditing(null); }} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] text-[#6b7280] border border-[#d1d5db] hover:bg-gray-50 transition-colors"><X size={14} /> Cancel</button>
                             <button type="submit" disabled={processing} className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#4f6df5] hover:bg-[#6380f7] text-white font-semibold rounded-lg text-[13px] transition-all disabled:opacity-60"><Save size={14} /> {editing ? 'Update' : 'Add Member'}</button>
@@ -101,6 +121,12 @@ export default function TeamMembers({ members }) {
                                         {[m.email, m.phone].filter(Boolean).join(' · ')}
                                     </div>
                                 </div>
+                                {m.rate > 0 && (
+                                    <div className="text-right flex-shrink-0">
+                                        <div className="text-[13px] font-bold text-black">{m.rate_currency} {Number(m.rate).toLocaleString()}</div>
+                                        <div className="text-[10px] text-[#9ca3af]">/{m.pay_type === 'hourly' ? 'hr' : m.pay_type === 'monthly' ? 'mo' : 'project'}</div>
+                                    </div>
+                                )}
                                 <button onClick={() => openEdit(m)} className="text-[#9ca3af] hover:text-[#4f6df5] transition-colors p-1.5"><Pencil size={14} /></button>
                                 <button onClick={() => remove(m)} className="text-[#9ca3af] hover:text-red-500 transition-colors p-1.5"><Trash2 size={14} /></button>
                             </div>

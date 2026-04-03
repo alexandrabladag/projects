@@ -103,6 +103,21 @@ class Project extends Model
         return $this->hasMany(Bill::class)->orderBy('date', 'desc');
     }
 
+    public function payroll(): HasMany
+    {
+        return $this->hasMany(ProjectPayroll::class)->orderBy('created_at', 'desc');
+    }
+
+    public function getTotalPayrollAttribute(): float
+    {
+        return $this->payroll->sum('amount');
+    }
+
+    public function getTotalPayrollPaidAttribute(): float
+    {
+        return $this->payroll->where('status', 'paid')->sum('amount');
+    }
+
     public function pages(): HasMany
     {
         return $this->hasMany(ProjectPage::class);

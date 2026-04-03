@@ -95,6 +95,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('pages/{page}/share',   [\App\Http\Controllers\ProjectPageController::class, 'toggleShare'])->name('pages.toggle-share');
 
         Route::post('bills',                 [\App\Http\Controllers\BillController::class, 'store'])->name('bills.store');
+
+        Route::post('payroll',              [\App\Http\Controllers\ProjectPayrollController::class, 'store'])->name('payroll.store');
+        Route::patch('payroll/{payroll}',   [\App\Http\Controllers\ProjectPayrollController::class, 'update'])->name('payroll.update');
+        Route::delete('payroll/{payroll}',  [\App\Http\Controllers\ProjectPayrollController::class, 'destroy'])->name('payroll.destroy');
         Route::patch('bills/{bill}',         [\App\Http\Controllers\BillController::class, 'update'])->name('bills.update');
         Route::delete('bills/{bill}',        [\App\Http\Controllers\BillController::class, 'destroy'])->name('bills.destroy');
 

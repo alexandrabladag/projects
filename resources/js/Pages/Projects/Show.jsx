@@ -5,7 +5,7 @@ import currencies from '@/Utils/currencies';
 import {
     Pencil, Eye, Plus, Save, X, Check, Send, ChevronUp, ChevronDown,
     FileText, Receipt, CalendarDays, Calendar, FolderOpen, Clock, ListChecks,
-    Trash2, Download, Upload, CheckCircle, XCircle, AlertCircle, Lock, Code,
+    Trash2, Download, Upload, CheckCircle, XCircle, AlertCircle, Lock, Code, Users,
 } from 'lucide-react';
 
 const RichEditor = lazy(() => import('@/Components/RichEditor'));
@@ -1702,6 +1702,152 @@ function BillsTab({ project, canManage, fmt }) {
     );
 }
 
+// ── PAYROLL TAB ──────────────────────────────────────────────────────────────
+function PayrollTab({ project, canManage, fmt }) {
+    const [showModal, setShowModal] = useState(false);
+    const entries = project.payroll ?? [];
+    const { props } = usePage();
+    const teamMembers = props.teamMembers ?? [];
+
+    const totalPayroll = entries.reduce((s, e) => s + parseFloat(e.amount ?? 0), 0);
+    const totalPaid = entries.filter(e => e.status === 'paid').reduce((s, e) => s + parseFloat(e.amount ?? 0), 0);
+
+    const { data, setData, post, processing, reset } = useForm({
+        team_member_id: '', period: '', pay_type: 'monthly', rate: '', hours: '', amount: '', currency: project.currency ?? 'PHP', notes: '',
+    });
+
+    // Auto-compute amount when rate/hours change
+    const computeAmount = (payType, rate, hours) => {
+        if (payType === 'hourly' && rate && hours) return (parseFloat(rate) * parseFloat(hours)).toFixed(2);
+        if (payType === 'monthly' && rate) return rate;
+        if (payType === 'fixed' && rate) return rate;
+        return '';
+    };
+
+    const handleMemberSelect = (id) => {
+        setData('team_member_id', id);
+        const member = teamMembers.find(m => String(m.id) === id);
+        if (member) {
+            // Note: teamMembers shared props may not include rate fields, so we try
+        }
+    };
+
+    const submit = () => {
+        post(route('projects.payroll.store', project.id), { onSuccess: () => { setShowModal(false); reset(); } });
+    };
+
+    const markPaid = (entry) => router.patch(route('projects.payroll.update', [project.id, entry.id]), { status: 'paid' });
+    const deleteEntry = (entry) => { if (confirm('Delete this payroll entry?')) router.delete(route('projects.payroll.destroy', [project.id, entry.id])); };
+
+    return (
+        <>
+            <div className="flex justify-between items-center mb-5">
+                <h3 className="text-[17px] font-bold">Team Payroll</h3>
+                {canManage && <Btn primary sm onClick={() => setShowModal(true)}><Plus size={13} /> Add Entry</Btn>}
+            </div>
+
+            {/* Summary */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+                {[
+                    { l: 'Total Payroll', v: fmt(totalPayroll), icon: <Users size={16} />, bg: 'bg-indigo-50 border-indigo-100', iconC: 'text-indigo-500', textC: 'text-indigo-700' },
+                    { l: 'Paid Out', v: fmt(totalPaid), icon: <Check size={16} />, bg: 'bg-emerald-50 border-emerald-100', iconC: 'text-emerald-500', textC: 'text-emerald-700' },
+                ].map(({ l, v, icon, bg, iconC, textC }) => (
+                    <div key={l} className={`${bg} border rounded-xl p-4 flex items-center gap-3`}>
+                        <div className={`w-9 h-9 rounded-lg bg-white flex items-center justify-center ${iconC} shadow-sm`}>{icon}</div>
+                        <div>
+                            <div className="text-[10px] tracking-[1.5px] uppercase text-[#6b7280] font-medium">{l}</div>
+                            <div className={`text-[20px] font-bold ${textC} leading-tight`}>{v}</div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {entries.length === 0 && !showModal && (
+                <div className="text-center py-14 text-[#6b7280]">
+                    <div className="mb-4 flex justify-center"><div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center"><Users size={24} className="text-indigo-400" /></div></div>
+                    <div className="text-[14px] font-semibold text-black mb-1">No payroll entries</div>
+                    <div className="text-[13px] text-[#6b7280] mb-4">Track team member costs for this project</div>
+                    {canManage && <Btn primary onClick={() => setShowModal(true)}><Plus size={15} /> Add First Entry</Btn>}
+                </div>
+            )}
+
+            {/* Entries */}
+            <div className="space-y-3">
+                {entries.map(entry => (
+                    <div key={entry.id} className={`bg-white border border-[#e5e7eb] ${entry.status === 'paid' ? 'border-l-emerald-400' : 'border-l-amber-400'} border-l-[3px] rounded-xl p-5`}>
+                        <div className="flex items-start justify-between mb-1">
+                            <div>
+                                <div className="flex items-center gap-2.5">
+                                    <span className="text-[14px] font-semibold text-black">{entry.team_member?.name ?? 'Unknown'}</span>
+                                    <Badge status={entry.status} />
+                                    <span className="text-[11px] px-2 py-0.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-500 font-medium">{entry.pay_type}</span>
+                                </div>
+                                <div className="text-[12px] text-[#6b7280] mt-0.5">{entry.period}{entry.hours ? ` · ${entry.hours} hrs @ ${fmt(entry.rate)}/hr` : ''}</div>
+                                {entry.notes && <div className="text-[12px] text-[#9ca3af] italic mt-1">{entry.notes}</div>}
+                            </div>
+                            <div className="text-right flex-shrink-0 ml-4">
+                                <div className="text-[18px] font-bold text-black">{fmt(entry.amount)}</div>
+                                {entry.paid_date && <div className="text-[11px] text-emerald-600">Paid {fmtDate(entry.paid_date)}</div>}
+                            </div>
+                        </div>
+                        {canManage && (
+                            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#f0f0f0]">
+                                {entry.status === 'pending' && <Btn ghost sm onClick={() => markPaid(entry)}><Check size={13} /> Mark Paid</Btn>}
+                                <div className="flex-1" />
+                                <button onClick={() => deleteEntry(entry)} className="text-[#9ca3af] hover:text-red-500 transition-colors p-1.5"><Trash2 size={14} /></button>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Add Modal */}
+            {showModal && (
+                <Modal title="Add Payroll Entry" subtitle={`For ${project.name}`} onClose={() => setShowModal(false)} footer={
+                    <><Btn ghost onClick={() => setShowModal(false)}><X size={13} /> Cancel</Btn>
+                    <Btn primary onClick={submit} disabled={processing || !data.team_member_id || !data.amount}><Plus size={13} /> Add Entry</Btn></>
+                }>
+                    <div className="space-y-4 pb-2">
+                        <div className="grid grid-cols-2 gap-3">
+                            <FG label="Team Member *">
+                                <select className={inputCls} value={data.team_member_id} onChange={e => handleMemberSelect(e.target.value)}>
+                                    <option value="">Select...</option>
+                                    {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>)}
+                                </select>
+                            </FG>
+                            <FG label="Period *"><input className={inputCls} value={data.period} onChange={e => setData('period', e.target.value)} placeholder="e.g. Apr 2026, Sprint 3" /></FG>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            <FG label="Pay Type">
+                                <select className={inputCls} value={data.pay_type} onChange={e => { setData('pay_type', e.target.value); setData('amount', computeAmount(e.target.value, data.rate, data.hours)); }}>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="hourly">Hourly</option>
+                                    <option value="fixed">Fixed</option>
+                                </select>
+                            </FG>
+                            <FG label="Rate"><input className={inputCls} type="number" step="0.01" value={data.rate} onChange={e => { setData('rate', e.target.value); setData('amount', computeAmount(data.pay_type, e.target.value, data.hours)); }} placeholder="0.00" /></FG>
+                            {data.pay_type === 'hourly' && (
+                                <FG label="Hours"><input className={inputCls} type="number" step="0.5" value={data.hours} onChange={e => { setData('hours', e.target.value); setData('amount', computeAmount(data.pay_type, data.rate, e.target.value)); }} placeholder="0" /></FG>
+                            )}
+                            {data.pay_type !== 'hourly' && (
+                                <FG label="Currency">
+                                    <select className={inputCls} value={data.currency} onChange={e => setData('currency', e.target.value)}>
+                                        {['PHP','USD','JPY','EUR','GBP','SGD','AUD'].map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                </FG>
+                            )}
+                        </div>
+                        <FG label="Total Amount *">
+                            <input className={`${inputCls} text-[16px] font-bold`} type="number" step="0.01" value={data.amount} onChange={e => setData('amount', e.target.value)} placeholder="0.00" />
+                        </FG>
+                        <FG label="Notes"><input className={inputCls} value={data.notes} onChange={e => setData('notes', e.target.value)} placeholder="e.g. April salary, overtime, bonus" /></FG>
+                    </div>
+                </Modal>
+            )}
+        </>
+    );
+}
+
 // ── PAGES TAB ────────────────────────────────────────────────────────────────
 function PagesTab({ project, canManage }) {
     const [showEditor, setShowEditor] = useState(false);
@@ -1880,7 +2026,7 @@ function PagesTab({ project, canManage }) {
 // ── MAIN SHOW PAGE ─────────────────────────────────────────────────────────────
 export default function Show({ project, canManage, nextInvoiceNumber, nextProposalNumber }) {
     // Sync tab with URL hash
-    const validTabs = ['overview','proposal','invoices','meetings','documents','timeline','tasks','bills','pages'];
+    const validTabs = ['overview','proposal','invoices','meetings','documents','timeline','tasks','bills','payroll','pages'];
     const hashTab = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '';
     const [tab, setTabState] = useState(validTabs.includes(hashTab) ? hashTab : 'overview');
     const setTab = (t) => {
@@ -1899,6 +2045,7 @@ export default function Show({ project, canManage, nextInvoiceNumber, nextPropos
         { id: 'timeline',   label: 'Timeline',    icon: <Clock size={15} /> },
         { id: 'tasks',      label: `Tasks (${project.tasks?.length ?? 0})`,        icon: <ListChecks size={15} /> },
         { id: 'bills',      label: `Bills (${project.bills?.length ?? 0})`,        icon: <Receipt size={15} /> },
+        { id: 'payroll',    label: `Payroll (${project.payroll?.length ?? 0})`,    icon: <Users size={15} /> },
         { id: 'pages',      label: `Pages (${project.pages?.length ?? 0})`,        icon: <FileText size={15} /> },
     ];
 
@@ -1939,6 +2086,7 @@ export default function Show({ project, canManage, nextInvoiceNumber, nextPropos
             {tab === 'timeline'  && <TimelineTab  project={project} />}
             {tab === 'tasks'     && <TasksTab     project={project} canManage={canManage} />}
             {tab === 'bills'     && <BillsTab     project={project} canManage={canManage} fmt={fmt} />}
+            {tab === 'payroll'   && <PayrollTab   project={project} canManage={canManage} fmt={fmt} />}
             {tab === 'pages'     && <PagesTab     project={project} canManage={canManage} />}
         </AppLayout>
     );

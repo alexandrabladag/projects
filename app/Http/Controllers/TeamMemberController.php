@@ -23,6 +23,9 @@ class TeamMemberController extends Controller
             'phone'      => 'nullable|string|max:50',
             'role'       => 'nullable|string|max:255',
             'department' => 'nullable|string|max:255',
+            'pay_type'      => 'nullable|in:hourly,monthly,fixed',
+            'rate'          => 'nullable|numeric|min:0',
+            'rate_currency' => 'nullable|string|max:10',
         ]);
 
         TeamMember::create($validated);
@@ -38,6 +41,9 @@ class TeamMemberController extends Controller
             'phone'      => 'nullable|string|max:50',
             'role'       => 'nullable|string|max:255',
             'department' => 'nullable|string|max:255',
+            'pay_type'      => 'nullable|in:hourly,monthly,fixed',
+            'rate'          => 'nullable|numeric|min:0',
+            'rate_currency' => 'nullable|string|max:10',
             'is_active'  => 'boolean',
         ]);
 

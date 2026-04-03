@@ -133,6 +133,7 @@ class ProjectController extends Controller
             'documents.uploader',
             'tasks',
             'bills.vendor',
+            'payroll.teamMember',
             'members.client',
             'pages.creator',
         ]);
@@ -145,6 +146,8 @@ class ProjectController extends Controller
             'budget_remaining'   => $project->budget_remaining,
             'total_bills'        => $project->total_bills,
             'total_bills_paid'   => $project->total_bills_paid,
+            'total_payroll'      => $project->total_payroll,
+            'total_payroll_paid' => $project->total_payroll_paid,
         ]);
 
         // Append invoice totals
