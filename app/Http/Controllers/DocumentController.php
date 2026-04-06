@@ -17,6 +17,7 @@ class DocumentController extends Controller
             'name' => 'required|string|max:255',
             'type' => 'required|in:contract,brief,report,asset,other',
             'file' => 'nullable|file|max:102400', // 100MB max
+            'task_id' => 'nullable|exists:tasks,id',
         ]);
 
         $filePath = null;
@@ -24,7 +25,7 @@ class DocumentController extends Controller
 
         if ($request->hasFile('file')) {
             $file     = $request->file('file');
-            $filePath = $file->store("projects/{$project->id}/documents", 'private');
+            $filePath = $file->store("projects/{$project->id}/documents", 'local');
             $fileSize = $this->formatBytes($file->getSize());
         }
 
@@ -34,28 +35,62 @@ class DocumentController extends Controller
             'file_path' => $filePath,
             'file_size' => $fileSize,
             'added_by'  => $request->user()->id,
+            'task_id'   => $validated['task_id'] ?? null,
         ]);
 
         return back()->with('success', 'Document added.');
     }
 
-    public function download(Document $document)
+    public function download(Request $request, Document $document)
     {
-        $this->authorize('view', $document->project);
+        $this->authorizeDocumentAccess($request, $document);
 
-        if (!$document->file_path || !Storage::disk('private')->exists($document->file_path)) {
+        if (!$document->file_path || !Storage::disk('local')->exists($document->file_path)) {
             abort(404, 'File not found.');
         }
 
-        return Storage::disk('private')->download($document->file_path, $document->name);
+        $originalExt = pathinfo($document->file_path, PATHINFO_EXTENSION);
+        $nameExt = pathinfo($document->name, PATHINFO_EXTENSION);
+        $downloadName = $nameExt ? $document->name : $document->name . '.' . $originalExt;
+
+        return Storage::disk('local')->download($document->file_path, $downloadName);
     }
 
-    public function destroy(Document $document)
+    public function preview(Request $request, Document $document)
+    {
+        $this->authorizeDocumentAccess($request, $document);
+
+        if (!$document->file_path || !Storage::disk('local')->exists($document->file_path)) {
+            abort(404, 'File not found.');
+        }
+
+        $mime = Storage::disk('local')->mimeType($document->file_path);
+
+        return response(Storage::disk('local')->get($document->file_path), 200, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="' . $document->name . '"',
+        ]);
+    }
+
+    private function authorizeDocumentAccess(Request $request, Document $document): void
+    {
+        $project = $document->project;
+
+        // Allow access if the project portal is enabled (public portal)
+        if ($project->portal_enabled) {
+            return;
+        }
+
+        // Otherwise require standard authorization
+        $this->authorize('view', $project);
+    }
+
+    public function destroy(Project $project, Document $document)
     {
         $this->authorize('update', $document->project);
 
         if ($document->file_path) {
-            Storage::disk('private')->delete($document->file_path);
+            Storage::disk('local')->delete($document->file_path);
         }
 
         $document->delete();

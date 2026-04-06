@@ -5,7 +5,7 @@ import currencies from '@/Utils/currencies';
 import {
     Pencil, Eye, Plus, Save, X, Check, Send, ChevronUp, ChevronDown,
     FileText, Receipt, CalendarDays, Calendar, FolderOpen, Clock, ListChecks,
-    Trash2, Download, Upload, CheckCircle, XCircle, AlertCircle, Lock, Code, Users,
+    Trash2, Download, Upload, CheckCircle, XCircle, AlertCircle, Lock, Code, Users, Maximize2, Minimize2,
 } from 'lucide-react';
 
 const RichEditor = lazy(() => import('@/Components/RichEditor'));
@@ -1252,9 +1252,74 @@ function MeetingsTab({ project, canManage }) {
     );
 }
 
+// ── DOCUMENT PREVIEW ──────────────────────────────────────────────────────────
+const PREVIEWABLE_EXT = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+const getFileExt = (name) => (name ?? '').split('.').pop().toLowerCase();
+const docExt = (doc) => getFileExt(doc.file_path) || getFileExt(doc.name);
+const isPreviewable = (doc) => doc.file_path && PREVIEWABLE_EXT.includes(docExt(doc));
+const isImage = (doc) => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(docExt(doc));
+
+function DocPreviewModal({ doc, onClose }) {
+    const [fullscreen, setFullscreen] = useState(false);
+    if (!doc) return null;
+    const previewUrl = `/documents/${doc.id}/preview`;
+    const canPreview = isPreviewable(doc);
+
+    if (fullscreen && canPreview) {
+        return (
+            <div className="fixed inset-0 z-[60] bg-black flex flex-col">
+                <div className="flex items-center justify-between px-4 py-2.5 bg-black/90">
+                    <div className="text-white text-[13px] font-medium truncate mr-4">{doc.name}</div>
+                    <div className="flex items-center gap-2">
+                        <a href={`/documents/${doc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-white/70 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-white/10 transition-colors"><Download size={13} /> Download</a>
+                        <button onClick={() => setFullscreen(false)} className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors" title="Exit fullscreen"><Minimize2 size={16} /></button>
+                        <button onClick={onClose} className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"><X size={16} /></button>
+                    </div>
+                </div>
+                <div className="flex-1 flex items-center justify-center overflow-auto">
+                    {isImage(doc) ? (
+                        <img src={previewUrl} alt={doc.name} className="max-w-full max-h-full object-contain" />
+                    ) : (
+                        <iframe src={previewUrl} className="w-full h-full" title={doc.name} />
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <Modal large title={doc.name} subtitle={`${doc.type?.charAt(0).toUpperCase() + doc.type?.slice(1)} · ${doc.file_size ?? ''}`} onClose={onClose} footer={
+            <>
+                <Btn ghost onClick={onClose}><X size={13} /> Close</Btn>
+                <a href={`/documents/${doc.id}/download`} className="inline-flex items-center gap-1.5 rounded-lg font-medium transition-all px-4 py-2.5 text-[13px] bg-[#4f6df5] hover:bg-[#6380f7] text-white"><Download size={13} /> Download</a>
+            </>
+        }>
+            {canPreview ? (
+                <div className="relative">
+                    <button onClick={() => setFullscreen(true)} className="absolute top-2 right-2 z-10 p-2 rounded-lg bg-black/50 text-white hover:bg-black/70 transition-colors" title="Fullscreen"><Maximize2 size={15} /></button>
+                    <div className="flex items-center justify-center bg-[#f3f4f6] rounded-lg overflow-hidden" style={{ minHeight: '400px' }}>
+                        {isImage(doc) ? (
+                            <img src={previewUrl} alt={doc.name} className="max-w-full max-h-[70vh] object-contain" />
+                        ) : (
+                            <iframe src={previewUrl} className="w-full rounded-lg" style={{ height: '70vh' }} title={doc.name} />
+                        )}
+                    </div>
+                </div>
+            ) : (
+                <div className="text-center py-16 text-[#6b7280]">
+                    <div className="mb-4 flex justify-center"><div className="w-16 h-16 rounded-2xl bg-[#f3f4f6] flex items-center justify-center text-3xl">{DOC_ICONS[doc.type] ?? '📁'}</div></div>
+                    <div className="text-[14px] font-medium text-black mb-1">Preview not available</div>
+                    <div className="text-[13px] mb-4">This file type cannot be previewed in the browser. Download it to view.</div>
+                </div>
+            )}
+        </Modal>
+    );
+}
+
 // ── DOCUMENTS TAB ─────────────────────────────────────────────────────────────
 function DocumentsTab({ project, canManage }) {
     const [showModal, setShowModal] = useState(false);
+    const [previewDoc, setPreviewDoc] = useState(null);
     const [filter, setFilter] = useState('all');
     const documents = project.documents ?? [];
     const filtered = filter === 'all' ? documents : documents.filter(d => d.type === filter);
@@ -1287,10 +1352,14 @@ function DocumentsTab({ project, canManage }) {
                             </div>
                         </div>
                         <Badge status={doc.type} label={doc.type} />
+                        {doc.task_id && <span className="text-[10px] text-[#9ca3af] bg-[#f3f4f6] px-2 py-0.5 rounded-full">Task</span>}
+                        <button onClick={() => setPreviewDoc(doc)} className="inline-flex items-center gap-1.5 text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100"><Eye size={13} /> View</button>
                         <a href={`/documents/${doc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100"><Download size={13} /> Download</a>
                     </div>
                 ))}
             </div>
+
+            <DocPreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} />
 
             {showModal && (
                 <Modal title="Add Document" subtitle={`To ${project.name}`} onClose={() => setShowModal(false)} footer={<><Btn ghost onClick={() => setShowModal(false)}>Cancel</Btn><Btn primary onClick={submit} disabled={processing}>{processing ? 'Adding…' : 'Add Document'}</Btn></>}>
@@ -1419,6 +1488,9 @@ function TimelineTab({ project }) {
 function TasksTab({ project, canManage }) {
     const [showModal, setShowModal] = useState(false);
     const [filter, setFilter] = useState('all');
+    const [expandedTask, setExpandedTask] = useState(null);
+    const [showDocModal, setShowDocModal] = useState(null); // task id
+    const [previewDoc, setPreviewDoc] = useState(null);
     const tasks = project.tasks ?? [];
     const filtered = filter === 'all' ? tasks : tasks.filter(t => t.status === filter);
 
@@ -1427,9 +1499,23 @@ function TasksTab({ project, canManage }) {
     });
     const submit = () => post(route('projects.tasks.store', project.id), { onSuccess: () => { setShowModal(false); reset(); } });
 
+    const docForm = useForm({ name: '', type: 'other', file: null, task_id: null });
+    const submitDoc = () => {
+        docForm.post(route('projects.documents.store', project.id), {
+            forceFormData: true,
+            onSuccess: () => { setShowDocModal(null); docForm.reset(); },
+        });
+    };
+
     const cycleStatus = (task) => {
         const next = { 'not-started': 'in-progress', 'in-progress': 'completed', 'review': 'completed', 'completed': 'not-started' };
         router.patch(route('tasks.status', task.id), { status: next[task.status] ?? 'not-started' });
+    };
+
+    const deleteDoc = (doc) => {
+        if (confirm('Delete this document?')) {
+            router.delete(route('projects.documents.destroy', [project.id, doc.id]));
+        }
     };
 
     // Group by category
@@ -1471,29 +1557,93 @@ function TasksTab({ project, canManage }) {
                         <ListChecks size={13} /> {cat} <span className="text-[#d1d5db]">({catTasks.length})</span>
                     </div>
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
-                        {catTasks.map(t => (
-                            <div key={t.id} className="flex items-center gap-3 px-4 py-3 border-b border-[#f0f0f0] last:border-b-0 hover:bg-[#fafbfc] transition-colors">
-                                <button
-                                    onClick={() => cycleStatus(t)}
-                                    className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all
-                                        ${t.status === 'completed' ? 'border-emerald-400 bg-emerald-400' : t.status === 'in-progress' ? 'border-indigo-400 bg-indigo-50' : 'border-[#d1d5db] hover:border-[#4f6df5]'}`}
-                                >
-                                    {t.status === 'completed' && <Check size={12} className="text-white" />}
-                                    {t.status === 'in-progress' && <div className="w-2 h-2 rounded-sm bg-indigo-400" />}
-                                </button>
-                                <div className="flex-1 min-w-0">
-                                    <div className={`text-[13px] ${t.status === 'completed' ? 'text-emerald-600' : 'text-black font-medium'}`}>{t.title}</div>
-                                    <div className="text-[11px] text-[#9ca3af] flex items-center gap-1.5">
-                                        {t.assignee && <span>{t.assignee}</span>}
-                                        {t.due_date && <><span>·</span><span className="flex items-center gap-0.5"><Calendar size={10} /> {fmtDate(t.due_date)}</span></>}
+                        {catTasks.map(t => {
+                            const docs = t.documents ?? [];
+                            const isExpanded = expandedTask === t.id;
+                            return (
+                                <div key={t.id} className="border-b border-[#f0f0f0] last:border-b-0">
+                                    <div className="flex items-center gap-3 px-4 py-3 hover:bg-[#fafbfc] transition-colors">
+                                        <button
+                                            onClick={() => cycleStatus(t)}
+                                            className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all
+                                                ${t.status === 'completed' ? 'border-emerald-400 bg-emerald-400' : t.status === 'in-progress' ? 'border-indigo-400 bg-indigo-50' : 'border-[#d1d5db] hover:border-[#4f6df5]'}`}
+                                        >
+                                            {t.status === 'completed' && <Check size={12} className="text-white" />}
+                                            {t.status === 'in-progress' && <div className="w-2 h-2 rounded-sm bg-indigo-400" />}
+                                        </button>
+                                        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setExpandedTask(isExpanded ? null : t.id)}>
+                                            <div className={`text-[13px] ${t.status === 'completed' ? 'text-emerald-600' : 'text-black font-medium'}`}>{t.title}</div>
+                                            <div className="text-[11px] text-[#9ca3af] flex items-center gap-1.5">
+                                                {t.assignee && <span>{t.assignee}</span>}
+                                                {t.due_date && <><span>·</span><span className="flex items-center gap-0.5"><Calendar size={10} /> {fmtDate(t.due_date)}</span></>}
+                                                {docs.length > 0 && <><span>·</span><span className="flex items-center gap-0.5"><FileText size={10} /> {docs.length} doc{docs.length !== 1 ? 's' : ''}</span></>}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            {canManage && (
+                                                <button
+                                                    onClick={() => { docForm.setData('task_id', t.id); setShowDocModal(t.id); }}
+                                                    className="p-1.5 rounded-md text-[#9ca3af] hover:text-[#4f6df5] hover:bg-indigo-50 transition-colors"
+                                                    title="Attach document"
+                                                >
+                                                    <Upload size={13} />
+                                                </button>
+                                            )}
+                                            <Badge status={t.priority} />
+                                            <Badge status={t.status} label={t.status === 'not-started' ? 'To Do' : t.status === 'in-progress' ? 'In Progress' : t.status === 'review' ? 'Review' : 'Done'} />
+                                        </div>
                                     </div>
+                                    {isExpanded && docs.length > 0 && (
+                                        <div className="px-4 pb-3 pt-0">
+                                            <div className="ml-8 bg-[#f9fafb] border border-[#e5e7eb] rounded-lg overflow-hidden">
+                                                <div className="px-3 py-2 border-b border-[#e5e7eb] text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium flex items-center gap-1.5">
+                                                    <FileText size={11} /> Attached Documents
+                                                </div>
+                                                {docs.map(doc => (
+                                                    <div key={doc.id} className="flex items-center gap-2.5 px-3 py-2.5 border-b border-[#f0f0f0] last:border-b-0">
+                                                        <div className={`w-7 h-7 rounded-md flex items-center justify-center text-[13px] flex-shrink-0 ${DOC_COLORS[doc.type] ?? 'bg-gray-100'}`}>
+                                                            {DOC_ICONS[doc.type] ?? '📁'}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="text-[12px] font-medium text-black truncate">{doc.name}</div>
+                                                            <div className="text-[10px] text-[#9ca3af]">
+                                                                {doc.uploader?.name ?? 'Team'} · {fmtDate(doc.created_at)} {doc.file_size ? `· ${doc.file_size}` : ''}
+                                                            </div>
+                                                        </div>
+                                                        <button onClick={() => setPreviewDoc(doc)} className="inline-flex items-center gap-1 text-[11px] text-[#6b7280] hover:text-black transition-colors px-2 py-1 rounded-md border border-[#e5e7eb] hover:bg-white">
+                                                            <Eye size={11} /> View
+                                                        </button>
+                                                        <a href={`/documents/${doc.id}/download`} className="inline-flex items-center gap-1 text-[11px] text-[#6b7280] hover:text-black transition-colors px-2 py-1 rounded-md border border-[#e5e7eb] hover:bg-white">
+                                                            <Download size={11} /> Download
+                                                        </a>
+                                                        {canManage && (
+                                                            <button onClick={() => deleteDoc(doc)} className="p-1 rounded-md text-[#d1d5db] hover:text-red-400 transition-colors">
+                                                                <Trash2 size={12} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {isExpanded && docs.length === 0 && (
+                                        <div className="px-4 pb-3 pt-0">
+                                            <div className="ml-8 text-[12px] text-[#9ca3af] flex items-center gap-1.5 py-2">
+                                                <FileText size={11} /> No documents attached
+                                                {canManage && (
+                                                    <button
+                                                        onClick={() => { docForm.setData('task_id', t.id); setShowDocModal(t.id); }}
+                                                        className="ml-1 text-[#4f6df5] hover:underline"
+                                                    >
+                                                        — Add one
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="flex items-center gap-1.5">
-                                    <Badge status={t.priority} />
-                                    <Badge status={t.status} label={t.status === 'not-started' ? 'To Do' : t.status === 'in-progress' ? 'In Progress' : t.status === 'review' ? 'Review' : 'Done'} />
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             ))}
@@ -1522,6 +1672,29 @@ function TasksTab({ project, canManage }) {
                     </div>
                 </Modal>
             )}
+
+            {showDocModal && (
+                <Modal title="Attach Document" subtitle={`To task: ${tasks.find(t => t.id === showDocModal)?.title ?? ''}`} onClose={() => { setShowDocModal(null); docForm.reset(); }} footer={<><Btn ghost onClick={() => { setShowDocModal(null); docForm.reset(); }}>Cancel</Btn><Btn primary onClick={submitDoc} disabled={docForm.processing}>{docForm.processing ? 'Uploading…' : 'Upload Document'}</Btn></>}>
+                    <div className="space-y-4 pb-2">
+                        <FG label="Document Name *"><input className={inputCls} value={docForm.data.name} onChange={e => docForm.setData('name', e.target.value)} placeholder="e.g. Final Mockup, Brand Guidelines" /></FG>
+                        <FG label="Document Type">
+                            <select className={inputCls} value={docForm.data.type} onChange={e => docForm.setData('type', e.target.value)}>
+                                {['contract','brief','report','asset','other'].map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
+                            </select>
+                        </FG>
+                        <div className="border-2 border-dashed border-[#d1d5db] rounded-xl p-8 text-center text-[#6b7280]">
+                            <input type="file" onChange={e => docForm.setData('file', e.target.files[0])} className="hidden" id="task-file-upload" />
+                            <label htmlFor="task-file-upload" className="cursor-pointer">
+                                <div className="text-3xl mb-2">📎</div>
+                                <div className="text-[13px]">{docForm.data.file ? docForm.data.file.name : 'Click to upload or drag & drop'}</div>
+                                <div className="text-[11px] mt-1">PDF, DOCX, PNG, ZIP — up to 100MB</div>
+                            </label>
+                        </div>
+                    </div>
+                </Modal>
+            )}
+
+            <DocPreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} />
         </>
     );
 }

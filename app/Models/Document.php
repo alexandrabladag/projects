@@ -11,6 +11,7 @@ class Document extends Model
 
     protected $fillable = [
         'project_id',
+        'task_id',
         'name',
         'type',         // contract | brief | report | asset | other
         'file_path',
@@ -21,6 +22,11 @@ class Document extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function task()
+    {
+        return $this->belongsTo(Task::class);
     }
 
     public function uploader()

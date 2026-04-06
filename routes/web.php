@@ -120,7 +120,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('tasks/{task}/status',         [TaskController::class, 'updateStatus'])
         ->name('tasks.status');
     Route::get('documents/{document}/download', [DocumentController::class, 'download'])
-        ->name('documents.download');
+        ->name('documents.download')->withoutMiddleware(['auth', 'verified']);
+    Route::get('documents/{document}/preview', [DocumentController::class, 'preview'])
+        ->name('documents.preview')->withoutMiddleware(['auth', 'verified']);
 
     Route::get('invoices/{invoice}/view', [InvoiceController::class, 'show'])->name('invoices.view');
     Route::get('proposals/{proposal}/view', [ProposalController::class, 'show'])->name('proposals.view');

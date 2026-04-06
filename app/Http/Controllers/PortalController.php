@@ -34,6 +34,7 @@ class PortalController extends Controller
             'proposals',
             'invoices.items',
             'meetings',
+            'documents.uploader',
         ]);
 
         $projectData = array_merge($project->toArray(), [

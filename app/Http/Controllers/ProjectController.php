@@ -131,7 +131,7 @@ class ProjectController extends Controller
             'invoices.items',
             'meetings',
             'documents.uploader',
-            'tasks',
+            'tasks.documents.uploader',
             'bills.vendor',
             'payroll.teamMember',
             'members.client',

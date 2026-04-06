@@ -4,7 +4,7 @@ import { Badge } from '@/Layouts/AppLayout';
 import { formatMoney, getCurrency } from '@/Utils/currencies';
 import {
     FileText, Receipt, CalendarDays, Eye, ChevronDown, ChevronUp,
-    CheckCircle, Circle, Clock, MapPin, Users, ArrowRight,
+    CheckCircle, Circle, Clock, MapPin, Users, ArrowRight, Download, X, FolderOpen, Maximize2, Minimize2,
 } from 'lucide-react';
 
 const fmtDate = (s) => s ? new Date(s).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—';
@@ -20,6 +20,9 @@ export default function Public({ project, company, code }) {
     const meetings = (project.meetings ?? []).filter(m => m.status === 'scheduled');
     const tasks = project.tasks ?? [];
     const [expandedInv, setExpandedInv] = useState(null);
+    const [previewDoc, setPreviewDoc] = useState(null);
+    const [fullscreen, setFullscreen] = useState(false);
+    const documents = project.documents ?? [];
 
     const completedTasks = tasks.filter(t => t.status === 'completed').length;
     const totalTasks = tasks.length;
@@ -291,23 +294,131 @@ export default function Public({ project, company, code }) {
                                                     </div>
                                                 )}
                                                 <div className="px-6 py-2">
-                                                    {catTasks.map(t => (
-                                                        <div key={t.id} className="flex items-center gap-3 py-2.5 border-b border-[#f8f8f8] last:border-b-0">
-                                                            {t.status === 'completed'
-                                                                ? <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
-                                                                : t.status === 'in-progress'
-                                                                    ? <div className="w-4 h-4 rounded-full border-2 border-[#4f6df5] flex items-center justify-center flex-shrink-0"><div className="w-2 h-2 rounded-full bg-[#4f6df5]" /></div>
-                                                                    : <Circle size={16} className="text-[#d1d5db] flex-shrink-0" />
-                                                            }
-                                                            <span className={`text-[13px] flex-1 ${t.status === 'completed' ? 'text-emerald-600' : 'text-black'}`}>{t.title}</span>
-                                                            {t.due_date && <span className="text-[11px] text-[#9ca3af]">{new Date(t.due_date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>}
-                                                            <Badge status={t.status} label={t.status==='completed'?'Done':t.status==='in-progress'?'In Progress':t.status==='review'?'Review':'To Do'} />
-                                                        </div>
-                                                    ))}
+                                                    {catTasks.map(t => {
+                                                        const docs = t.documents ?? [];
+                                                        return (
+                                                            <div key={t.id} className="py-2.5 border-b border-[#f8f8f8] last:border-b-0">
+                                                                <div className="flex items-center gap-3">
+                                                                    {t.status === 'completed'
+                                                                        ? <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
+                                                                        : t.status === 'in-progress'
+                                                                            ? <div className="w-4 h-4 rounded-full border-2 border-[#4f6df5] flex items-center justify-center flex-shrink-0"><div className="w-2 h-2 rounded-full bg-[#4f6df5]" /></div>
+                                                                            : <Circle size={16} className="text-[#d1d5db] flex-shrink-0" />
+                                                                    }
+                                                                    <span className={`text-[13px] flex-1 ${t.status === 'completed' ? 'text-emerald-600' : 'text-black'}`}>{t.title}</span>
+                                                                    {t.due_date && <span className="text-[11px] text-[#9ca3af]">{new Date(t.due_date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>}
+                                                                    <Badge status={t.status} label={t.status==='completed'?'Done':t.status==='in-progress'?'In Progress':t.status==='review'?'Review':'To Do'} />
+                                                                </div>
+                                                                {docs.length > 0 && (
+                                                                    <div className="ml-7 mt-1.5 flex flex-wrap gap-2">
+                                                                        {docs.map(doc => (
+                                                                            <div key={doc.id} className="inline-flex items-center gap-2 bg-[#f3f4f6] border border-[#e5e7eb] rounded-lg px-2.5 py-1.5">
+                                                                                <span className="text-[11px] font-medium text-[#4b5563] truncate max-w-[150px]">{doc.name}</span>
+                                                                                <button onClick={() => setPreviewDoc(doc)} className="text-[#6b7280] hover:text-[#4f6df5] transition-colors"><Eye size={12} /></button>
+                                                                                <a href={`/documents/${doc.id}/download`} className="text-[#6b7280] hover:text-black transition-colors"><Download size={12} /></a>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                         );
                                     })}
+                                </div>
+                            </div>
+                        );
+                    })()}
+
+                    {/* Documents */}
+                    {documents.length > 0 && (
+                        <div className="mb-8">
+                            <h2 className="text-[16px] font-bold text-black mb-4 flex items-center gap-2"><FolderOpen size={18} className="text-[#4f6df5]" /> Documents</h2>
+                            <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden shadow-sm">
+                                {documents.map(doc => (
+                                    <div key={doc.id} className="flex items-center gap-3.5 px-5 py-3.5 border-b border-[#e5e7eb] last:border-b-0">
+                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-[18px] flex-shrink-0 ${
+                                            { contract:'bg-red-500/10', brief:'bg-orange-500/10', report:'bg-blue-500/10', asset:'bg-purple-500/10' }[doc.type] ?? 'bg-gray-100'
+                                        }`}>
+                                            {{ contract:'📋', brief:'📝', report:'📊', asset:'🖼️' }[doc.type] ?? '📁'}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-[13px] font-medium text-black truncate">{doc.name}</div>
+                                            <div className="text-[11.5px] text-[#6b7280]">
+                                                {doc.uploader?.name ?? 'Team'} · {fmtDate(doc.created_at)} {doc.file_size ? `· ${doc.file_size}` : ''}
+                                            </div>
+                                        </div>
+                                        {doc.file_path && (
+                                            <button onClick={() => setPreviewDoc(doc)} className="inline-flex items-center gap-1.5 text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
+                                                <Eye size={13} /> View
+                                            </button>
+                                        )}
+                                        {doc.file_path && (
+                                            <a href={`/documents/${doc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
+                                                <Download size={13} /> Download
+                                            </a>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Document Preview Modal */}
+                    {previewDoc && (() => {
+                        const ext = (previewDoc.file_path ?? '').split('.').pop().toLowerCase();
+                        const imgExts = ['jpg','jpeg','png','gif','webp','svg'];
+                        const previewUrl = `/documents/${previewDoc.id}/preview`;
+                        const canPreview = previewDoc.file_path && ([...imgExts, 'pdf'].includes(ext));
+                        const isImg = imgExts.includes(ext);
+
+                        if (fullscreen && canPreview) {
+                            return (
+                                <div className="fixed inset-0 z-[60] bg-black flex flex-col">
+                                    <div className="flex items-center justify-between px-4 py-2.5 bg-black/90">
+                                        <div className="text-white text-[13px] font-medium truncate mr-4">{previewDoc.name}</div>
+                                        <div className="flex items-center gap-2">
+                                            <a href={`/documents/${previewDoc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-white/70 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-white/10 transition-colors"><Download size={13} /> Download</a>
+                                            <button onClick={() => setFullscreen(false)} className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors" title="Exit fullscreen"><Minimize2 size={16} /></button>
+                                            <button onClick={() => { setPreviewDoc(null); setFullscreen(false); }} className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"><X size={16} /></button>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 flex items-center justify-center overflow-auto">
+                                        {isImg ? <img src={previewUrl} alt={previewDoc.name} className="max-w-full max-h-full object-contain" /> : <iframe src={previewUrl} className="w-full h-full" title={previewDoc.name} />}
+                                    </div>
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setPreviewDoc(null)}>
+                                <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                                    <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb]">
+                                        <div>
+                                            <div className="text-[15px] font-bold text-black">{previewDoc.name}</div>
+                                            <div className="text-[12px] text-[#6b7280]">{previewDoc.type} {previewDoc.file_size ? `· ${previewDoc.file_size}` : ''}</div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {canPreview && <button onClick={() => setFullscreen(true)} className="p-1.5 rounded-lg text-[#6b7280] hover:text-black hover:bg-gray-100" title="Fullscreen"><Maximize2 size={16} /></button>}
+                                            <a href={`/documents/${previewDoc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-[#6b7280] hover:text-black px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
+                                                <Download size={13} /> Download
+                                            </a>
+                                            <button onClick={() => setPreviewDoc(null)} className="p-1.5 rounded-lg text-[#6b7280] hover:text-black hover:bg-gray-100"><X size={16} /></button>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 overflow-auto p-6">
+                                        {canPreview ? (
+                                            isImg ? <img src={previewUrl} alt={previewDoc.name} className="max-w-full mx-auto rounded-lg" /> : <iframe src={previewUrl} className="w-full rounded-lg" style={{ height: '70vh' }} title={previewDoc.name} />
+                                        ) : (
+                                            <div className="text-center py-16 text-[#6b7280]">
+                                                <div className="text-3xl mb-3">📄</div>
+                                                <div className="text-[14px] font-medium text-black mb-1">Preview not available</div>
+                                                <div className="text-[13px]">This file type cannot be previewed. Download it to view.</div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         );

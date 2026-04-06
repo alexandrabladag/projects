@@ -28,6 +28,11 @@ class Task extends Model
         return $this->belongsTo(Project::class);
     }
 
+    public function documents()
+    {
+        return $this->hasMany(Document::class);
+    }
+
     public function scopePending($query)
     {
         return $query->whereNotIn('status', ['completed']);
