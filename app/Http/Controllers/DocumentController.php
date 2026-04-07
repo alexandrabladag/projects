@@ -85,6 +85,32 @@ class DocumentController extends Controller
         $this->authorize('view', $project);
     }
 
+    public function update(Request $request, Project $project, Document $document)
+    {
+        $this->authorize('update', $project);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:contract,brief,report,asset,other',
+            'file' => 'nullable|file|max:102400',
+        ]);
+
+        if ($request->hasFile('file')) {
+            // Delete old file
+            if ($document->file_path) {
+                Storage::disk('local')->delete($document->file_path);
+            }
+            $file = $request->file('file');
+            $validated['file_path'] = $file->store("projects/{$project->id}/documents", 'local');
+            $validated['file_size'] = $this->formatBytes($file->getSize());
+        }
+        unset($validated['file']);
+
+        $document->update($validated);
+
+        return back()->with('success', 'Document updated.');
+    }
+
     public function destroy(Project $project, Document $document)
     {
         $this->authorize('update', $document->project);

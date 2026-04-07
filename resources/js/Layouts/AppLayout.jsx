@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users, Menu } from 'lucide-react';
 
 // ── Reusable Badge ─────────────────────────────────────────────────────────────
 export function Badge({ status, label }) {
@@ -34,7 +34,7 @@ export function Badge({ status, label }) {
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
-function Sidebar({ projects, workspace, user }) {
+function Sidebar({ projects, workspace, user, open, onClose }) {
     const { url } = usePage();
 
     const icons = {
@@ -64,8 +64,15 @@ function Sidebar({ projects, workspace, user }) {
         );
     };
 
+    // Close sidebar on navigation (mobile)
+    useEffect(() => { onClose?.(); }, [url]);
+
     return (
-        <aside className="w-[232px] bg-[#1e293b] border-r border-[#334155] flex flex-col fixed h-screen z-10 overflow-y-auto">
+        <>
+            {/* Mobile overlay */}
+            {open && <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={onClose} />}
+
+            <aside className={`w-[232px] bg-[#1e293b] border-r border-[#334155] flex flex-col fixed h-screen z-30 overflow-y-auto transition-transform duration-200 ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
             {/* Logo */}
             <div className="px-5 py-6 border-b border-[#334155]">
                 <div className="font-serif text-xl font-bold tracking-[5px] text-[#4f6df5]">FLOW</div>
@@ -148,6 +155,7 @@ function Sidebar({ projects, workspace, user }) {
                 </div>
             </div>
         </aside>
+        </>
     );
 }
 
@@ -171,8 +179,8 @@ function Toast() {
     const isSuccess = message.type === 'success';
 
     return (
-        <div className={`fixed top-5 right-5 z-50 animate-slide-in`}>
-            <div className={`flex items-start gap-3 px-4 py-3.5 rounded-xl border text-[13px] shadow-lg backdrop-blur-sm min-w-[320px] max-w-[420px]
+        <div className={`fixed top-5 right-4 left-4 md:left-auto md:right-5 z-50 animate-slide-in`}>
+            <div className={`flex items-start gap-3 px-4 py-3.5 rounded-xl border text-[13px] shadow-lg backdrop-blur-sm w-full md:min-w-[320px] md:max-w-[420px]
                 ${isSuccess
                     ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                     : 'bg-red-50 border-red-200 text-red-800'
@@ -195,37 +203,43 @@ function Toast() {
 // ── Main Layout ────────────────────────────────────────────────────────────────
 export default function AppLayout({ children, title, breadcrumbs = [] }) {
     const { auth, sidebarProjects } = usePage().props;
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
         <div className="flex min-h-screen bg-[#f8f8f8]">
-            <Sidebar projects={sidebarProjects ?? []} workspace={auth.workspace} user={auth.user} />
+            <Sidebar projects={sidebarProjects ?? []} workspace={auth.workspace} user={auth.user} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-            <div className="ml-[232px] flex-1 flex flex-col min-h-screen">
+            <div className="md:ml-[232px] flex-1 flex flex-col min-h-screen w-full">
                 {/* Topbar */}
-                <header className="sticky top-0 z-10 bg-[#f8f8f8] border-b border-[#e5e7eb] px-8 py-4 flex items-center justify-between">
-                    <div>
-                        {title && (
-                            <h1 className="font-serif text-2xl font-semibold text-black">{title}</h1>
-                        )}
-                        {breadcrumbs.length > 0 && (
-                            <nav className="flex items-center gap-1.5 text-[11.5px] text-[#6b7280] mt-0.5">
-                                {breadcrumbs.map((bc, i) => (
-                                    <span key={i} className="flex items-center gap-1.5">
-                                        {bc.href
-                                            ? <Link href={bc.href} className="hover:text-black transition-colors">{bc.label}</Link>
-                                            : <span>{bc.label}</span>
-                                        }
-                                        {i < breadcrumbs.length - 1 && <span className="opacity-40">›</span>}
-                                    </span>
-                                ))}
-                            </nav>
-                        )}
+                <header className="sticky top-0 z-10 bg-[#f8f8f8] border-b border-[#e5e7eb] px-4 md:px-8 py-3 md:py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => setSidebarOpen(true)} className="md:hidden p-1.5 -ml-1.5 rounded-lg text-[#6b7280] hover:text-black hover:bg-gray-100 transition-colors">
+                            <Menu size={20} />
+                        </button>
+                        <div>
+                            {title && (
+                                <h1 className="font-serif text-xl md:text-2xl font-semibold text-black">{title}</h1>
+                            )}
+                            {breadcrumbs.length > 0 && (
+                                <nav className="flex items-center gap-1.5 text-[11.5px] text-[#6b7280] mt-0.5">
+                                    {breadcrumbs.map((bc, i) => (
+                                        <span key={i} className="flex items-center gap-1.5">
+                                            {bc.href
+                                                ? <Link href={bc.href} className="hover:text-black transition-colors">{bc.label}</Link>
+                                                : <span>{bc.label}</span>
+                                            }
+                                            {i < breadcrumbs.length - 1 && <span className="opacity-40">›</span>}
+                                        </span>
+                                    ))}
+                                </nav>
+                            )}
+                        </div>
                     </div>
                     <div />
                 </header>
 
                 {/* Page Content */}
-                <main className="flex-1 p-8">
+                <main className="flex-1 p-4 md:p-8">
                     {children}
                 </main>
             </div>

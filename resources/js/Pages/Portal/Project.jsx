@@ -58,7 +58,7 @@ export default function Project({ project }) {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[#f0f0f0]">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-[#f0f0f0]">
                     <div>
                         <div className="text-[10px] uppercase tracking-wide text-[#9ca3af] font-medium">Budget</div>
                         <div className="text-[18px] font-bold text-black">{fmt(project.budget)}</div>
@@ -75,7 +75,7 @@ export default function Project({ project }) {
             </div>
 
             {/* Tabs */}
-            <div className="border-b border-[#e5e7eb] mb-6 flex gap-0">
+            <div className="border-b border-[#e5e7eb] mb-6 flex gap-0 overflow-x-auto">
                 {tabs.map(t => (
                     <button
                         key={t.id}
@@ -102,7 +102,7 @@ export default function Project({ project }) {
                     {/* Timeline */}
                     <div className="bg-white border border-[#e5e7eb] rounded-xl p-5">
                         <div className="text-[14px] font-bold text-black mb-3">Timeline</div>
-                        <div className="grid grid-cols-4 gap-4 text-center">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                             <div>
                                 <div className="text-[10px] uppercase tracking-wide text-[#9ca3af] mb-1">Start</div>
                                 <div className="text-[13px] font-medium text-black">{fmtDate(project.start_date)}</div>

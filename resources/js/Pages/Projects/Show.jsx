@@ -34,17 +34,17 @@ const DOC_COLORS  = { contract:'bg-red-500/10', brief:'bg-orange-500/10', report
 // ── Modal Wrapper ─────────────────────────────────────────────────────────────
 function Modal({ title, subtitle, large, onClose, children, footer }) {
     return (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-5" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-            <div className={`bg-white border border-[#d1d5db] rounded-2xl w-full flex flex-col max-h-[88vh] ${large ? 'max-w-[660px]' : 'max-w-[560px]'}`}>
-                <div className="flex justify-between items-start p-6 pb-4 flex-shrink-0">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end md:items-center justify-center md:p-5" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+            <div className={`bg-white border border-[#d1d5db] rounded-t-2xl md:rounded-2xl w-full flex flex-col max-h-[92vh] md:max-h-[88vh] ${large ? 'md:max-w-[660px]' : 'md:max-w-[560px]'}`}>
+                <div className="flex justify-between items-start p-4 md:p-6 pb-3 md:pb-4 flex-shrink-0">
                     <div>
                         <div className="font-serif text-[21px] font-semibold text-black">{title}</div>
                         {subtitle && <div className="text-[12px] text-[#6b7280] mt-1">{subtitle}</div>}
                     </div>
                     <button onClick={onClose} className="text-[#6b7280] hover:text-black text-[22px] leading-none transition-colors">×</button>
                 </div>
-                <div className="px-6 pb-2 overflow-y-auto flex-1">{children}</div>
-                {footer && <div className="flex justify-end gap-2.5 p-6 pt-4 flex-shrink-0">{footer}</div>}
+                <div className="px-4 md:px-6 pb-2 overflow-y-auto flex-1">{children}</div>
+                {footer && <div className="flex justify-end gap-2.5 p-4 md:p-6 pt-3 md:pt-4 flex-shrink-0">{footer}</div>}
             </div>
         </div>
     );
@@ -129,7 +129,7 @@ function OverviewTab({ project, canManage, fmt }) {
                 </div>
 
                 {/* Quick Stats */}
-                <div className={`grid ${project.launch_date ? 'grid-cols-5' : 'grid-cols-4'} border-t border-[#e5e7eb] pt-4 gap-0`}>
+                <div className={`grid grid-cols-2 ${project.launch_date ? 'md:grid-cols-5' : 'md:grid-cols-4'} border-t border-[#e5e7eb] pt-4 gap-0`}>
                     {[
                         { label: 'Progress', value: `${project.progress}%` },
                         { label: 'Budget', value: `${fmt(project.spent)} / ${fmt(project.budget)}` },
@@ -158,7 +158,7 @@ function OverviewTab({ project, canManage, fmt }) {
             {/* Client Access */}
             <ClientAccessSection project={project} canManage={canManage} />
 
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-4">
                     {/* Description */}
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
@@ -169,7 +169,7 @@ function OverviewTab({ project, canManage, fmt }) {
                     {/* Client Info */}
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                         <div className="px-5 py-3.5 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Client Information</span></div>
-                        <div className="px-5 py-4 grid grid-cols-2 gap-4">
+                        <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {[
                                 { l: 'Contact', v: project.contact_name },
                                 { l: 'Email', v: project.contact_email, gold: true },
@@ -190,7 +190,7 @@ function OverviewTab({ project, canManage, fmt }) {
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                         <div className="px-5 py-3.5 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Financial Overview</span></div>
                         <div className="px-5 py-4">
-                            <div className="grid grid-cols-3 gap-4 mb-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                                 {[
                                     { l: 'Project Budget', v: fmt(project.budget), serif: true },
                                     { l: 'Spent (Bills)', v: fmt(project.spent), serif: true, warn: budgetPct > 90 },
@@ -798,7 +798,7 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
                 {[
                     { l: 'Total Billed', v: fmt(totalBilled), icon: <Receipt size={16} />, bg: 'bg-indigo-50 border-indigo-100', iconC: 'text-indigo-500', textC: 'text-indigo-700' },
                     { l: 'Paid', v: fmt(totalPaid), icon: <Check size={16} />, bg: 'bg-emerald-50 border-emerald-100', iconC: 'text-emerald-500', textC: 'text-emerald-700' },
@@ -1320,12 +1320,31 @@ function DocPreviewModal({ doc, onClose }) {
 function DocumentsTab({ project, canManage }) {
     const [showModal, setShowModal] = useState(false);
     const [previewDoc, setPreviewDoc] = useState(null);
+    const [editDoc, setEditDoc] = useState(null);
     const [filter, setFilter] = useState('all');
     const documents = project.documents ?? [];
     const filtered = filter === 'all' ? documents : documents.filter(d => d.type === filter);
 
     const { data, setData, post, processing, reset } = useForm({ name: '', type: 'contract', file: null });
-    const submit = () => { post(route('projects.documents.store', project.id), { onSuccess: () => { setShowModal(false); reset(); } }); };
+    const submit = () => { post(route('projects.documents.store', project.id), { forceFormData: true, onSuccess: () => { setShowModal(false); reset(); } }); };
+
+    const editForm = useForm({ name: '', type: 'other', file: null });
+    const openEditDoc = (doc) => {
+        editForm.setData({ name: doc.name, type: doc.type, file: null });
+        setEditDoc(doc);
+    };
+    const submitEditDoc = () => {
+        editForm.transform(data => ({ ...data, _method: 'PUT' }));
+        editForm.post(route('projects.documents.update', [project.id, editDoc.id]), {
+            forceFormData: true,
+            onSuccess: () => { setEditDoc(null); editForm.reset(); },
+        });
+    };
+    const deleteDoc = (doc) => {
+        if (confirm('Delete this document?')) {
+            router.delete(route('projects.documents.destroy', [project.id, doc.id]));
+        }
+    };
 
     return (
         <>
@@ -1355,6 +1374,12 @@ function DocumentsTab({ project, canManage }) {
                         {doc.task_id && <span className="text-[10px] text-[#9ca3af] bg-[#f3f4f6] px-2 py-0.5 rounded-full">Task</span>}
                         <button onClick={() => setPreviewDoc(doc)} className="inline-flex items-center gap-1.5 text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100"><Eye size={13} /> View</button>
                         <a href={`/documents/${doc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100"><Download size={13} /> Download</a>
+                        {canManage && (
+                            <>
+                                <button onClick={() => openEditDoc(doc)} className="p-1.5 rounded-md text-[#9ca3af] hover:text-[#4f6df5] transition-colors" title="Edit"><Pencil size={14} /></button>
+                                <button onClick={() => deleteDoc(doc)} className="p-1.5 rounded-md text-[#9ca3af] hover:text-red-500 transition-colors" title="Delete"><Trash2 size={14} /></button>
+                            </>
+                        )}
                     </div>
                 ))}
             </div>
@@ -1378,6 +1403,27 @@ function DocumentsTab({ project, canManage }) {
                                 <div className="text-[11px] mt-1">PDF, DOCX, PNG, ZIP — up to 100MB</div>
                             </label>
                         </div>
+                    </div>
+                </Modal>
+            )}
+
+            {/* Edit Document Modal */}
+            {editDoc && (
+                <Modal title="Edit Document" subtitle={editDoc.name} onClose={() => setEditDoc(null)} footer={
+                    <><Btn ghost onClick={() => setEditDoc(null)}><X size={13} /> Cancel</Btn>
+                    <Btn primary onClick={submitEditDoc} disabled={editForm.processing}><Save size={13} /> {editForm.processing ? 'Saving…' : 'Save Changes'}</Btn></>
+                }>
+                    <div className="space-y-4 pb-2">
+                        <FG label="Document Name *"><input className={inputCls} value={editForm.data.name} onChange={e => editForm.setData('name', e.target.value)} /></FG>
+                        <FG label="Document Type">
+                            <select className={inputCls} value={editForm.data.type} onChange={e => editForm.setData('type', e.target.value)}>
+                                {['contract','brief','report','asset','other'].map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
+                            </select>
+                        </FG>
+                        <FG label="Replace File">
+                            <input type="file" onChange={e => editForm.setData('file', e.target.files[0])} className="text-[13px] text-[#6b7280]" />
+                            {editDoc.file_size && !editForm.data.file && <div className="text-[11px] text-[#9ca3af] mt-1">Current file: {editDoc.file_size}</div>}
+                        </FG>
                     </div>
                 </Modal>
             )}
@@ -1438,7 +1484,7 @@ function TimelineTab({ project }) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* Key Dates */}
                 <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                     <div className="px-5 py-4 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Key Dates</span></div>
@@ -1778,7 +1824,7 @@ function BillsTab({ project, canManage, fmt }) {
             </div>
 
             {/* Summary */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
                 {[
                     { l: 'Total Bills', v: fmt(totalBills), icon: <Receipt size={16} />, bg: 'bg-indigo-50 border-indigo-100', iconC: 'text-indigo-500', textC: 'text-indigo-700' },
                     { l: 'Paid', v: fmt(totalPaid), icon: <Check size={16} />, bg: 'bg-emerald-50 border-emerald-100', iconC: 'text-emerald-500', textC: 'text-emerald-700' },
@@ -2372,12 +2418,12 @@ export default function Show({ project, canManage, nextInvoiceNumber, nextPropos
             <Head title={project.name} />
 
             {/* Tab Bar */}
-            <div className="-mx-8 px-8 border-b border-[#e5e7eb] mb-7 flex gap-0 overflow-x-auto">
+            <div className="-mx-4 md:-mx-8 px-4 md:px-8 border-b border-[#e5e7eb] mb-7 flex gap-0 overflow-x-auto">
                 {tabs.map(t => (
                     <button
                         key={t.id}
                         onClick={() => setTab(t.id)}
-                        className={`flex items-center gap-1.5 px-4 py-3.5 text-[13px] font-medium border-b-2 whitespace-nowrap transition-all
+                        className={`flex items-center gap-1.5 px-2.5 md:px-4 py-3 md:py-3.5 text-[12px] md:text-[13px] font-medium border-b-2 whitespace-nowrap transition-all
                             ${tab === t.id
                                 ? 'border-[#4f6df5] text-[#4f6df5]'
                                 : 'border-transparent text-[#6b7280] hover:text-black'

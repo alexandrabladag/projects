@@ -23,7 +23,7 @@ export default function Dashboard({ stats, activeProjects, upcomingMeetings, rec
             <Head title="Dashboard" />
 
             {/* Stats Row */}
-            <div className="grid grid-cols-5 gap-3 mb-7">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-7">
                 {[
                     { label: 'Projects', icon: <Briefcase size={16} />, iconBg: 'bg-indigo-50', iconColor: 'text-indigo-500', values: [{ v: stats.total_projects, c: 'text-black' }], sub: `${stats.active_projects} active` },
                     { label: 'Total Budget', icon: <Wallet size={16} />, iconBg: 'bg-sky-50', iconColor: 'text-sky-500', values: Object.entries(stats.budget_by_currency ?? {}).map(([code, amount]) => ({ v: formatMoney(amount, code), c: 'text-black' })), sub: 'Across all projects' },
@@ -45,7 +45,7 @@ export default function Dashboard({ stats, activeProjects, upcomingMeetings, rec
                 ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-5 mb-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                 {/* Active Projects */}
                 <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                     <div className="flex items-center justify-between px-5 py-4 border-b border-[#e5e7eb]">

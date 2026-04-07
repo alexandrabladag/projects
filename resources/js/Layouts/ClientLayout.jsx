@@ -8,7 +8,7 @@ export default function ClientLayout({ children, title }) {
         <div className="min-h-screen bg-[#f8f8f8]">
             {/* Top Nav */}
             <header className="bg-white border-b border-[#e5e7eb] sticky top-0 z-10">
-                <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-14">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 flex items-center justify-between h-14">
                     <div className="flex items-center gap-6">
                         <Link href={route('portal.dashboard')} className="text-[16px] font-bold text-black tracking-tight">
                             Client Portal
@@ -32,8 +32,8 @@ export default function ClientLayout({ children, title }) {
             </header>
 
             {/* Content */}
-            <main className="max-w-6xl mx-auto px-6 py-8">
-                {title && <h1 className="text-[22px] font-bold text-black mb-6">{title}</h1>}
+            <main className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8">
+                {title && <h1 className="text-[18px] md:text-[22px] font-bold text-black mb-5 md:mb-6">{title}</h1>}
                 {children}
             </main>
         </div>

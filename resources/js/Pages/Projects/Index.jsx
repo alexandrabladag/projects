@@ -26,9 +26,9 @@ export default function Index({ projects, canManage }) {
             <Head title="Projects" />
 
             {/* Toolbar */}
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="flex bg-[#f3f4f6] rounded-lg p-0.5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex bg-[#f3f4f6] rounded-lg p-0.5 overflow-x-auto">
                         {[
                             { key: 'all', label: 'All' },
                             { key: 'active', label: 'Active' },
@@ -52,7 +52,7 @@ export default function Index({ projects, canManage }) {
                         <input
                             type="text" value={search} onChange={e => setSearch(e.target.value)}
                             placeholder="Search projects..."
-                            className="pl-9 pr-3 py-1.5 bg-[#f3f4f6] border border-transparent rounded-lg text-[12px] text-black outline-none focus:border-[#4f6df5] focus:bg-white transition-all w-48"
+                            className="pl-9 pr-3 py-1.5 bg-[#f3f4f6] border border-transparent rounded-lg text-[12px] text-black outline-none focus:border-[#4f6df5] focus:bg-white transition-all w-full md:w-48"
                         />
                     </div>
                 </div>

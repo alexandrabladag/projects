@@ -80,6 +80,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('meetings/{meeting}',  [MeetingController::class, 'destroy'])->name('meetings.destroy');
 
         Route::post('documents',             [DocumentController::class, 'store'])->name('documents.store');
+        Route::put('documents/{document}',  [DocumentController::class, 'update'])->name('documents.update');
         Route::delete('documents/{document}',[DocumentController::class, 'destroy'])->name('documents.destroy');
 
         Route::post('client-access',         [\App\Http\Controllers\ClientAccessController::class, 'store'])->name('client-access.store');

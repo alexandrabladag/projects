@@ -64,7 +64,7 @@ export default function Public({ project, company, code }) {
                                 </a>
                             )}
                         </h2>
-                        <h1 className="text-[32px] font-extrabold text-black mt-1 leading-tight">{project.name}</h1>
+                        <h1 className="text-[22px] md:text-[32px] font-extrabold text-black mt-1 leading-tight">{project.name}</h1>
                         {project.description && (
                             <p className="text-[15px] text-[#6b7280] mt-3 max-w-2xl mx-auto leading-relaxed">{project.description}</p>
                         )}
@@ -84,7 +84,7 @@ export default function Public({ project, company, code }) {
                     )}
 
                     {/* Project Details */}
-                    <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                         {/* Contact & Project Info */}
                         <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 shadow-sm">
                             <h3 className="text-[14px] font-bold text-black mb-4">Project Details</h3>
@@ -172,7 +172,7 @@ export default function Public({ project, company, code }) {
                                             </div>
                                             {i < PROJECT_PHASES.length - 1 && <div className={`flex-1 h-0.5 ${done ? 'bg-emerald-300' : 'bg-[#e5e7eb]'}`} />}
                                         </div>
-                                        <span className={`text-[9px] text-center leading-tight mt-1.5 ${active ? 'text-[#4f6df5] font-bold' : done ? 'text-emerald-600 font-medium' : 'text-[#9ca3af]'}`}>{phase}</span>
+                                        <span className={`text-[9px] text-center leading-tight mt-1.5 hidden md:block ${active ? 'text-[#4f6df5] font-bold' : done ? 'text-emerald-600 font-medium' : 'text-[#9ca3af]'}`}>{phase}</span>
                                     </div>
                                 );
                             })}
@@ -180,7 +180,7 @@ export default function Public({ project, company, code }) {
                     </div>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-4 gap-4 mb-8">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                         {[
                             { label: 'Timeline', value: `${fmtShort(project.start_date)} — ${fmtShort(project.end_date)}`, icon: <Clock size={16} />, bg: 'bg-sky-50', ic: 'text-sky-500' },
                             { label: 'Budget', value: fmt(project.budget), icon: <Receipt size={16} />, bg: 'bg-indigo-50', ic: 'text-indigo-500' },
