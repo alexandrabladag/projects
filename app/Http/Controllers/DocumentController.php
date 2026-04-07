@@ -126,6 +126,37 @@ class DocumentController extends Controller
         return back()->with('success', 'Document deleted.');
     }
 
+    public function editorUpload(Request $request, Project $project)
+    {
+        $this->authorize('update', $project);
+
+        $request->validate([
+            'file' => 'required|file|max:102400',
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->store("projects/{$project->id}/editor", 'local');
+        $mime = $file->getMimeType();
+        $isImage = str_starts_with($mime, 'image/');
+
+        // Create a document record so it's tracked and downloadable
+        $doc = $project->documents()->create([
+            'name'      => $file->getClientOriginalName(),
+            'type'      => $isImage ? 'asset' : 'other',
+            'file_path' => $path,
+            'file_size' => $this->formatBytes($file->getSize()),
+            'added_by'  => $request->user()->id,
+        ]);
+
+        return response()->json([
+            'url'      => route('documents.preview', $doc->id),
+            'download' => route('documents.download', $doc->id),
+            'name'     => $doc->name,
+            'id'       => $doc->id,
+            'isImage'  => $isImage,
+        ]);
+    }
+
     private function formatBytes(int $bytes): string
     {
         if ($bytes >= 1048576) return round($bytes / 1048576, 1) . ' MB';

@@ -1,18 +1,21 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
+import Image from '@tiptap/extension-image';
 import { Table } from '@tiptap/extension-table';
 import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
 import Placeholder from '@tiptap/extension-placeholder';
+import axios from 'axios';
 import {
     Bold, Italic, Underline as UnderlineIcon, Strikethrough,
     Heading1, Heading2, Heading3, List, ListOrdered, Quote,
     Table as TableIcon, AlignLeft, AlignCenter, AlignRight,
     Undo, Redo, Minus, Pilcrow, PenLine, Code,
+    ImageIcon, Paperclip,
 } from 'lucide-react';
 
 function ToolbarBtn({ onClick, active, disabled, children, title }) {
@@ -37,9 +40,12 @@ function Divider() {
     return <div className="w-px h-5 bg-[#e5e7eb] mx-0.5" />;
 }
 
-export default function RichEditor({ content, onChange, placeholder = 'Start writing…' }) {
+export default function RichEditor({ content, onChange, placeholder = 'Start writing…', projectId }) {
     const [showSource, setShowSource] = useState(false);
     const [htmlSource, setHtmlSource] = useState('');
+    const [uploading, setUploading] = useState(false);
+    const imageInputRef = useRef(null);
+    const fileInputRef = useRef(null);
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
@@ -47,6 +53,7 @@ export default function RichEditor({ content, onChange, placeholder = 'Start wri
             }),
             Underline,
             TextAlign.configure({ types: ['heading', 'paragraph'] }),
+            Image.configure({ inline: false, allowBase64: false }),
             Table.configure({ resizable: false }),
             TableRow,
             TableCell,
@@ -65,6 +72,27 @@ export default function RichEditor({ content, onChange, placeholder = 'Start wri
     });
 
     if (!editor) return null;
+
+    const uploadFile = async (file, insertAs) => {
+        if (!projectId || !file) return;
+        setUploading(true);
+        try {
+            const form = new FormData();
+            form.append('file', file);
+            const { data } = await axios.post(`/projects/${projectId}/documents/editor-upload`, form);
+            if (insertAs === 'image' && data.isImage) {
+                editor.chain().focus().setImage({ src: data.url, alt: data.name }).run();
+            } else {
+                editor.chain().focus().insertContent(
+                    `<p>📎 <a href="${data.download}" target="_blank"><strong>${data.name}</strong></a></p>`
+                ).run();
+            }
+        } catch (e) {
+            console.error('Upload failed', e);
+        } finally {
+            setUploading(false);
+        }
+    };
 
     return (
         <div className="border border-[#d1d5db] rounded-xl bg-white focus-within:border-[#4f6df5] transition-colors">
@@ -166,6 +194,21 @@ export default function RichEditor({ content, onChange, placeholder = 'Start wri
                     <PenLine size={15} />
                 </ToolbarBtn>
 
+                {projectId && (
+                    <>
+                        <Divider />
+                        <ToolbarBtn onClick={() => imageInputRef.current?.click()} title="Insert Image" disabled={uploading}>
+                            <ImageIcon size={15} />
+                        </ToolbarBtn>
+                        <ToolbarBtn onClick={() => fileInputRef.current?.click()} title="Attach File" disabled={uploading}>
+                            <Paperclip size={15} />
+                        </ToolbarBtn>
+                        <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={e => { uploadFile(e.target.files[0], 'image'); e.target.value = ''; }} />
+                        <input ref={fileInputRef} type="file" className="hidden" onChange={e => { uploadFile(e.target.files[0], 'file'); e.target.value = ''; }} />
+                        {uploading && <span className="text-[10px] text-[#9ca3af] ml-1">Uploading...</span>}
+                    </>
+                )}
+
                 <div className="flex-1" />
 
                 <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo">
@@ -233,6 +276,8 @@ export default function RichEditor({ content, onChange, placeholder = 'Start wri
                 .ProseMirror th { background: #f3f4f6; font-weight: 600; text-align: left; }
                 .ProseMirror th, .ProseMirror td { border: 1px solid #d1d5db; padding: 8px 12px; font-size: 13px; }
                 .ProseMirror .selectedCell { background: #4f6df5/10; }
+                .ProseMirror img { max-width: 100%; height: auto; border-radius: 8px; margin: 0.8em 0; }
+                .ProseMirror a { color: #4f6df5; text-decoration: underline; }
             `}</style>
         </div>
     );

@@ -747,7 +747,7 @@ function ProposalModal({ nextNumber, isEdit, project, data, setData, processing,
                         Proposal Content <span className="flex-1 h-px bg-[#e5e7eb]" />
                     </div>
                     <Suspense fallback={<div className="text-[13px] text-[#6b7280] p-4">Loading editor…</div>}>
-                        <RichEditor content={data.content} onChange={val => setData('content', val)} placeholder="Write your proposal — use headings for sections, lists for scope/deliverables, tables for timelines…" />
+                        <RichEditor content={data.content} onChange={val => setData('content', val)} placeholder="Write your proposal — use headings for sections, lists for scope/deliverables, tables for timelines…" projectId={project.id} />
                     </Suspense>
                 </div>
             </div>
@@ -2406,7 +2406,7 @@ function PagesTab({ project, canManage }) {
                         </FG>
                     </div>
                     <Suspense fallback={<div className="text-[13px] text-[#6b7280] p-4">Loading editor…</div>}>
-                        <RichEditor content={data.content} onChange={val => setData('content', val)} placeholder="Write your page content…" />
+                        <RichEditor content={data.content} onChange={val => setData('content', val)} placeholder="Write your page content…" projectId={project.id} />
                     </Suspense>
                     <div className="flex justify-end gap-2 mt-4">
                         <Btn ghost onClick={() => { setShowEditor(false); setEditingPage(null); }}><X size={13} /> Cancel</Btn>
