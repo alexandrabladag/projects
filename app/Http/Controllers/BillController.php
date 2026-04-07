@@ -41,30 +41,59 @@ class BillController extends Controller
     {
         $this->authorize('update', $project);
 
+        // Status-only update (from action buttons)
+        if ($request->has('status') && count($request->all()) === 1) {
+            $validated = $request->validate([
+                'status' => 'required|in:pending,approved,paid',
+            ]);
+
+            $updateData = ['status' => $validated['status']];
+
+            if ($validated['status'] === 'paid' && $bill->status !== 'paid') {
+                $updateData['paid_date'] = now();
+                $updateData['paid_amount'] = $bill->amount;
+                $updateData['paid_currency'] = $bill->currency;
+                $project->increment('spent', $bill->amount);
+            }
+
+            if ($bill->status === 'paid' && $validated['status'] !== 'paid') {
+                $project->decrement('spent', $bill->amount);
+                $updateData['paid_date'] = null;
+                $updateData['paid_amount'] = null;
+            }
+
+            $bill->update($updateData);
+            return back()->with('success', 'Bill status updated.');
+        }
+
+        // Full edit
         $validated = $request->validate([
-            'status' => 'required|in:pending,approved,paid',
+            'client_id'   => 'nullable|exists:clients,id',
+            'number'      => 'nullable|string|max:100',
+            'amount'      => 'required|numeric|min:0',
+            'currency'    => 'nullable|string|max:10',
+            'date'        => 'required|date',
+            'due_date'    => 'nullable|date',
+            'description' => 'nullable|string|max:500',
+            'category'    => 'nullable|string|max:100',
+            'notes'       => 'nullable|string',
+            'file'        => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
-        $updateData = ['status' => $validated['status']];
-
-        // When marking as paid, update project spent
-        if ($validated['status'] === 'paid' && $bill->status !== 'paid') {
-            $updateData['paid_date'] = now();
-            $updateData['paid_amount'] = $bill->amount;
-            $updateData['paid_currency'] = $bill->currency;
-
-            // Increase project spent
-            $project->increment('spent', $bill->amount);
-        }
-
-        // If un-paying (reverting from paid), decrease spent
-        if ($bill->status === 'paid' && $validated['status'] !== 'paid') {
+        // If bill was paid and amount changed, adjust project spent
+        if ($bill->status === 'paid' && (float) $validated['amount'] !== (float) $bill->amount) {
             $project->decrement('spent', $bill->amount);
-            $updateData['paid_date'] = null;
-            $updateData['paid_amount'] = null;
+            $project->increment('spent', $validated['amount']);
+            $validated['paid_amount'] = $validated['amount'];
         }
 
-        $bill->update($updateData);
+        if ($request->hasFile('file')) {
+            $validated['file_path'] = $request->file('file')->store('bills', 'public');
+            $validated['file_name'] = $request->file('file')->getClientOriginalName();
+        }
+        unset($validated['file']);
+
+        $bill->update($validated);
 
         return back()->with('success', 'Bill updated.');
     }

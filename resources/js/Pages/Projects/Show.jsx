@@ -1712,6 +1712,7 @@ function Section({ title, children }) {
 // ── BILLS TAB (Vendor/Contractor Invoices) ───────────────────────────────────
 function BillsTab({ project, canManage, fmt }) {
     const [showModal, setShowModal] = useState(false);
+    const [editBill, setEditBill] = useState(null);
     const bills = project.bills ?? [];
     const { props } = usePage();
     const allClients = props.clients ?? [];
@@ -1731,6 +1732,29 @@ function BillsTab({ project, canManage, fmt }) {
         post(route('projects.bills.store', project.id), {
             forceFormData: true,
             onSuccess: () => { setShowModal(false); reset(); },
+        });
+    };
+
+    const editForm = useForm({
+        client_id: '', number: '', amount: '', currency: project.currency ?? 'USD',
+        date: '', due_date: '', description: '', category: '', notes: '', file: null,
+    });
+
+    const openEdit = (bill) => {
+        editForm.setData({
+            client_id: bill.client_id ?? '', number: bill.number ?? '', amount: bill.amount ?? '',
+            currency: bill.currency ?? project.currency ?? 'USD', date: bill.date?.slice(0, 10) ?? '',
+            due_date: bill.due_date?.slice(0, 10) ?? '', description: bill.description ?? '',
+            category: bill.category ?? '', notes: bill.notes ?? '', file: null,
+        });
+        setEditBill(bill);
+    };
+
+    const submitEdit = () => {
+        editForm.transform(data => ({ ...data, _method: 'PATCH' }));
+        editForm.post(route('projects.bills.update', [project.id, editBill.id]), {
+            forceFormData: true,
+            onSuccess: () => { setEditBill(null); editForm.reset(); },
         });
     };
 
@@ -1827,7 +1851,8 @@ function BillsTab({ project, canManage, fmt }) {
                                         Paid {bill.paid_date ? fmtDate(bill.paid_date) : ''}
                                     </span>
                                 )}
-                                <button onClick={() => deleteBill(bill)} className="text-[#9ca3af] hover:text-red-500 transition-colors p-1.5 ml-auto"><Trash2 size={14} /></button>
+                                <button onClick={() => openEdit(bill)} className="text-[#9ca3af] hover:text-[#4f6df5] transition-colors p-1.5 ml-auto" title="Edit"><Pencil size={14} /></button>
+                                <button onClick={() => deleteBill(bill)} className="text-[#9ca3af] hover:text-red-500 transition-colors p-1.5" title="Delete"><Trash2 size={14} /></button>
                             </div>
                         )}
                     </div>
@@ -1867,6 +1892,45 @@ function BillsTab({ project, canManage, fmt }) {
                         <FG label="Notes"><textarea className={`${inputCls} resize-y`} rows={2} value={data.notes} onChange={e => setData('notes', e.target.value)} placeholder="Payment terms, bank details, etc." /></FG>
                         <FG label="Attach Invoice File">
                             <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setData('file', e.target.files[0])} className="text-[13px] text-[#6b7280]" />
+                        </FG>
+                    </div>
+                </Modal>
+            )}
+
+            {/* Edit Bill Modal */}
+            {editBill && (
+                <Modal title="Edit Bill" subtitle={`${editBill.vendor?.name ?? ''} ${editBill.number ? '#' + editBill.number : ''}`} large onClose={() => setEditBill(null)} footer={
+                    <><Btn ghost onClick={() => setEditBill(null)}><X size={13} /> Cancel</Btn>
+                    <Btn primary onClick={submitEdit} disabled={editForm.processing}><Save size={13} /> {editForm.processing ? 'Saving…' : 'Save Changes'}</Btn></>
+                }>
+                    <div className="space-y-4 pb-2">
+                        <div className="grid grid-cols-2 gap-3">
+                            <FG label="Vendor / Contractor" error={editForm.errors.client_id}>
+                                <select className={inputCls} value={editForm.data.client_id} onChange={e => editForm.setData('client_id', e.target.value)}>
+                                    <option value="">Select...</option>
+                                    {vendors.map(v => <option key={v.id} value={v.id}>{v.name} ({v.type})</option>)}
+                                </select>
+                            </FG>
+                            <FG label="Their Invoice #"><input className={inputCls} value={editForm.data.number} onChange={e => editForm.setData('number', e.target.value)} placeholder="e.g. VND-001" /></FG>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            <FG label="Amount *" error={editForm.errors.amount}><input className={inputCls} type="number" step="0.01" value={editForm.data.amount} onChange={e => editForm.setData('amount', e.target.value)} placeholder="0.00" /></FG>
+                            <FG label="Currency">
+                                <select className={inputCls} value={editForm.data.currency} onChange={e => editForm.setData('currency', e.target.value)}>
+                                    {['USD','PHP','JPY','EUR','GBP','SGD','AUD','THB','VND','IDR','MYR'].map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </FG>
+                            <FG label="Category"><input className={inputCls} value={editForm.data.category} onChange={e => editForm.setData('category', e.target.value)} placeholder="e.g. Design, Dev" /></FG>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <FG label="Bill Date *" error={editForm.errors.date}><input className={inputCls} type="date" value={editForm.data.date} onChange={e => editForm.setData('date', e.target.value)} /></FG>
+                            <FG label="Due Date"><input className={inputCls} type="date" value={editForm.data.due_date} onChange={e => editForm.setData('due_date', e.target.value)} /></FG>
+                        </div>
+                        <FG label="Description"><input className={inputCls} value={editForm.data.description} onChange={e => editForm.setData('description', e.target.value)} placeholder="What is this bill for?" /></FG>
+                        <FG label="Notes"><textarea className={`${inputCls} resize-y`} rows={2} value={editForm.data.notes} onChange={e => editForm.setData('notes', e.target.value)} placeholder="Payment terms, bank details, etc." /></FG>
+                        <FG label="Replace Invoice File">
+                            <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => editForm.setData('file', e.target.files[0])} className="text-[13px] text-[#6b7280]" />
+                            {editBill.file_name && !editForm.data.file && <div className="text-[11px] text-[#9ca3af] mt-1">Current: {editBill.file_name}</div>}
                         </FG>
                     </div>
                 </Modal>
