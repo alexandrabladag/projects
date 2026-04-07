@@ -1847,9 +1847,14 @@ function BillsTab({ project, canManage, fmt }) {
                                     <Btn ghost sm onClick={() => updateStatus(bill, 'paid')}><Check size={13} /> Mark Paid</Btn>
                                 )}
                                 {bill.status === 'paid' && (
-                                    <span className="text-[11px] text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full font-medium">
-                                        Paid {bill.paid_date ? fmtDate(bill.paid_date) : ''}
-                                    </span>
+                                    <>
+                                        <span className="text-[11px] text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full font-medium">
+                                            Paid {bill.paid_date ? fmtDate(bill.paid_date) : ''}
+                                        </span>
+                                        <a href={`/bills/${bill.id}/remittance`} className="inline-flex items-center gap-1 text-[11px] text-[#4f6df5] hover:text-[#6380f7] font-medium transition-colors">
+                                            <FileText size={12} /> Remittance Advice
+                                        </a>
+                                    </>
                                 )}
                                 <button onClick={() => openEdit(bill)} className="text-[#9ca3af] hover:text-[#4f6df5] transition-colors p-1.5 ml-auto" title="Edit"><Pencil size={14} /></button>
                                 <button onClick={() => deleteBill(bill)} className="text-[#9ca3af] hover:text-red-500 transition-colors p-1.5" title="Delete"><Trash2 size={14} /></button>

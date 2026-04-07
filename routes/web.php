@@ -126,4 +126,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('invoices/{invoice}/view', [InvoiceController::class, 'show'])->name('invoices.view');
     Route::get('proposals/{proposal}/view', [ProposalController::class, 'show'])->name('proposals.view');
+    Route::get('bills/{bill}/remittance', [\App\Http\Controllers\BillController::class, 'remittance'])->name('bills.remittance');
 });

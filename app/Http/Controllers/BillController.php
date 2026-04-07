@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bill;
+use App\Models\Company;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class BillController extends Controller
 {
@@ -96,6 +98,18 @@ class BillController extends Controller
         $bill->update($validated);
 
         return back()->with('success', 'Bill updated.');
+    }
+
+    public function remittance(Bill $bill)
+    {
+        $this->authorize('view', $bill->project);
+
+        $bill->load(['project', 'vendor']);
+
+        return Inertia::render('Bills/Remittance', [
+            'bill'    => $bill,
+            'company' => Company::first(),
+        ]);
     }
 
     public function destroy(Project $project, Bill $bill)
