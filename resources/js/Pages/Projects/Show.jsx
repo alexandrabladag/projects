@@ -1947,6 +1947,7 @@ function BillsTab({ project, canManage, fmt }) {
 // ── PAYROLL TAB ──────────────────────────────────────────────────────────────
 function PayrollTab({ project, canManage, fmt }) {
     const [showModal, setShowModal] = useState(false);
+    const [editEntry, setEditEntry] = useState(null);
     const entries = project.payroll ?? [];
     const { props } = usePage();
     const teamMembers = props.teamMembers ?? [];
@@ -1976,6 +1977,26 @@ function PayrollTab({ project, canManage, fmt }) {
 
     const submit = () => {
         post(route('projects.payroll.store', project.id), { onSuccess: () => { setShowModal(false); reset(); } });
+    };
+
+    const editForm = useForm({
+        team_member_id: '', period: '', pay_type: 'monthly', rate: '', hours: '', amount: '', currency: project.currency ?? 'PHP', notes: '',
+    });
+
+    const openEdit = (entry) => {
+        editForm.setData({
+            team_member_id: entry.team_member_id ?? '', period: entry.period ?? '', pay_type: entry.pay_type ?? 'monthly',
+            rate: entry.rate ?? '', hours: entry.hours ?? '', amount: entry.amount ?? '',
+            currency: entry.currency ?? project.currency ?? 'PHP', notes: entry.notes ?? '',
+        });
+        setEditEntry(entry);
+    };
+
+    const submitEdit = () => {
+        editForm.transform(data => ({ ...data, _method: 'PATCH' }));
+        editForm.post(route('projects.payroll.update', [project.id, editEntry.id]), {
+            onSuccess: () => { setEditEntry(null); editForm.reset(); },
+        });
     };
 
     const markPaid = (entry) => router.patch(route('projects.payroll.update', [project.id, entry.id]), { status: 'paid' });
@@ -2035,8 +2056,14 @@ function PayrollTab({ project, canManage, fmt }) {
                         {canManage && (
                             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#f0f0f0]">
                                 {entry.status === 'pending' && <Btn ghost sm onClick={() => markPaid(entry)}><Check size={13} /> Mark Paid</Btn>}
+                                {entry.status === 'paid' && (
+                                    <span className="text-[11px] text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full font-medium">
+                                        Paid {entry.paid_date ? fmtDate(entry.paid_date) : ''}
+                                    </span>
+                                )}
                                 <div className="flex-1" />
-                                <button onClick={() => deleteEntry(entry)} className="text-[#9ca3af] hover:text-red-500 transition-colors p-1.5"><Trash2 size={14} /></button>
+                                <button onClick={() => openEdit(entry)} className="text-[#9ca3af] hover:text-[#4f6df5] transition-colors p-1.5" title="Edit"><Pencil size={14} /></button>
+                                <button onClick={() => deleteEntry(entry)} className="text-[#9ca3af] hover:text-red-500 transition-colors p-1.5" title="Delete"><Trash2 size={14} /></button>
                             </div>
                         )}
                     </div>
@@ -2083,6 +2110,49 @@ function PayrollTab({ project, canManage, fmt }) {
                             <input className={`${inputCls} text-[16px] font-bold`} type="number" step="0.01" value={data.amount} onChange={e => setData('amount', e.target.value)} placeholder="0.00" />
                         </FG>
                         <FG label="Notes"><input className={inputCls} value={data.notes} onChange={e => setData('notes', e.target.value)} placeholder="e.g. April salary, overtime, bonus" /></FG>
+                    </div>
+                </Modal>
+            )}
+
+            {/* Edit Payroll Modal */}
+            {editEntry && (
+                <Modal title="Edit Payroll Entry" subtitle={editEntry.team_member?.name ?? ''} onClose={() => setEditEntry(null)} footer={
+                    <><Btn ghost onClick={() => setEditEntry(null)}><X size={13} /> Cancel</Btn>
+                    <Btn primary onClick={submitEdit} disabled={editForm.processing}><Save size={13} /> {editForm.processing ? 'Saving…' : 'Save Changes'}</Btn></>
+                }>
+                    <div className="space-y-4 pb-2">
+                        <div className="grid grid-cols-2 gap-3">
+                            <FG label="Team Member *">
+                                <select className={inputCls} value={editForm.data.team_member_id} onChange={e => editForm.setData('team_member_id', e.target.value)}>
+                                    <option value="">Select...</option>
+                                    {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>)}
+                                </select>
+                            </FG>
+                            <FG label="Period *"><input className={inputCls} value={editForm.data.period} onChange={e => editForm.setData('period', e.target.value)} placeholder="e.g. Apr 2026, Sprint 3" /></FG>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            <FG label="Pay Type">
+                                <select className={inputCls} value={editForm.data.pay_type} onChange={e => { editForm.setData('pay_type', e.target.value); editForm.setData('amount', computeAmount(e.target.value, editForm.data.rate, editForm.data.hours)); }}>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="hourly">Hourly</option>
+                                    <option value="fixed">Fixed</option>
+                                </select>
+                            </FG>
+                            <FG label="Rate"><input className={inputCls} type="number" step="0.01" value={editForm.data.rate} onChange={e => { editForm.setData('rate', e.target.value); editForm.setData('amount', computeAmount(editForm.data.pay_type, e.target.value, editForm.data.hours)); }} placeholder="0.00" /></FG>
+                            {editForm.data.pay_type === 'hourly' ? (
+                                <FG label="Hours"><input className={inputCls} type="number" step="0.5" value={editForm.data.hours} onChange={e => { editForm.setData('hours', e.target.value); editForm.setData('amount', computeAmount(editForm.data.pay_type, editForm.data.rate, e.target.value)); }} placeholder="0" /></FG>
+                            ) : (
+                                <FG label="Currency">
+                                    <select className={inputCls} value={editForm.data.currency} onChange={e => editForm.setData('currency', e.target.value)}>
+                                        {['PHP','USD','JPY','EUR','GBP','SGD','AUD'].map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                </FG>
+                            )}
+                        </div>
+                        <FG label="Total Amount *">
+                            <input className={`${inputCls} text-[16px] font-bold`} type="number" step="0.01" value={editForm.data.amount} onChange={e => editForm.setData('amount', e.target.value)} placeholder="0.00" />
+                        </FG>
+                        <FG label="Notes"><input className={inputCls} value={editForm.data.notes} onChange={e => editForm.setData('notes', e.target.value)} placeholder="e.g. April salary, overtime, bonus" /></FG>
                     </div>
                 </Modal>
             )}
