@@ -18,7 +18,7 @@ export default function Remittance({ bill, company }) {
     const downloadPdf = () => {
         html2pdf().set({
             margin: 0,
-            filename: `${refNumber}.pdf`,
+            filename: `${refNumber}${vendor.name ? ' — ' + vendor.name : ''}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
@@ -48,7 +48,7 @@ export default function Remittance({ bill, company }) {
             </div>
 
             <div className="min-h-screen bg-[#f3f4f6] flex justify-center py-10 px-4">
-                <div ref={pageRef} className="ra-page bg-white rounded-xl shadow-sm w-full max-w-[800px] p-12">
+                <div ref={pageRef} className="ra-page bg-white rounded-xl shadow-sm w-full max-w-[800px] p-12 flex flex-col" style={{ minHeight: '297mm' }}>
 
                     {/* Header */}
                     <div className="flex justify-between items-start mb-6">
@@ -150,14 +150,14 @@ export default function Remittance({ bill, company }) {
                     </div>
 
                     {/* Confirmation */}
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-5 py-4 mb-6">
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-5 py-4">
                         <div className="flex items-center gap-2 mb-1">
-                            <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                            <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
                                 <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                             </div>
                             <span className="text-[13px] font-semibold text-emerald-800">Payment Confirmation</span>
                         </div>
-                        <div className="text-[12px] text-emerald-700 ml-7">
+                        <div className="text-[12px] text-emerald-700" style={{ paddingLeft: '28px' }}>
                             This confirms that payment of <strong>{fmt(bill.paid_amount ?? bill.amount)}</strong> has been
                             {bill.paid_date ? ` processed on ${fmtDate(bill.paid_date)}` : ' processed'} for
                             the services rendered under {project.name}.
@@ -166,14 +166,17 @@ export default function Remittance({ bill, company }) {
 
                     {/* Notes */}
                     {bill.notes && (
-                        <div className="border-t border-[#e5e7eb] pt-5 mb-6">
+                        <div className="border-t border-[#e5e7eb] pt-5 mt-6">
                             <div className="text-[9px] tracking-[1.5px] uppercase text-[#9ca3af] font-semibold mb-1.5">Notes</div>
                             <div className="text-[12px] text-[#6b7280] leading-relaxed whitespace-pre-line">{bill.notes}</div>
                         </div>
                     )}
 
+                    {/* Spacer to push footer to bottom */}
+                    <div className="flex-1" />
+
                     {/* Footer */}
-                    <div className="mt-10 pt-4 border-t border-[#e5e7eb] text-center text-[11px] text-[#9ca3af]">
+                    <div className="pt-4 border-t border-[#e5e7eb] text-center text-[11px] text-[#9ca3af]">
                         {company?.name} {company?.website ? `· ${company.website}` : ''}
                         <div className="mt-1">This remittance advice is for informational purposes and confirms payment as described above.</div>
                     </div>
