@@ -18,6 +18,7 @@ class DocumentController extends Controller
             'type' => 'required|in:contract,brief,report,asset,other',
             'file' => 'nullable|file|max:102400', // 100MB max
             'task_id' => 'nullable|exists:tasks,id',
+            'page_id' => 'nullable|exists:project_pages,id',
         ]);
 
         $filePath = null;
@@ -36,6 +37,7 @@ class DocumentController extends Controller
             'file_size' => $fileSize,
             'added_by'  => $request->user()->id,
             'task_id'   => $validated['task_id'] ?? null,
+            'page_id'   => $validated['page_id'] ?? null,
         ]);
 
         return back()->with('success', 'Document added.');

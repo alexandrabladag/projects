@@ -12,6 +12,7 @@ class Document extends Model
     protected $fillable = [
         'project_id',
         'task_id',
+        'page_id',
         'name',
         'type',         // contract | brief | report | asset | other
         'file_path',
@@ -27,6 +28,11 @@ class Document extends Model
     public function task()
     {
         return $this->belongsTo(Task::class);
+    }
+
+    public function page()
+    {
+        return $this->belongsTo(ProjectPage::class, 'page_id');
     }
 
     public function uploader()

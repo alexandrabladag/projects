@@ -135,7 +135,7 @@ class ProjectController extends Controller
             'bills.vendor',
             'payroll.teamMember',
             'members.client',
-            'pages.creator',
+            'pages.creator', 'pages.documents.uploader',
         ]);
 
         // Append computed attributes

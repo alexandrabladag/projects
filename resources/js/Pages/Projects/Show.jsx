@@ -2211,9 +2211,24 @@ function PagesTab({ project, canManage }) {
     const [showEditor, setShowEditor] = useState(false);
     const [editingPage, setEditingPage] = useState(null);
     const [copied, setCopied] = useState(null);
+    const [docModal, setDocModal] = useState(null); // page id
+    const [previewDoc, setPreviewDoc] = useState(null);
     const pages = project.pages ?? [];
 
     const { data, setData, post, put, processing, reset, errors } = useForm({ title: '', content: '' });
+
+    const docForm = useForm({ name: '', type: 'other', file: null, page_id: null });
+    const submitDoc = () => {
+        docForm.post(route('projects.documents.store', project.id), {
+            forceFormData: true,
+            onSuccess: () => { setDocModal(null); docForm.reset(); },
+        });
+    };
+    const deletePageDoc = (doc) => {
+        if (confirm('Delete this document?')) {
+            router.delete(route('projects.documents.destroy', [project.id, doc.id]));
+        }
+    };
 
     const openNew = () => { setEditingPage(null); reset(); setShowEditor(true); };
     const openEdit = (page) => { setEditingPage(page); setData({ title: page.title, content: page.content ?? '' }); setShowEditor(true); };
@@ -2333,6 +2348,27 @@ function PagesTab({ project, canManage }) {
                                         </div>
                                     )}
 
+                                    {/* Page Documents */}
+                                    {(page.documents ?? []).length > 0 && (
+                                        <div className="mb-3">
+                                            <div className="text-[10px] tracking-[1.2px] uppercase text-[#9ca3af] font-medium mb-1.5">Attached Documents</div>
+                                            <div className="space-y-1">
+                                                {page.documents.map(doc => (
+                                                    <div key={doc.id} className="flex items-center gap-2 bg-[#f9fafb] border border-[#e5e7eb] rounded-lg px-2.5 py-1.5">
+                                                        <span className="text-[13px]">{DOC_ICONS[doc.type] ?? '📁'}</span>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="text-[11px] font-medium text-black truncate">{doc.name}</div>
+                                                            <div className="text-[9px] text-[#9ca3af]">{doc.uploader?.name ?? 'Team'} · {doc.file_size ?? ''}</div>
+                                                        </div>
+                                                        <button onClick={() => setPreviewDoc(doc)} className="text-[#6b7280] hover:text-[#4f6df5] transition-colors"><Eye size={12} /></button>
+                                                        <a href={`/documents/${doc.id}/download`} className="text-[#6b7280] hover:text-black transition-colors"><Download size={12} /></a>
+                                                        {canManage && <button onClick={() => deletePageDoc(doc)} className="text-[#d1d5db] hover:text-red-400 transition-colors"><Trash2 size={12} /></button>}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Actions */}
                                     <div className="flex items-center gap-1.5 pt-3 border-t border-[#f0f0f0]">
                                         {page.is_shared && page.share_code && (
@@ -2343,6 +2379,9 @@ function PagesTab({ project, canManage }) {
                                         <div className="flex-1" />
                                         {canManage && (
                                             <>
+                                                <Btn ghost sm onClick={() => { docForm.setData('page_id', page.id); setDocModal(page.id); }}>
+                                                    <Upload size={12} /> Attach
+                                                </Btn>
                                                 <Btn ghost sm onClick={() => toggleShare(page)}>
                                                     {page.is_shared ? <><Lock size={12} /> Shared</> : 'Share'}
                                                 </Btn>
@@ -2377,6 +2416,30 @@ function PagesTab({ project, canManage }) {
                     </div>
                 </div>
             )}
+
+            {/* Attach Document to Page Modal */}
+            {docModal && (
+                <Modal title="Attach Document" subtitle={`To page: ${pages.find(p => p.id === docModal)?.title ?? ''}`} onClose={() => { setDocModal(null); docForm.reset(); }} footer={<><Btn ghost onClick={() => { setDocModal(null); docForm.reset(); }}>Cancel</Btn><Btn primary onClick={submitDoc} disabled={docForm.processing}>{docForm.processing ? 'Uploading…' : 'Upload Document'}</Btn></>}>
+                    <div className="space-y-4 pb-2">
+                        <FG label="Document Name *"><input className={inputCls} value={docForm.data.name} onChange={e => docForm.setData('name', e.target.value)} placeholder="e.g. Meeting Notes PDF, Design Specs" /></FG>
+                        <FG label="Document Type">
+                            <select className={inputCls} value={docForm.data.type} onChange={e => docForm.setData('type', e.target.value)}>
+                                {['contract','brief','report','asset','other'].map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
+                            </select>
+                        </FG>
+                        <div className="border-2 border-dashed border-[#d1d5db] rounded-xl p-8 text-center text-[#6b7280]">
+                            <input type="file" onChange={e => docForm.setData('file', e.target.files[0])} className="hidden" id="page-file-upload" />
+                            <label htmlFor="page-file-upload" className="cursor-pointer">
+                                <div className="text-3xl mb-2">📎</div>
+                                <div className="text-[13px]">{docForm.data.file ? docForm.data.file.name : 'Click to upload or drag & drop'}</div>
+                                <div className="text-[11px] mt-1">PDF, DOCX, PNG, ZIP — up to 100MB</div>
+                            </label>
+                        </div>
+                    </div>
+                </Modal>
+            )}
+
+            <DocPreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} />
         </>
     );
 }
