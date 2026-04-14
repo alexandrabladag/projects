@@ -1545,6 +1545,10 @@ function TasksTab({ project, canManage }) {
         title: '', assignee: '', due_date: '', priority: 'medium', status: 'not-started', category: 'Deliverable',
     });
     const submit = () => post(route('projects.tasks.store', project.id), { onSuccess: () => { setShowModal(false); reset(); } });
+    const submitAndAddAnother = () => post(route('projects.tasks.store', project.id), {
+        preserveScroll: true,
+        onSuccess: () => { reset('title', 'assignee', 'due_date'); },
+    });
 
     const editForm = useForm({
         title: '', assignee: '', due_date: '', priority: 'medium', status: 'not-started', category: '',
@@ -1665,7 +1669,17 @@ function TasksTab({ project, canManage }) {
                                                 </button>
                                             )}
                                             <Badge status={t.priority} />
-                                            <Badge status={t.status} label={t.status === 'not-started' ? 'To Do' : t.status === 'in-progress' ? 'In Progress' : t.status === 'review' ? 'Review' : 'Done'} />
+                                            {canManage ? (
+                                                <button
+                                                    onClick={() => cycleStatus(t)}
+                                                    title="Click to change status"
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Badge status={t.status} label={t.status === 'not-started' ? 'To Do' : t.status === 'in-progress' ? 'In Progress' : t.status === 'review' ? 'Review' : 'Done'} />
+                                                </button>
+                                            ) : (
+                                                <Badge status={t.status} label={t.status === 'not-started' ? 'To Do' : t.status === 'in-progress' ? 'In Progress' : t.status === 'review' ? 'Review' : 'Done'} />
+                                            )}
                                             {canManage && (
                                                 <>
                                                     <button
@@ -1742,7 +1756,7 @@ function TasksTab({ project, canManage }) {
             ))}
 
             {showModal && (
-                <Modal title="Add Task" subtitle={`For ${project.name}`} onClose={() => setShowModal(false)} footer={<><Btn ghost onClick={() => setShowModal(false)}><X size={13} /> Cancel</Btn><Btn primary onClick={submit} disabled={processing}><Plus size={13} /> {processing ? 'Adding…' : 'Add Task'}</Btn></>}>
+                <Modal title="Add Task" subtitle={`For ${project.name}`} onClose={() => setShowModal(false)} footer={<><Btn ghost onClick={() => setShowModal(false)}><X size={13} /> Cancel</Btn><Btn ghost onClick={submitAndAddAnother} disabled={processing}><Plus size={13} /> {processing ? 'Saving…' : 'Save & Add Another'}</Btn><Btn primary onClick={submit} disabled={processing}><Plus size={13} /> {processing ? 'Adding…' : 'Add Task'}</Btn></>}>
                     <div className="space-y-4 pb-2">
                         <FG label="Task Title *"><input className={inputCls} value={data.title} onChange={e => setData('title', e.target.value)} placeholder="What needs to be done?" /></FG>
                         <div className="grid grid-cols-2 gap-3">
