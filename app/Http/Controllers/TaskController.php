@@ -26,7 +26,7 @@ class TaskController extends Controller
         return back()->with('success', 'Task added.');
     }
 
-    public function update(Request $request, Task $task)
+    public function update(Request $request, Project $project, Task $task)
     {
         $this->authorize('update', $task->project);
 
@@ -55,7 +55,7 @@ class TaskController extends Controller
         return back()->with('success', 'Task status updated.');
     }
 
-    public function destroy(Task $task)
+    public function destroy(Project $project, Task $task)
     {
         $this->authorize('update', $task->project);
         $task->delete();
