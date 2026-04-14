@@ -1533,6 +1533,7 @@ function TimelineTab({ project }) {
 // ── TASKS TAB ─────────────────────────────────────────────────────────────────
 function TasksTab({ project, canManage }) {
     const [showModal, setShowModal] = useState(false);
+    const [editTask, setEditTask] = useState(null);
     const [filter, setFilter] = useState('all');
     const [expandedTask, setExpandedTask] = useState(null);
     const [showDocModal, setShowDocModal] = useState(null); // task id
@@ -1544,6 +1545,34 @@ function TasksTab({ project, canManage }) {
         title: '', assignee: '', due_date: '', priority: 'medium', status: 'not-started', category: 'Deliverable',
     });
     const submit = () => post(route('projects.tasks.store', project.id), { onSuccess: () => { setShowModal(false); reset(); } });
+
+    const editForm = useForm({
+        title: '', assignee: '', due_date: '', priority: 'medium', status: 'not-started', category: '',
+    });
+
+    const openEdit = (task) => {
+        editForm.setData({
+            title: task.title ?? '',
+            assignee: task.assignee ?? '',
+            due_date: task.due_date?.slice(0, 10) ?? '',
+            priority: task.priority ?? 'medium',
+            status: task.status ?? 'not-started',
+            category: task.category ?? '',
+        });
+        setEditTask(task);
+    };
+
+    const submitEdit = () => {
+        editForm.put(route('projects.tasks.update', [project.id, editTask.id]), {
+            onSuccess: () => { setEditTask(null); editForm.reset(); },
+        });
+    };
+
+    const deleteTask = (task) => {
+        if (confirm('Delete this task?')) {
+            router.delete(route('projects.tasks.destroy', [project.id, task.id]));
+        }
+    };
 
     const docForm = useForm({ name: '', type: 'other', file: null, task_id: null });
     const submitDoc = () => {
@@ -1637,6 +1666,24 @@ function TasksTab({ project, canManage }) {
                                             )}
                                             <Badge status={t.priority} />
                                             <Badge status={t.status} label={t.status === 'not-started' ? 'To Do' : t.status === 'in-progress' ? 'In Progress' : t.status === 'review' ? 'Review' : 'Done'} />
+                                            {canManage && (
+                                                <>
+                                                    <button
+                                                        onClick={() => openEdit(t)}
+                                                        className="p-1.5 rounded-md text-[#9ca3af] hover:text-[#4f6df5] hover:bg-indigo-50 transition-colors"
+                                                        title="Edit task"
+                                                    >
+                                                        <Pencil size={13} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteTask(t)}
+                                                        className="p-1.5 rounded-md text-[#9ca3af] hover:text-red-500 hover:bg-red-50 transition-colors"
+                                                        title="Delete task"
+                                                    >
+                                                        <Trash2 size={13} />
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                     {isExpanded && docs.length > 0 && (
@@ -1715,6 +1762,31 @@ function TasksTab({ project, canManage }) {
                             </FG>
                         </div>
                         <FG label="Category"><input className={inputCls} value={data.category} onChange={e => setData('category', e.target.value)} placeholder="e.g. Deliverable, Client Approval, Milestone" /></FG>
+                    </div>
+                </Modal>
+            )}
+
+            {editTask && (
+                <Modal title="Edit Task" subtitle={`For ${project.name}`} onClose={() => setEditTask(null)} footer={<><Btn ghost onClick={() => setEditTask(null)}><X size={13} /> Cancel</Btn><Btn primary onClick={submitEdit} disabled={editForm.processing}><Save size={13} /> {editForm.processing ? 'Saving…' : 'Save Changes'}</Btn></>}>
+                    <div className="space-y-4 pb-2">
+                        <FG label="Task Title *" error={editForm.errors.title}><input className={inputCls} value={editForm.data.title} onChange={e => editForm.setData('title', e.target.value)} placeholder="What needs to be done?" /></FG>
+                        <div className="grid grid-cols-2 gap-3">
+                            <FG label="Assignee"><input className={inputCls} value={editForm.data.assignee} onChange={e => editForm.setData('assignee', e.target.value)} placeholder="Person responsible" /></FG>
+                            <FG label="Due Date"><input className={inputCls} type="date" value={editForm.data.due_date} onChange={e => editForm.setData('due_date', e.target.value)} /></FG>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <FG label="Priority">
+                                <select className={inputCls} value={editForm.data.priority} onChange={e => editForm.setData('priority', e.target.value)}>
+                                    {['high','medium','low'].map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase()+p.slice(1)}</option>)}
+                                </select>
+                            </FG>
+                            <FG label="Status">
+                                <select className={inputCls} value={editForm.data.status} onChange={e => editForm.setData('status', e.target.value)}>
+                                    {[['not-started','Not Started'],['in-progress','In Progress'],['review','Review'],['completed','Completed']].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+                                </select>
+                            </FG>
+                        </div>
+                        <FG label="Category"><input className={inputCls} value={editForm.data.category} onChange={e => editForm.setData('category', e.target.value)} placeholder="e.g. Deliverable, Client Approval, Milestone" /></FG>
                     </div>
                 </Modal>
             )}
