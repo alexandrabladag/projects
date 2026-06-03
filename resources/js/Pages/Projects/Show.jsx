@@ -2617,13 +2617,18 @@ function PagesTab({ project, canManage }) {
 
 // ── MAIN SHOW PAGE ─────────────────────────────────────────────────────────────
 export default function Show({ project, canManage, taskCategories = [], nextInvoiceNumber, nextProposalNumber }) {
-    // Sync tab with URL hash
+    // Keep the active tab in the URL (?tab=…) so a refresh, bookmark, or shared
+    // link lands on the same tab. We read it from Inertia's page URL, which is
+    // identical on the server and client (unlike window.location.hash).
     const validTabs = ['overview','proposal','invoices','meetings','documents','timeline','tasks','bills','payroll','pages'];
-    const hashTab = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '';
-    const [tab, setTabState] = useState(validTabs.includes(hashTab) ? hashTab : 'overview');
+    const { url } = usePage();
+    const urlTab = new URLSearchParams(url.split('?')[1] ?? '').get('tab');
+    const [tab, setTabState] = useState(validTabs.includes(urlTab) ? urlTab : 'overview');
     const setTab = (t) => {
         setTabState(t);
-        window.history.replaceState(null, '', `#${t}`);
+        const u = new URL(window.location.href);
+        u.searchParams.set('tab', t);
+        window.history.replaceState(null, '', u);
     };
     const projectCur = getCurrency(project.currency ?? 'USD');
     const fmt = (n) => formatMoney(n, projectCur.code);
