@@ -3,7 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Badge } from '@/Layouts/AppLayout';
 import { formatMoney, getCurrency } from '@/Utils/currencies';
 import {
-    FileText, Receipt, CalendarDays, Eye, ChevronDown, ChevronUp,
+    FileText, Receipt, CalendarDays, Eye, ChevronDown, ChevronUp, ChevronRight,
     CheckCircle, Circle, Clock, MapPin, Users, ArrowRight, Download, X, FolderOpen, Maximize2, Minimize2,
 } from 'lucide-react';
 
@@ -16,12 +16,12 @@ export default function Public({ project, company, code }) {
     const cur = getCurrency(project.currency ?? 'USD');
     const fmt = (n) => formatMoney(n, cur.code);
     const proposals = project.proposals ?? [];
-    const invoices = project.invoices ?? [];
     const meetings = (project.meetings ?? []).filter(m => m.status === 'scheduled');
     const tasks = project.tasks ?? [];
-    const [expandedInv, setExpandedInv] = useState(null);
     const [previewDoc, setPreviewDoc] = useState(null);
     const [fullscreen, setFullscreen] = useState(false);
+    const [collapsedCats, setCollapsedCats] = useState({});
+    const toggleCat = (cat) => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
     const documents = project.documents ?? [];
 
     const completedTasks = tasks.filter(t => t.status === 'completed').length;
@@ -260,13 +260,15 @@ export default function Public({ project, company, code }) {
                                         const dateRange = earliest && latest
                                             ? `${earliest.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${latest.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`
                                             : '';
+                                        const collapsed = collapsedCats[cat];
 
                                         return (
                                             <div key={cat} className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden shadow-sm">
-                                                <div className={`bg-gradient-to-r ${isAllDone ? 'from-emerald-500 to-emerald-400' : color} px-6 py-5 text-white`}>
+                                                <div onClick={() => toggleCat(cat)} className={`bg-gradient-to-r ${isAllDone ? 'from-emerald-500 to-emerald-400' : color} px-6 py-5 text-white cursor-pointer select-none`}>
                                                     <div className="flex items-start justify-between">
                                                         <div>
                                                             <div className="flex items-center gap-2 mb-1">
+                                                                {collapsed ? <ChevronRight size={14} className="opacity-80" /> : <ChevronDown size={14} className="opacity-80" />}
                                                                 <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Phase {idx+1}</span>
                                                                 {info.duration && <span className="text-[10px] opacity-60">· {info.duration}</span>}
                                                                 {isAllDone && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-medium">Complete</span>}
@@ -284,6 +286,7 @@ export default function Public({ project, company, code }) {
                                                         <div className="h-full rounded-full bg-white/80 progress-fill" style={{width:`${pct}%`}} />
                                                     </div>
                                                 </div>
+                                                {!collapsed && (<>
                                                 {info.note && <div className="px-6 py-2.5 bg-[#fafbfc] border-b border-[#f0f0f0] text-[12px] text-[#6b7280] italic">{info.note}</div>}
                                                 {info.scope && (
                                                     <div className="px-6 py-3 border-b border-[#f0f0f0]">
@@ -307,7 +310,7 @@ export default function Public({ project, company, code }) {
                                                                     }
                                                                     <span className={`text-[13px] flex-1 ${t.status === 'completed' ? 'text-emerald-600' : 'text-black'}`}>{t.title}</span>
                                                                     {t.due_date && <span className="text-[11px] text-[#9ca3af]">{new Date(t.due_date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>}
-                                                                    <Badge status={t.status} label={t.status==='completed'?'Done':t.status==='in-progress'?'In Progress':t.status==='review'?'Review':'To Do'} />
+                                                                    <Badge status={t.status} label={t.status==='completed'?'Done':t.status==='in-progress'?'In Progress':t.status==='review'?'Review':t.status==='pending-approval'?'Pending Approval':'To Do'} />
                                                                 </div>
                                                                 {docs.length > 0 && (
                                                                     <div className="ml-7 mt-1.5 flex flex-wrap gap-2">
@@ -324,6 +327,7 @@ export default function Public({ project, company, code }) {
                                                         );
                                                     })}
                                                 </div>
+                                                </>)}
                                             </div>
                                         );
                                     })}
@@ -423,85 +427,6 @@ export default function Public({ project, company, code }) {
                             </div>
                         );
                     })()}
-
-                    {/* Proposals */}
-                    {proposals.length > 0 && (
-                        <div className="mb-8">
-                            <h2 className="text-[16px] font-bold text-black mb-4">Proposals</h2>
-                            {proposals.map(pr => (
-                                <div key={pr.id} className="bg-white rounded-xl border border-[#e5e7eb] p-5 mb-3 shadow-sm">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <div className="text-[15px] font-bold text-black">{pr.title}</div>
-                                            <div className="text-[12px] text-[#9ca3af] mt-0.5">{fmtDate(pr.date)}</div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-[18px] font-bold text-black">{fmt(pr.amount)}</div>
-                                            <Badge status={pr.status} />
-                                        </div>
-                                    </div>
-                                    {/* Signed file — show prominently if available */}
-                                    {pr.signed_file_path && (
-                                        <div className="mt-3 flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
-                                            <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
-                                            <div className="flex-1">
-                                                <div className="text-[13px] font-medium text-emerald-700">Signed Proposal</div>
-                                                <div className="text-[11px] text-emerald-600">{pr.signed_file_name}</div>
-                                            </div>
-                                            <a href={`/storage/${pr.signed_file_path}`} target="_blank" className="inline-flex items-center gap-1 text-[12px] text-emerald-700 font-semibold bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-lg transition-colors">
-                                                View Document
-                                            </a>
-                                        </div>
-                                    )}
-                                    <div className="mt-3 flex items-center gap-3">
-                                        <Link href={route('proposals.view', pr.id)} className="inline-flex items-center gap-1 text-[13px] text-[#4f6df5] font-medium hover:text-[#6380f7] transition-colors">
-                                            View Full Proposal <ArrowRight size={14} />
-                                        </Link>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Invoices */}
-                    {invoices.length > 0 && (
-                        <div className="mb-8">
-                            <h2 className="text-[16px] font-bold text-black mb-4">Invoices</h2>
-                            <div className="space-y-3">
-                                {invoices.map(inv => (
-                                    <div key={inv.id} className={`bg-white rounded-xl border border-[#e5e7eb] border-l-[3px] overflow-hidden shadow-sm ${
-                                        inv.status === 'paid' ? 'border-l-emerald-400' : inv.status === 'sent' ? 'border-l-indigo-400' : 'border-l-gray-300'
-                                    }`}>
-                                        <div className="flex items-center gap-3 px-5 py-4 cursor-pointer" onClick={() => setExpandedInv(expandedInv === inv.id ? null : inv.id)}>
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2.5">
-                                                    <span className="text-[13px] font-mono font-bold text-black">{inv.number}</span>
-                                                    <Badge status={inv.status} />
-                                                </div>
-                                                <div className="text-[12px] text-[#9ca3af] mt-0.5">{inv.description}</div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-[17px] font-bold text-black">{fmt(inv.total)}</div>
-                                                <div className="text-[11px] text-[#9ca3af]">{inv.status === 'paid' ? 'Paid' : `Due ${fmtShort(inv.due_date)}`}</div>
-                                            </div>
-                                            <Link href={route('invoices.view', inv.id)} onClick={e => e.stopPropagation()} className="text-[#4f6df5] hover:text-[#6380f7]"><Eye size={16} /></Link>
-                                            <span className="text-[#d1d5db]">{expandedInv === inv.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</span>
-                                        </div>
-                                        {expandedInv === inv.id && (
-                                            <div className="px-5 py-4 bg-[#fafbfc] border-t border-[#f0f0f0]">
-                                                {(inv.items ?? []).map((item, i) => (
-                                                    <div key={i} className="flex justify-between py-2 border-b border-[#f0f0f0] last:border-b-0 text-[13px]">
-                                                        <span className="text-[#4b5563]">{item.description}</span>
-                                                        <span className="font-medium text-black">{fmt(item.quantity * item.rate)}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
 
                     {/* Upcoming Meetings */}
                     {meetings.length > 0 && (

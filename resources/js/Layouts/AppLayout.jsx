@@ -22,6 +22,7 @@ export function Badge({ status, label }) {
         'in-progress':'bg-indigo-50 text-indigo-600 border border-indigo-200',
         'not-started':'bg-gray-50 text-gray-500 border border-gray-200',
         review:       'bg-violet-50 text-violet-600 border border-violet-200',
+        'pending-approval':'bg-amber-50 text-amber-600 border border-amber-200',
         client:       'bg-blue-50 text-blue-600 border border-blue-200',
         vendor:       'bg-violet-50 text-violet-600 border border-violet-200',
         contractor:   'bg-amber-50 text-amber-600 border border-amber-200',

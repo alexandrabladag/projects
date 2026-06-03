@@ -17,10 +17,12 @@ class Task extends Model
         'priority',     // high | medium | low
         'status',       // not-started | in-progress | review | completed
         'category',
+        'position',
     ];
 
     protected $casts = [
         'due_date' => 'date',
+        'position' => 'integer',
     ];
 
     public function project()

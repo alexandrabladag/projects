@@ -54,8 +54,6 @@ export default function Dashboard({ projects }) {
 
                             {/* Quick stats */}
                             <div className="flex gap-4 text-[12px] text-[#6b7280]">
-                                <span className="flex items-center gap-1"><FileText size={13} /> {p.proposals_count ?? 0} proposals</span>
-                                <span className="flex items-center gap-1"><Receipt size={13} /> {p.invoices_count ?? 0} invoices</span>
                                 <span className="flex items-center gap-1"><Calendar size={13} /> Due {fmtDate(p.end_date)}</span>
                             </div>
                         </Link>

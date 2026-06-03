@@ -14,7 +14,6 @@ class PortalController extends Controller
         $user = $request->user();
 
         $projects = Project::where('client_user_id', $user->id)
-            ->withCount(['proposals', 'invoices'])
             ->latest()
             ->get();
 
@@ -31,24 +30,12 @@ class PortalController extends Controller
         }
 
         $project->load([
-            'proposals',
-            'invoices.items',
             'meetings',
             'documents.uploader',
         ]);
 
-        $projectData = array_merge($project->toArray(), [
-            'total_billed' => $project->total_billed,
-            'total_paid'   => $project->total_paid,
-        ]);
-
-        $projectData['invoices'] = $project->invoices->map(fn ($inv) => array_merge(
-            $inv->toArray(),
-            ['total' => $inv->total]
-        ));
-
         return Inertia::render('Portal/Project', [
-            'project' => $projectData,
+            'project' => $project->toArray(),
         ]);
     }
 }

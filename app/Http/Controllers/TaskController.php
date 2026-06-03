@@ -8,6 +8,26 @@ use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
+    public function reorder(Request $request, Project $project)
+    {
+        $this->authorize('update', $project);
+
+        $validated = $request->validate([
+            'ids'   => 'required|array',
+            'ids.*' => 'integer',
+        ]);
+
+        // Only reorder tasks that actually belong to this project.
+        $ids = $project->tasks()->whereIn('id', $validated['ids'])->pluck('id')->all();
+        $ordered = array_values(array_filter($validated['ids'], fn ($id) => in_array($id, $ids)));
+
+        foreach ($ordered as $position => $id) {
+            Task::where('id', $id)->update(['position' => $position]);
+        }
+
+        return back(303)->with('success', 'Tasks reordered.');
+    }
+
     public function store(Request $request, Project $project)
     {
         $this->authorize('update', $project);
@@ -17,7 +37,7 @@ class TaskController extends Controller
             'assignee' => 'nullable|string|max:100',
             'due_date' => 'nullable|date',
             'priority' => 'required|in:high,medium,low',
-            'status'   => 'required|in:not-started,in-progress,review,completed',
+            'status'   => 'required|in:not-started,in-progress,review,pending-approval,completed',
             'category' => 'nullable|string|max:100',
         ]);
 
@@ -35,7 +55,7 @@ class TaskController extends Controller
             'assignee' => 'nullable|string|max:100',
             'due_date' => 'nullable|date',
             'priority' => 'required|in:high,medium,low',
-            'status'   => 'required|in:not-started,in-progress,review,completed',
+            'status'   => 'required|in:not-started,in-progress,review,pending-approval,completed',
             'category' => 'nullable|string|max:100',
         ]);
 
@@ -47,7 +67,7 @@ class TaskController extends Controller
     public function updateStatus(Request $request, Task $task)
     {
         $request->validate([
-            'status' => 'required|in:not-started,in-progress,review,completed',
+            'status' => 'required|in:not-started,in-progress,review,pending-approval,completed',
         ]);
 
         $task->update(['status' => $request->status]);

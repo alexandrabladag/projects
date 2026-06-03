@@ -1,9 +1,9 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import AppLayout, { Badge } from '@/Layouts/AppLayout';
 import currencies from '@/Utils/currencies';
 import {
-    Pencil, Eye, Plus, Save, X, Check, Send, ChevronUp, ChevronDown,
+    Pencil, Eye, Plus, Save, X, Check, Send, ChevronUp, ChevronDown, ChevronRight, GripVertical,
     FileText, Receipt, CalendarDays, Calendar, FolderOpen, Clock, ListChecks,
     Trash2, Download, Upload, CheckCircle, XCircle, AlertCircle, Lock, Code, Users, Maximize2, Minimize2,
 } from 'lucide-react';
@@ -1536,10 +1536,16 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
     const [editTask, setEditTask] = useState(null);
     const [filter, setFilter] = useState('all');
     const [categoryFilter, setCategoryFilter] = useState('all');
+    const [collapsedCats, setCollapsedCats] = useState({});
+    const toggleCat = (cat) => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
     const [expandedTask, setExpandedTask] = useState(null);
     const [showDocModal, setShowDocModal] = useState(null); // task id
     const [previewDoc, setPreviewDoc] = useState(null);
-    const tasks = project.tasks ?? [];
+    // Local copy so drag-reordering feels instant; re-synced when the server data changes.
+    const [tasks, setTasks] = useState(project.tasks ?? []);
+    useEffect(() => { setTasks(project.tasks ?? []); }, [project.tasks]);
+    const [dragTask, setDragTask] = useState(null); // { id, category }
+    const [dragOverId, setDragOverId] = useState(null);
     // Managed catalog names, plus any legacy category still on a task, so the dropdowns never lose a value.
     const catalogNames = taskCategories.map(c => c.name);
     const categoryOptions = [...new Set([...catalogNames, ...tasks.map(t => t.category).filter(Boolean)])].sort();
@@ -1548,6 +1554,25 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
         (filter === 'all' || t.status === filter) &&
         (categoryFilter === 'all' || t.category === categoryFilter)
     );
+
+    const onDragStart = (t) => setDragTask({ id: t.id, category: t.category || 'General' });
+    const onDragEnter = (t) => { if (dragTask && (t.category || 'General') === dragTask.category) setDragOverId(t.id); };
+    const onDragEnd = () => { setDragTask(null); setDragOverId(null); };
+    const onDropTask = (overTask) => {
+        if (!dragTask || dragTask.id === overTask.id) return onDragEnd();
+        const overCat = overTask.category || 'General';
+        if (overCat !== dragTask.category) return onDragEnd();   // only reorder within the same category
+        const list = [...tasks];
+        const from = list.findIndex(t => t.id === dragTask.id);
+        const to = list.findIndex(t => t.id === overTask.id);
+        if (from === -1 || to === -1) return onDragEnd();
+        const [moved] = list.splice(from, 1);
+        list.splice(to, 0, moved);
+        setTasks(list);
+        const ids = list.filter(t => (t.category || 'General') === overCat).map(t => t.id);
+        router.patch(route('projects.tasks.reorder', project.id), { ids }, { preserveState: true, preserveScroll: true });
+        onDragEnd();
+    };
 
     const { data, setData, post, processing, reset } = useForm({
         title: '', assignee: '', due_date: '', priority: 'medium', status: 'not-started',
@@ -1596,7 +1621,7 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
     };
 
     const cycleStatus = (task) => {
-        const next = { 'not-started': 'in-progress', 'in-progress': 'review', 'review': 'completed', 'completed': 'not-started' };
+        const next = { 'not-started': 'in-progress', 'in-progress': 'review', 'review': 'pending-approval', 'pending-approval': 'completed', 'completed': 'not-started' };
         router.patch(route('tasks.status', task.id), { status: next[task.status] ?? 'not-started' });
     };
 
@@ -1623,6 +1648,7 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                         { key: 'not-started', label: 'To Do' },
                         { key: 'in-progress', label: 'In Progress' },
                         { key: 'review', label: 'Review' },
+                        { key: 'pending-approval', label: 'Pending Approval' },
                         { key: 'completed', label: 'Done' },
                     ].map(s => (
                         <button key={s.key} onClick={() => setFilter(s.key)} className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all ${filter === s.key ? 'bg-white text-black shadow-sm' : 'text-[#6b7280] hover:text-black'}`}>
@@ -1647,25 +1673,46 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                 </div>
             )}
 
-            {Object.entries(byCategory).map(([cat, catTasks]) => (
+            {Object.entries(byCategory).map(([cat, catTasks]) => {
+                const collapsed = collapsedCats[cat];
+                return (
                 <div key={cat} className="mb-5">
-                    <div className="flex items-center gap-2 text-[10.5px] tracking-[1.5px] uppercase text-[#6b7280] mb-2 pb-2 border-b border-[#e5e7eb]">
+                    <button onClick={() => toggleCat(cat)} className="w-full flex items-center gap-2 text-[10.5px] tracking-[1.5px] uppercase text-[#6b7280] mb-2 pb-2 border-b border-[#e5e7eb] hover:text-black transition-colors">
+                        {collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
                         <ListChecks size={13} /> {cat} <span className="text-[#d1d5db]">({catTasks.length})</span>
-                    </div>
+                    </button>
+                    {!collapsed && (
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                         {catTasks.map(t => {
                             const docs = t.documents ?? [];
                             const isExpanded = expandedTask === t.id;
                             return (
-                                <div key={t.id} className="border-b border-[#f0f0f0] last:border-b-0">
-                                    <div className="flex items-center gap-3 px-4 py-3 hover:bg-[#fafbfc] transition-colors">
+                                <div
+                                    key={t.id}
+                                    draggable={canManage}
+                                    onDragStart={() => onDragStart(t)}
+                                    onDragEnter={() => onDragEnter(t)}
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={() => onDropTask(t)}
+                                    onDragEnd={onDragEnd}
+                                    className={`border-b border-[#f0f0f0] last:border-b-0 transition-all
+                                        ${dragTask?.id === t.id ? 'opacity-40' : ''}
+                                        ${dragOverId === t.id && dragTask?.id !== t.id ? 'border-t-2 border-t-[#4f6df5]' : ''}`}
+                                >
+                                    <div className="flex items-center gap-2 px-4 py-3 hover:bg-[#fafbfc] transition-colors">
+                                        {canManage && (
+                                            <span className="cursor-grab active:cursor-grabbing text-[#d1d5db] hover:text-[#9ca3af] flex-shrink-0" title="Drag to reorder">
+                                                <GripVertical size={15} />
+                                            </span>
+                                        )}
                                         <button
                                             onClick={() => cycleStatus(t)}
                                             className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all
-                                                ${t.status === 'completed' ? 'border-emerald-400 bg-emerald-400' : t.status === 'in-progress' ? 'border-indigo-400 bg-indigo-50' : 'border-[#d1d5db] hover:border-[#4f6df5]'}`}
+                                                ${t.status === 'completed' ? 'border-emerald-400 bg-emerald-400' : t.status === 'in-progress' ? 'border-indigo-400 bg-indigo-50' : t.status === 'pending-approval' ? 'border-amber-400 bg-amber-50' : 'border-[#d1d5db] hover:border-[#4f6df5]'}`}
                                         >
                                             {t.status === 'completed' && <Check size={12} className="text-white" />}
                                             {t.status === 'in-progress' && <div className="w-2 h-2 rounded-sm bg-indigo-400" />}
+                                            {t.status === 'pending-approval' && <div className="w-2 h-2 rounded-full bg-amber-400" />}
                                         </button>
                                         <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setExpandedTask(isExpanded ? null : t.id)}>
                                             <div className={`text-[13px] ${t.status === 'completed' ? 'text-emerald-600' : 'text-black font-medium'}`}>{t.title}</div>
@@ -1692,10 +1739,10 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                                                     title="Click to change status"
                                                     className="cursor-pointer"
                                                 >
-                                                    <Badge status={t.status} label={t.status === 'not-started' ? 'To Do' : t.status === 'in-progress' ? 'In Progress' : t.status === 'review' ? 'Review' : 'Done'} />
+                                                    <Badge status={t.status} label={t.status === 'not-started' ? 'To Do' : t.status === 'in-progress' ? 'In Progress' : t.status === 'review' ? 'Review' : t.status === 'pending-approval' ? 'Pending Approval' : 'Done'} />
                                                 </button>
                                             ) : (
-                                                <Badge status={t.status} label={t.status === 'not-started' ? 'To Do' : t.status === 'in-progress' ? 'In Progress' : t.status === 'review' ? 'Review' : 'Done'} />
+                                                <Badge status={t.status} label={t.status === 'not-started' ? 'To Do' : t.status === 'in-progress' ? 'In Progress' : t.status === 'review' ? 'Review' : t.status === 'pending-approval' ? 'Pending Approval' : 'Done'} />
                                             )}
                                             {canManage && (
                                                 <>
@@ -1769,8 +1816,10 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                             );
                         })}
                     </div>
+                    )}
                 </div>
-            ))}
+                );
+            })}
 
             {showModal && (
                 <Modal title="Add Task" subtitle={`For ${project.name}`} onClose={() => setShowModal(false)} footer={<><Btn ghost onClick={() => setShowModal(false)}><X size={13} /> Cancel</Btn><Btn ghost onClick={submitAndAddAnother} disabled={processing}><Plus size={13} /> {processing ? 'Saving…' : 'Save & Add Another'}</Btn><Btn primary onClick={submit} disabled={processing}><Plus size={13} /> {processing ? 'Adding…' : 'Add Task'}</Btn></>}>
@@ -1788,7 +1837,7 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                             </FG>
                             <FG label="Status">
                                 <select className={inputCls} value={data.status} onChange={e => setData('status', e.target.value)}>
-                                    {[['not-started','Not Started'],['in-progress','In Progress'],['review','Review'],['completed','Completed']].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+                                    {[['not-started','Not Started'],['in-progress','In Progress'],['review','Review'],['pending-approval','Pending Approval'],['completed','Completed']].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
                                 </select>
                             </FG>
                         </div>
@@ -1823,7 +1872,7 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                             </FG>
                             <FG label="Status">
                                 <select className={inputCls} value={editForm.data.status} onChange={e => editForm.setData('status', e.target.value)}>
-                                    {[['not-started','Not Started'],['in-progress','In Progress'],['review','Review'],['completed','Completed']].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+                                    {[['not-started','Not Started'],['in-progress','In Progress'],['review','Review'],['pending-approval','Pending Approval'],['completed','Completed']].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
                                 </select>
                             </FG>
                         </div>

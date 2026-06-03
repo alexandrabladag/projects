@@ -110,6 +110,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('bills/{bill}',        [\App\Http\Controllers\BillController::class, 'destroy'])->name('bills.destroy');
 
         Route::post('tasks',                 [TaskController::class, 'store'])->name('tasks.store');
+        Route::patch('tasks/reorder',        [TaskController::class, 'reorder'])->name('tasks.reorder');
         Route::put('tasks/{task}',           [TaskController::class, 'update'])->name('tasks.update');
         Route::delete('tasks/{task}',        [TaskController::class, 'destroy'])->name('tasks.destroy');
     });

@@ -14,22 +14,13 @@ class PublicPortalController extends Controller
             ->where('portal_enabled', true)
             ->firstOrFail();
 
-        $project->load(['proposals', 'invoices.items', 'meetings', 'tasks.documents', 'documents.uploader', 'clientRecord', 'lead']);
-
-        $projectData = array_merge($project->toArray(), [
-            'total_billed' => $project->total_billed,
-            'total_paid'   => $project->total_paid,
-        ]);
-
-        $projectData['invoices'] = $project->invoices->map(fn ($inv) => array_merge(
-            $inv->toArray(),
-            ['total' => $inv->total]
-        ));
+        // 'proposals' is still loaded because the public portal derives the deliverables list from it.
+        $project->load(['proposals', 'meetings', 'tasks.documents', 'documents.uploader', 'clientRecord', 'lead']);
 
         $company = Company::first();
 
         return Inertia::render('Portal/Public', [
-            'project' => $projectData,
+            'project' => $project->toArray(),
             'company' => $company ? [
                 'name'      => $company->name,
                 'logo_path' => $company->logo_path,

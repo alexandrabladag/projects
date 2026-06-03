@@ -13,16 +13,12 @@ export default function Project({ project }) {
     const fmt = (n) => formatMoney(n, cur.code);
     const [previewDoc, setPreviewDoc] = useState(null);
     const [fullscreen, setFullscreen] = useState(false);
-    const proposals = project.proposals ?? [];
-    const invoices = project.invoices ?? [];
     const meetings = project.meetings ?? [];
     const documents = project.documents ?? [];
 
     const tabs = [
         { id: 'overview', label: 'Overview', icon: <Eye size={15} /> },
         { id: 'documents', label: `Documents (${documents.length})`, icon: <FolderOpen size={15} /> },
-        { id: 'proposals', label: `Proposals (${proposals.length})`, icon: <FileText size={15} /> },
-        { id: 'invoices', label: `Invoices (${invoices.length})`, icon: <Receipt size={15} /> },
         { id: 'meetings', label: `Meetings (${meetings.length})`, icon: <CalendarDays size={15} /> },
     ];
 
@@ -62,14 +58,6 @@ export default function Project({ project }) {
                     <div>
                         <div className="text-[10px] uppercase tracking-wide text-[#9ca3af] font-medium">Budget</div>
                         <div className="text-[18px] font-bold text-black">{fmt(project.budget)}</div>
-                    </div>
-                    <div>
-                        <div className="text-[10px] uppercase tracking-wide text-[#9ca3af] font-medium">Billed</div>
-                        <div className="text-[18px] font-bold text-indigo-600">{fmt(project.total_billed)}</div>
-                    </div>
-                    <div>
-                        <div className="text-[10px] uppercase tracking-wide text-[#9ca3af] font-medium">Paid</div>
-                        <div className="text-[18px] font-bold text-emerald-600">{fmt(project.total_paid)}</div>
                     </div>
                 </div>
             </div>
@@ -122,43 +110,6 @@ export default function Project({ project }) {
                         </div>
                     </div>
                 </div>
-            )}
-
-            {/* Proposals */}
-            {tab === 'proposals' && (
-                <div className="space-y-3">
-                    {proposals.length === 0 && <div className="text-center py-10 text-[13px] text-[#6b7280]">No proposals yet</div>}
-                    {proposals.map(pr => (
-                        <div key={pr.id} className="bg-white border border-[#e5e7eb] rounded-xl p-5">
-                            <div className="flex justify-between items-start mb-2">
-                                <div>
-                                    <div className="text-[15px] font-bold text-black">{pr.title}</div>
-                                    <div className="text-[12px] text-[#6b7280]">Issued {fmtDate(pr.date)} {pr.valid_until ? `· Valid until ${fmtDate(pr.valid_until)}` : ''}</div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <Badge status={pr.status} />
-                                    <div className="text-[18px] font-bold text-black">{fmt(pr.amount)}</div>
-                                </div>
-                            </div>
-                            {pr.content && (
-                                <div className="mt-3 pt-3 border-t border-[#f0f0f0] text-[12px] text-[#6b7280] line-clamp-3" dangerouslySetInnerHTML={{ __html: pr.content.replace(/<[^>]*>/g, ' ').slice(0, 300) }} />
-                            )}
-                            {pr.summary && !pr.content && (
-                                <div className="mt-3 pt-3 border-t border-[#f0f0f0] text-[12px] text-[#6b7280] line-clamp-3">{pr.summary}</div>
-                            )}
-                            <div className="mt-3">
-                                <Link href={route('proposals.view', pr.id)} className="text-[12px] text-[#4f6df5] hover:text-[#6380f7] font-medium transition-colors">
-                                    View Full Proposal →
-                                </Link>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Invoices */}
-            {tab === 'invoices' && (
-                <InvoiceList invoices={invoices} fmt={fmt} />
             )}
 
             {/* Documents */}
@@ -275,63 +226,5 @@ export default function Project({ project }) {
                 </div>
             )}
         </ClientLayout>
-    );
-}
-
-function InvoiceList({ invoices, fmt }) {
-    const [expanded, setExpanded] = useState(null);
-    const fmtDate = (s) => s ? new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
-
-    const statusColors = { draft: 'border-l-gray-300', sent: 'border-l-indigo-400', paid: 'border-l-emerald-400', overdue: 'border-l-red-400' };
-
-    return (
-        <div className="space-y-3">
-            {invoices.length === 0 && <div className="text-center py-10 text-[13px] text-[#6b7280]">No invoices yet</div>}
-            {invoices.map(inv => (
-                <div key={inv.id} className={`bg-white border border-[#e5e7eb] ${statusColors[inv.status] ?? ''} border-l-[3px] rounded-xl overflow-hidden`}>
-                    <div className="flex items-center gap-3 px-5 py-4 cursor-pointer hover:bg-[#fafbfc] transition-colors" onClick={() => setExpanded(expanded === inv.id ? null : inv.id)}>
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2.5 mb-0.5">
-                                <span className="text-[13px] font-mono font-bold text-black">{inv.number}</span>
-                                <Badge status={inv.status} />
-                            </div>
-                            <div className="text-[12px] text-[#6b7280]">{inv.description || fmtDate(inv.date)}</div>
-                        </div>
-                        <div className="text-right mr-2">
-                            <div className="text-[17px] font-bold text-black">{fmt(inv.total)}</div>
-                            <div className="text-[11px] text-[#9ca3af]">{inv.status === 'paid' ? 'Paid' : inv.due_date ? `Due ${fmtDate(inv.due_date)}` : ''}</div>
-                        </div>
-                        <Link href={route('invoices.view', inv.id)} onClick={e => e.stopPropagation()} className="text-[#4f6df5] hover:text-[#6380f7] transition-colors">
-                            <Eye size={16} />
-                        </Link>
-                        <span className="text-[#9ca3af]">{expanded === inv.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</span>
-                    </div>
-                    {expanded === inv.id && (
-                        <div className="px-5 py-4 bg-[#fafbfc] border-t border-[#f0f0f0]">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-[#e5e7eb]">
-                                        <th className="text-left text-[10px] tracking-wide uppercase text-[#9ca3af] font-medium pb-2">Description</th>
-                                        <th className="text-center text-[10px] tracking-wide uppercase text-[#9ca3af] font-medium pb-2 w-16">Qty</th>
-                                        <th className="text-right text-[10px] tracking-wide uppercase text-[#9ca3af] font-medium pb-2 w-24">Rate</th>
-                                        <th className="text-right text-[10px] tracking-wide uppercase text-[#9ca3af] font-medium pb-2 w-24">Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {(inv.items ?? []).map((item, i) => (
-                                        <tr key={i} className="border-b border-[#f0f0f0] last:border-b-0">
-                                            <td className="py-2.5 text-[13px] text-black">{item.description}</td>
-                                            <td className="py-2.5 text-[13px] text-center text-[#6b7280]">{item.quantity}</td>
-                                            <td className="py-2.5 text-[13px] text-right text-[#6b7280]">{fmt(item.rate)}</td>
-                                            <td className="py-2.5 text-[13px] text-right font-medium text-black">{fmt(item.quantity * item.rate)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-            ))}
-        </div>
     );
 }
