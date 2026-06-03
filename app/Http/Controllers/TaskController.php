@@ -42,6 +42,7 @@ class TaskController extends Controller
         ]);
 
         $project->tasks()->create($validated);
+        $project->recalculateProgress();
 
         return back()->with('success', 'Task added.');
     }
@@ -60,6 +61,7 @@ class TaskController extends Controller
         ]);
 
         $task->update($validated);
+        $task->project->recalculateProgress();
 
         return back()->with('success', 'Task updated.');
     }
@@ -71,6 +73,7 @@ class TaskController extends Controller
         ]);
 
         $task->update(['status' => $request->status]);
+        $task->project->recalculateProgress();
 
         return back()->with('success', 'Task status updated.');
     }
@@ -79,6 +82,7 @@ class TaskController extends Controller
     {
         $this->authorize('update', $task->project);
         $task->delete();
+        $project->recalculateProgress();
         return back()->with('success', 'Task deleted.');
     }
 }

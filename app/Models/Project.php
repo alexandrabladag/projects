@@ -128,6 +128,20 @@ class Project extends Model
         return $this->hasMany(Task::class)->orderBy('position')->orderBy('id');
     }
 
+    /**
+     * Recompute the project's progress from its tasks' completion.
+     * Projects with no tasks keep their manually-set progress.
+     */
+    public function recalculateProgress(): void
+    {
+        $total = $this->tasks()->count();
+        if ($total === 0) {
+            return;
+        }
+        $completed = $this->tasks()->where('status', 'completed')->count();
+        $this->forceFill(['progress' => (int) round($completed / $total * 100)])->save();
+    }
+
     // ── Scopes ────────────────────────────────────────────────────────────────
 
     public function scopeActive($query)
