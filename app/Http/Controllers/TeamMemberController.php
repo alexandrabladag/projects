@@ -3,30 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Models\TeamMember;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class TeamMemberController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $workspaceId = $request->user()?->workspace_id;
+
         return Inertia::render('Settings/TeamMembers', [
-            'members' => TeamMember::orderBy('name')->get(),
+            'members' => TeamMember::with('user:id,name,email')->orderBy('name')->get(),
+            // Login accounts that can be linked to a team member.
+            'users'   => User::when($workspaceId, fn ($q) => $q->where('workspace_id', $workspaceId))
+                ->orderBy('name')
+                ->get(['id', 'name', 'email']),
         ]);
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name'       => 'required|string|max:255',
-            'email'      => 'nullable|email|max:255',
-            'phone'      => 'nullable|string|max:50',
-            'role'       => 'nullable|string|max:255',
-            'department' => 'nullable|string|max:255',
-            'pay_type'      => 'nullable|in:hourly,monthly,fixed',
-            'rate'          => 'nullable|numeric|min:0',
-            'rate_currency' => 'nullable|string|max:10',
-        ]);
+        $validated = $request->validate($this->rules());
 
         TeamMember::create($validated);
 
@@ -35,16 +34,8 @@ class TeamMemberController extends Controller
 
     public function update(Request $request, TeamMember $teamMember)
     {
-        $validated = $request->validate([
-            'name'       => 'required|string|max:255',
-            'email'      => 'nullable|email|max:255',
-            'phone'      => 'nullable|string|max:50',
-            'role'       => 'nullable|string|max:255',
-            'department' => 'nullable|string|max:255',
-            'pay_type'      => 'nullable|in:hourly,monthly,fixed',
-            'rate'          => 'nullable|numeric|min:0',
-            'rate_currency' => 'nullable|string|max:10',
-            'is_active'  => 'boolean',
+        $validated = $request->validate($this->rules($teamMember->id) + [
+            'is_active' => 'boolean',
         ]);
 
         $teamMember->update($validated);
@@ -56,5 +47,21 @@ class TeamMemberController extends Controller
     {
         $teamMember->delete();
         return back()->with('success', 'Team member removed.');
+    }
+
+    private function rules(?int $ignoreId = null): array
+    {
+        return [
+            'name'          => 'required|string|max:255',
+            'email'         => 'nullable|email|max:255',
+            'phone'         => 'nullable|string|max:50',
+            'role'          => 'nullable|string|max:255',
+            'department'    => 'nullable|string|max:255',
+            'pay_type'      => 'nullable|in:hourly,monthly,fixed',
+            'rate'          => 'nullable|numeric|min:0',
+            'rate_currency' => 'nullable|string|max:10',
+            // One login account links to at most one team member.
+            'user_id'       => ['nullable', 'exists:users,id', Rule::unique('team_members', 'user_id')->ignore($ignoreId)],
+        ];
     }
 }

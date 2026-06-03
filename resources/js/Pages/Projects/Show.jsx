@@ -1574,24 +1574,26 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
         onDragEnd();
     };
 
+    const teamMembers = usePage().props.teamMembers ?? [];
+
     const { data, setData, post, processing, reset } = useForm({
-        title: '', assignee: '', due_date: '', priority: 'medium', status: 'not-started',
+        title: '', assignee_id: '', due_date: '', priority: 'medium', status: 'not-started',
         category: taskCategories[0]?.name ?? 'General',
     });
     const submit = () => post(route('projects.tasks.store', project.id), { onSuccess: () => { setShowModal(false); reset(); } });
     const submitAndAddAnother = () => post(route('projects.tasks.store', project.id), {
         preserveScroll: true,
-        onSuccess: () => { reset('title', 'assignee', 'due_date'); },
+        onSuccess: () => { reset('title', 'assignee_id', 'due_date'); },
     });
 
     const editForm = useForm({
-        title: '', assignee: '', due_date: '', priority: 'medium', status: 'not-started', category: '',
+        title: '', assignee_id: '', due_date: '', priority: 'medium', status: 'not-started', category: '',
     });
 
     const openEdit = (task) => {
         editForm.setData({
             title: task.title ?? '',
-            assignee: task.assignee ?? '',
+            assignee_id: task.assignee_id ?? '',
             due_date: task.due_date?.slice(0, 10) ?? '',
             priority: task.priority ?? 'medium',
             status: task.status ?? 'not-started',
@@ -1826,7 +1828,12 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                     <div className="space-y-4 pb-2">
                         <FG label="Task Title *"><input className={inputCls} value={data.title} onChange={e => setData('title', e.target.value)} placeholder="What needs to be done?" /></FG>
                         <div className="grid grid-cols-2 gap-3">
-                            <FG label="Assignee"><input className={inputCls} value={data.assignee} onChange={e => setData('assignee', e.target.value)} placeholder="Person responsible" /></FG>
+                            <FG label="Assignee">
+                                <select className={inputCls} value={data.assignee_id} onChange={e => setData('assignee_id', e.target.value)}>
+                                    <option value="">Unassigned</option>
+                                    {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>)}
+                                </select>
+                            </FG>
                             <FG label="Due Date"><input className={inputCls} type="date" value={data.due_date} onChange={e => setData('due_date', e.target.value)} /></FG>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
@@ -1861,7 +1868,12 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                     <div className="space-y-4 pb-2">
                         <FG label="Task Title *" error={editForm.errors.title}><input className={inputCls} value={editForm.data.title} onChange={e => editForm.setData('title', e.target.value)} placeholder="What needs to be done?" /></FG>
                         <div className="grid grid-cols-2 gap-3">
-                            <FG label="Assignee"><input className={inputCls} value={editForm.data.assignee} onChange={e => editForm.setData('assignee', e.target.value)} placeholder="Person responsible" /></FG>
+                            <FG label="Assignee">
+                                <select className={inputCls} value={editForm.data.assignee_id} onChange={e => editForm.setData('assignee_id', e.target.value)}>
+                                    <option value="">Unassigned</option>
+                                    {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>)}
+                                </select>
+                            </FG>
                             <FG label="Due Date"><input className={inputCls} type="date" value={editForm.data.due_date} onChange={e => editForm.setData('due_date', e.target.value)} /></FG>
                         </div>
                         <div className="grid grid-cols-2 gap-3">

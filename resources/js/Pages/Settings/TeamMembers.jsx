@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Plus, Pencil, Trash2, Save, X, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, Save, X, Users, Link2 as LinkIcon } from 'lucide-react';
 
 const inputCls = 'w-full bg-[#f3f4f6] border border-[#d1d5db] rounded-lg px-3.5 py-2.5 text-[13px] text-black outline-none focus:border-[#4f6df5] transition-colors';
 
-export default function TeamMembers({ members }) {
+export default function TeamMembers({ members, users = [] }) {
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
 
     const { data, setData, post, put, processing, reset, errors } = useForm({
-        name: '', email: '', phone: '', role: '', department: '', pay_type: 'monthly', rate: '', rate_currency: 'PHP',
+        name: '', email: '', phone: '', role: '', department: '', pay_type: 'monthly', rate: '', rate_currency: 'PHP', user_id: '',
     });
 
     const openNew = () => { setEditing(null); reset(); setShowForm(true); };
-    const openEdit = (m) => { setEditing(m); setData({ name: m.name, email: m.email ?? '', phone: m.phone ?? '', role: m.role ?? '', department: m.department ?? '', pay_type: m.pay_type ?? 'monthly', rate: m.rate ?? '', rate_currency: m.rate_currency ?? 'PHP' }); setShowForm(true); };
+    const openEdit = (m) => { setEditing(m); setData({ name: m.name, email: m.email ?? '', phone: m.phone ?? '', role: m.role ?? '', department: m.department ?? '', pay_type: m.pay_type ?? 'monthly', rate: m.rate ?? '', rate_currency: m.rate_currency ?? 'PHP', user_id: m.user_id ?? '' }); setShowForm(true); };
 
     const submit = (e) => {
         e.preventDefault();
@@ -89,6 +89,15 @@ export default function TeamMembers({ members }) {
                                 </select>
                             </div>
                         </div>
+                        <div className="mb-4">
+                            <label className="block text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-2">Linked Login Account</label>
+                            <select className={inputCls} value={data.user_id} onChange={e => setData('user_id', e.target.value)}>
+                                <option value="">Not linked (cannot log in)</option>
+                                {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
+                            </select>
+                            {errors.user_id && <p className="text-red-500 text-[12px] mt-1">{errors.user_id}</p>}
+                            <p className="text-[11px] text-[#9ca3af] mt-1.5">Link this person to an account so they can see their own tasks in “My Tasks”.</p>
+                        </div>
                         <div className="flex justify-end gap-2">
                             <button type="button" onClick={() => { setShowForm(false); setEditing(null); }} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] text-[#6b7280] border border-[#d1d5db] hover:bg-gray-50 transition-colors"><X size={14} /> Cancel</button>
                             <button type="submit" disabled={processing} className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#4f6df5] hover:bg-[#6380f7] text-white font-semibold rounded-lg text-[13px] transition-all disabled:opacity-60"><Save size={14} /> {editing ? 'Update' : 'Add Member'}</button>
@@ -120,6 +129,11 @@ export default function TeamMembers({ members }) {
                                     <div className="text-[11px] text-[#9ca3af] mt-0.5">
                                         {[m.email, m.phone].filter(Boolean).join(' · ')}
                                     </div>
+                                    {m.user && (
+                                        <div className="text-[11px] text-emerald-600 mt-0.5 inline-flex items-center gap-1">
+                                            <LinkIcon size={11} /> Linked to {m.user.name}
+                                        </div>
+                                    )}
                                 </div>
                                 {m.rate > 0 && (
                                     <div className="text-right flex-shrink-0">

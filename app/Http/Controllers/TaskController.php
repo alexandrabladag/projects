@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\TeamMember;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
@@ -33,13 +34,15 @@ class TaskController extends Controller
         $this->authorize('update', $project);
 
         $validated = $request->validate([
-            'title'    => 'required|string|max:255',
-            'assignee' => 'nullable|string|max:100',
-            'due_date' => 'nullable|date',
-            'priority' => 'required|in:high,medium,low',
-            'status'   => 'required|in:not-started,in-progress,review,pending-approval,completed',
-            'category' => 'nullable|string|max:100',
+            'title'       => 'required|string|max:255',
+            'assignee_id' => 'nullable|exists:team_members,id',
+            'due_date'    => 'nullable|date',
+            'priority'    => 'required|in:high,medium,low',
+            'status'      => 'required|in:not-started,in-progress,review,pending-approval,completed',
+            'category'    => 'nullable|string|max:100',
         ]);
+
+        $validated['assignee'] = $this->assigneeName($validated['assignee_id'] ?? null);
 
         $project->tasks()->create($validated);
         $project->recalculateProgress();
@@ -52,13 +55,15 @@ class TaskController extends Controller
         $this->authorize('update', $task->project);
 
         $validated = $request->validate([
-            'title'    => 'required|string|max:255',
-            'assignee' => 'nullable|string|max:100',
-            'due_date' => 'nullable|date',
-            'priority' => 'required|in:high,medium,low',
-            'status'   => 'required|in:not-started,in-progress,review,pending-approval,completed',
-            'category' => 'nullable|string|max:100',
+            'title'       => 'required|string|max:255',
+            'assignee_id' => 'nullable|exists:team_members,id',
+            'due_date'    => 'nullable|date',
+            'priority'    => 'required|in:high,medium,low',
+            'status'      => 'required|in:not-started,in-progress,review,pending-approval,completed',
+            'category'    => 'nullable|string|max:100',
         ]);
+
+        $validated['assignee'] = $this->assigneeName($validated['assignee_id'] ?? null);
 
         $task->update($validated);
         $task->project->recalculateProgress();
@@ -84,5 +89,10 @@ class TaskController extends Controller
         $task->delete();
         $project->recalculateProgress();
         return back()->with('success', 'Task deleted.');
+    }
+
+    private function assigneeName(?int $teamMemberId): ?string
+    {
+        return $teamMemberId ? TeamMember::find($teamMemberId)?->name : null;
     }
 }

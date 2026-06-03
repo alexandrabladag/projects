@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Task extends Model
 {
@@ -13,6 +14,7 @@ class Task extends Model
         'project_id',
         'title',
         'assignee',
+        'assignee_id',
         'due_date',
         'priority',     // high | medium | low
         'status',       // not-started | in-progress | review | completed
@@ -33,6 +35,11 @@ class Task extends Model
     public function documents()
     {
         return $this->hasMany(Document::class);
+    }
+
+    public function assignedMember(): BelongsTo
+    {
+        return $this->belongsTo(TeamMember::class, 'assignee_id');
     }
 
     public function scopePending($query)

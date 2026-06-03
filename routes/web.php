@@ -39,6 +39,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    Route::get('/my-tasks', [\App\Http\Controllers\MyTasksController::class, 'index'])->name('my-tasks');
+
     Route::resource('projects', ProjectController::class);
     Route::resource('directory', ClientController::class)->parameters(['directory' => 'client'])->names('clients');
     Route::post('directory/{client}/contacts', [ContactController::class, 'store'])->name('clients.contacts.store');

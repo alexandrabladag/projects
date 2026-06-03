@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users, Tag, Menu } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users, Tag, ListTodo, Menu } from 'lucide-react';
 
 // ── Reusable Badge ─────────────────────────────────────────────────────────────
 export function Badge({ status, label }) {
@@ -40,6 +40,7 @@ function Sidebar({ projects, workspace, user, open, onClose }) {
 
     const icons = {
         dashboard: <LayoutDashboard size={18} strokeWidth={1.75} />,
+        mytasks:   <ListTodo size={18} strokeWidth={1.75} />,
         projects:  <FolderKanban size={18} strokeWidth={1.75} />,
         clients:   <Building2 size={18} strokeWidth={1.75} />,
         profile:   <UserCircle size={18} strokeWidth={1.75} />,
@@ -84,6 +85,7 @@ function Sidebar({ projects, workspace, user, open, onClose }) {
             {/* Main Nav */}
             <nav className="px-3 py-3 flex-1 overflow-y-auto">
                 {navItem(route('dashboard'), 'dashboard', 'Dashboard')}
+                {navItem(route('my-tasks'), 'mytasks', 'My Tasks')}
                 {navItem(route('projects.index'), 'projects', 'All Projects')}
                 {navItem(route('clients.index'), 'clients', 'Directory')}
 

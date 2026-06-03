@@ -65,6 +65,14 @@ class User extends Authenticatable
         return $this->hasMany(Project::class, 'manager_id');
     }
 
+    /**
+     * The team member record linked to this login account, if any.
+     */
+    public function teamMember()
+    {
+        return $this->hasOne(TeamMember::class);
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     public function isAdmin(): bool
