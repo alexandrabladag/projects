@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users, Menu } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users, Tag, Menu } from 'lucide-react';
 
 // ── Reusable Badge ─────────────────────────────────────────────────────────────
 export function Badge({ status, label }) {
@@ -43,6 +43,7 @@ function Sidebar({ projects, workspace, user, open, onClose }) {
         clients:   <Building2 size={18} strokeWidth={1.75} />,
         profile:   <UserCircle size={18} strokeWidth={1.75} />,
         team:      <Users size={18} strokeWidth={1.75} />,
+        categories: <Tag size={18} strokeWidth={1.75} />,
         transfer:  <ArrowLeftRight size={18} strokeWidth={1.75} />,
         settings:  <Settings size={18} strokeWidth={1.75} />,
     };
@@ -130,6 +131,7 @@ function Sidebar({ projects, workspace, user, open, onClose }) {
                 {navItem(route('profile.edit'), 'profile', 'Profile')}
                 {navItem(route('company.edit'), 'settings', 'Company Settings')}
                 {navItem(route('team.index'), 'team', 'Team Members')}
+                {navItem(route('categories.index'), 'categories', 'Task Categories')}
                 {navItem(route('workspace.transfer'), 'transfer', 'Export & Import')}
             </div>
 

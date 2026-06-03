@@ -161,6 +161,7 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Show', [
             'project'            => $projectData,
             'canManage'          => $request->user()->canManageProjects(),
+            'taskCategories'     => \App\Models\TaskCategory::orderBy('position')->orderBy('name')->get(),
             'nextInvoiceNumber'  => $company?->generateNumber('invoice') ?? 'INV-' . date('Y') . '-001',
             'nextProposalNumber' => $company?->generateNumber('proposal') ?? 'PROP-' . date('Y') . '-001',
         ]);

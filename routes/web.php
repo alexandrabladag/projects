@@ -53,6 +53,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('settings/team/{teamMember}', [\App\Http\Controllers\TeamMemberController::class, 'update'])->name('team.update');
     Route::delete('settings/team/{teamMember}', [\App\Http\Controllers\TeamMemberController::class, 'destroy'])->name('team.destroy');
 
+    Route::get('settings/categories', [\App\Http\Controllers\TaskCategoryController::class, 'index'])->name('categories.index');
+    Route::post('settings/categories', [\App\Http\Controllers\TaskCategoryController::class, 'store'])->name('categories.store');
+    Route::put('settings/categories/{taskCategory}', [\App\Http\Controllers\TaskCategoryController::class, 'update'])->name('categories.update');
+    Route::delete('settings/categories/{taskCategory}', [\App\Http\Controllers\TaskCategoryController::class, 'destroy'])->name('categories.destroy');
+
     Route::get('settings/transfer', [\App\Http\Controllers\WorkspaceTransferController::class, 'index'])->name('workspace.transfer');
     Route::get('settings/export', [\App\Http\Controllers\WorkspaceTransferController::class, 'export'])->name('workspace.export');
     Route::post('settings/import', [\App\Http\Controllers\WorkspaceTransferController::class, 'import'])->name('workspace.import');

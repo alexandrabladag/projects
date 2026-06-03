@@ -1531,18 +1531,27 @@ function TimelineTab({ project }) {
 }
 
 // ── TASKS TAB ─────────────────────────────────────────────────────────────────
-function TasksTab({ project, canManage }) {
+function TasksTab({ project, canManage, taskCategories = [] }) {
     const [showModal, setShowModal] = useState(false);
     const [editTask, setEditTask] = useState(null);
     const [filter, setFilter] = useState('all');
+    const [categoryFilter, setCategoryFilter] = useState('all');
     const [expandedTask, setExpandedTask] = useState(null);
     const [showDocModal, setShowDocModal] = useState(null); // task id
     const [previewDoc, setPreviewDoc] = useState(null);
     const tasks = project.tasks ?? [];
-    const filtered = filter === 'all' ? tasks : tasks.filter(t => t.status === filter);
+    // Managed catalog names, plus any legacy category still on a task, so the dropdowns never lose a value.
+    const catalogNames = taskCategories.map(c => c.name);
+    const categoryOptions = [...new Set([...catalogNames, ...tasks.map(t => t.category).filter(Boolean)])].sort();
+    const categories = categoryOptions;
+    const filtered = tasks.filter(t =>
+        (filter === 'all' || t.status === filter) &&
+        (categoryFilter === 'all' || t.category === categoryFilter)
+    );
 
     const { data, setData, post, processing, reset } = useForm({
-        title: '', assignee: '', due_date: '', priority: 'medium', status: 'not-started', category: 'Deliverable',
+        title: '', assignee: '', due_date: '', priority: 'medium', status: 'not-started',
+        category: taskCategories[0]?.name ?? 'General',
     });
     const submit = () => post(route('projects.tasks.store', project.id), { onSuccess: () => { setShowModal(false); reset(); } });
     const submitAndAddAnother = () => post(route('projects.tasks.store', project.id), {
@@ -1587,7 +1596,7 @@ function TasksTab({ project, canManage }) {
     };
 
     const cycleStatus = (task) => {
-        const next = { 'not-started': 'in-progress', 'in-progress': 'completed', 'review': 'completed', 'completed': 'not-started' };
+        const next = { 'not-started': 'in-progress', 'in-progress': 'review', 'review': 'completed', 'completed': 'not-started' };
         router.patch(route('tasks.status', task.id), { status: next[task.status] ?? 'not-started' });
     };
 
@@ -1607,18 +1616,26 @@ function TasksTab({ project, canManage }) {
                 <h3 className="text-[17px] font-bold">Task List</h3>
                 {canManage && <Btn primary sm onClick={() => setShowModal(true)}><Plus size={13} /> Add Task</Btn>}
             </div>
-            <div className="flex bg-[#f3f4f6] rounded-lg p-0.5 mb-5 w-fit">
-                {[
-                    { key: 'all', label: 'All' },
-                    { key: 'not-started', label: 'To Do' },
-                    { key: 'in-progress', label: 'In Progress' },
-                    { key: 'review', label: 'Review' },
-                    { key: 'completed', label: 'Done' },
-                ].map(s => (
-                    <button key={s.key} onClick={() => setFilter(s.key)} className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all ${filter === s.key ? 'bg-white text-black shadow-sm' : 'text-[#6b7280] hover:text-black'}`}>
-                        {s.label}
-                    </button>
-                ))}
+            <div className="flex flex-wrap items-center gap-3 mb-5">
+                <div className="flex bg-[#f3f4f6] rounded-lg p-0.5 w-fit">
+                    {[
+                        { key: 'all', label: 'All' },
+                        { key: 'not-started', label: 'To Do' },
+                        { key: 'in-progress', label: 'In Progress' },
+                        { key: 'review', label: 'Review' },
+                        { key: 'completed', label: 'Done' },
+                    ].map(s => (
+                        <button key={s.key} onClick={() => setFilter(s.key)} className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all ${filter === s.key ? 'bg-white text-black shadow-sm' : 'text-[#6b7280] hover:text-black'}`}>
+                            {s.label}
+                        </button>
+                    ))}
+                </div>
+                {categories.length > 0 && (
+                    <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-[#f3f4f6] text-black border-0 focus:ring-2 focus:ring-indigo-400 cursor-pointer">
+                        <option value="all">All Categories</option>
+                        {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                )}
             </div>
 
             {filtered.length === 0 && (
@@ -1775,7 +1792,17 @@ function TasksTab({ project, canManage }) {
                                 </select>
                             </FG>
                         </div>
-                        <FG label="Category"><input className={inputCls} value={data.category} onChange={e => setData('category', e.target.value)} placeholder="e.g. Deliverable, Client Approval, Milestone" /></FG>
+                        <FG label="Category">
+                            {categoryOptions.length > 0 ? (
+                                <select className={inputCls} value={data.category} onChange={e => setData('category', e.target.value)}>
+                                    {!categoryOptions.includes(data.category) && <option value={data.category}>{data.category}</option>}
+                                    {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            ) : (
+                                <input className={inputCls} value={data.category} onChange={e => setData('category', e.target.value)} placeholder="e.g. Deliverable, Client Approval, Milestone" />
+                            )}
+                            <p className="text-[11px] text-[#9ca3af] mt-1.5">Manage categories in Settings → Task Categories.</p>
+                        </FG>
                     </div>
                 </Modal>
             )}
@@ -1800,7 +1827,16 @@ function TasksTab({ project, canManage }) {
                                 </select>
                             </FG>
                         </div>
-                        <FG label="Category"><input className={inputCls} value={editForm.data.category} onChange={e => editForm.setData('category', e.target.value)} placeholder="e.g. Deliverable, Client Approval, Milestone" /></FG>
+                        <FG label="Category">
+                            {categoryOptions.length > 0 ? (
+                                <select className={inputCls} value={editForm.data.category} onChange={e => editForm.setData('category', e.target.value)}>
+                                    {!categoryOptions.includes(editForm.data.category) && editForm.data.category && <option value={editForm.data.category}>{editForm.data.category}</option>}
+                                    {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            ) : (
+                                <input className={inputCls} value={editForm.data.category} onChange={e => editForm.setData('category', e.target.value)} placeholder="e.g. Deliverable, Client Approval, Milestone" />
+                            )}
+                        </FG>
                     </div>
                 </Modal>
             )}
@@ -2531,7 +2567,7 @@ function PagesTab({ project, canManage }) {
 }
 
 // ── MAIN SHOW PAGE ─────────────────────────────────────────────────────────────
-export default function Show({ project, canManage, nextInvoiceNumber, nextProposalNumber }) {
+export default function Show({ project, canManage, taskCategories = [], nextInvoiceNumber, nextProposalNumber }) {
     // Sync tab with URL hash
     const validTabs = ['overview','proposal','invoices','meetings','documents','timeline','tasks','bills','payroll','pages'];
     const hashTab = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '';
@@ -2591,7 +2627,7 @@ export default function Show({ project, canManage, nextInvoiceNumber, nextPropos
             {tab === 'meetings'  && <MeetingsTab  project={project} canManage={canManage} />}
             {tab === 'documents' && <DocumentsTab project={project} canManage={canManage} />}
             {tab === 'timeline'  && <TimelineTab  project={project} />}
-            {tab === 'tasks'     && <TasksTab     project={project} canManage={canManage} />}
+            {tab === 'tasks'     && <TasksTab     project={project} canManage={canManage} taskCategories={taskCategories} />}
             {tab === 'bills'     && <BillsTab     project={project} canManage={canManage} fmt={fmt} />}
             {tab === 'payroll'   && <PayrollTab   project={project} canManage={canManage} fmt={fmt} />}
             {tab === 'pages'     && <PagesTab     project={project} canManage={canManage} />}
