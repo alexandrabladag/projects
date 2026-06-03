@@ -227,7 +227,6 @@ export default function Public({ project, company, code }) {
                         };
                         const byCategory = {};
                         tasks.forEach(t => { const cat = t.category || 'General'; if (!byCategory[cat]) byCategory[cat] = []; byCategory[cat].push(t); });
-                        const phaseColors = ['from-[#4f6df5] to-[#6380f7]','from-violet-500 to-indigo-500','from-amber-500 to-orange-400','from-emerald-500 to-teal-400'];
 
                         return (
                             <div className="mb-8">
@@ -251,7 +250,6 @@ export default function Public({ project, company, code }) {
                                         const inProgress = catTasks.filter(t => t.status === 'in-progress').length;
                                         const pct = Math.round((done / catTasks.length) * 100);
                                         const info = phaseInfo[cat] ?? {};
-                                        const color = phaseColors[idx % phaseColors.length];
                                         const isAllDone = pct === 100;
                                         const isActive = inProgress > 0 || (done > 0 && !isAllDone);
                                         const dates = catTasks.filter(t => t.due_date).map(t => new Date(t.due_date));
@@ -264,26 +262,26 @@ export default function Public({ project, company, code }) {
 
                                         return (
                                             <div key={cat} className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden shadow-sm">
-                                                <div onClick={() => toggleCat(cat)} className={`bg-gradient-to-r ${isAllDone ? 'from-emerald-500 to-emerald-400' : color} px-6 py-5 text-white cursor-pointer select-none`}>
+                                                <div onClick={() => toggleCat(cat)} className="bg-[#f9fafb] border-b border-[#e5e7eb] px-6 py-5 text-black cursor-pointer select-none">
                                                     <div className="flex items-start justify-between">
                                                         <div>
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                {collapsed ? <ChevronRight size={14} className="opacity-80" /> : <ChevronDown size={14} className="opacity-80" />}
-                                                                <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Phase {idx+1}</span>
-                                                                {info.duration && <span className="text-[10px] opacity-60">· {info.duration}</span>}
-                                                                {isAllDone && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-medium">Complete</span>}
-                                                                {isActive && !isAllDone && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-medium">In Progress</span>}
+                                                                {collapsed ? <ChevronRight size={14} className="text-[#9ca3af]" /> : <ChevronDown size={14} className="text-[#9ca3af]" />}
+                                                                <span className="text-[10px] font-bold uppercase tracking-wider text-[#9ca3af]">Phase {idx+1}</span>
+                                                                {info.duration && <span className="text-[10px] text-[#9ca3af]">· {info.duration}</span>}
+                                                                {isAllDone && <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">Complete</span>}
+                                                                {isActive && !isAllDone && <span className="text-[10px] bg-[#f3f4f6] text-[#6b7280] border border-[#e5e7eb] px-2 py-0.5 rounded-full font-medium">In Progress</span>}
                                                             </div>
-                                                            <div className="text-[16px] font-bold">{cat.replace(/^Phase \d+ — /,'')}</div>
-                                                            {dateRange && <div className="text-[12px] opacity-70 mt-0.5">{dateRange}</div>}
+                                                            <div className="text-[16px] font-bold text-black">{cat.replace(/^Phase \d+ — /,'')}</div>
+                                                            {dateRange && <div className="text-[12px] text-[#9ca3af] mt-0.5">{dateRange}</div>}
                                                         </div>
                                                         <div className="text-right">
-                                                            <div className="text-[24px] font-extrabold">{pct}%</div>
-                                                            <div className="text-[11px] opacity-70">{done}/{catTasks.length}</div>
+                                                            <div className={`text-[24px] font-extrabold ${isAllDone ? 'text-emerald-600' : 'text-black'}`}>{pct}%</div>
+                                                            <div className="text-[11px] text-[#9ca3af]">{done}/{catTasks.length}</div>
                                                         </div>
                                                     </div>
-                                                    <div className="h-1.5 bg-white/20 rounded-full overflow-hidden mt-3">
-                                                        <div className="h-full rounded-full bg-white/80 progress-fill" style={{width:`${pct}%`}} />
+                                                    <div className="h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden mt-3">
+                                                        <div className={`h-full rounded-full progress-fill ${isAllDone ? 'bg-emerald-500' : 'bg-[#9ca3af]'}`} style={{width:`${pct}%`}} />
                                                     </div>
                                                 </div>
                                                 {!collapsed && (<>
