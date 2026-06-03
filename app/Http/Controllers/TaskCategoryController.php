@@ -6,7 +6,6 @@ use App\Models\Task;
 use App\Models\TaskCategory;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Unique;
 use Inertia\Inertia;
 
 class TaskCategoryController extends Controller
@@ -80,7 +79,7 @@ class TaskCategoryController extends Controller
         return back()->with('success', 'Category deleted.');
     }
 
-    private function uniqueName(?int $ignoreId = null): Unique
+    private function uniqueName(?int $ignoreId = null)
     {
         $rule = Rule::unique('task_categories', 'name')
             ->where(fn ($q) => $q->where('workspace_id', auth()->user()?->workspace_id));
