@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\RecordsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Bill extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, RecordsActivity;
 
     protected $fillable = [
         'project_id', 'client_id', 'number', 'status',
@@ -33,5 +34,10 @@ class Bill extends Model
     public function vendor(): BelongsTo
     {
         return $this->belongsTo(Client::class, 'client_id');
+    }
+
+    protected function activityLabel(): string
+    {
+        return 'bill ' . ($this->number ?: $this->description ?: ('#' . $this->getKey()));
     }
 }

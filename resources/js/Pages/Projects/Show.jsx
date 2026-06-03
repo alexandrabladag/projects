@@ -2627,12 +2627,51 @@ function PagesTab({ project, canManage }) {
     );
 }
 
+function ActivityTab({ activities = [] }) {
+    const rel = (s) => {
+        if (!s) return '';
+        const d = new Date(s);
+        const diff = (Date.now() - d.getTime()) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+    const dotColor = { created: 'bg-emerald-400', updated: 'bg-indigo-400', deleted: 'bg-red-400' };
+
+    return (
+        <>
+            <h3 className="text-[17px] font-bold mb-5">Activity</h3>
+            {activities.length === 0 ? (
+                <div className="text-center py-14 text-[#6b7280]">
+                    <div className="mb-4 flex justify-center"><div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center"><Clock size={24} className="text-indigo-400" /></div></div>
+                    <div className="text-[14px] font-semibold text-black mb-1">No activity yet</div>
+                    <div className="text-[13px] text-[#6b7280]">Changes to tasks, invoices, proposals and more will show up here.</div>
+                </div>
+            ) : (
+                <div className="bg-white border border-[#e5e7eb] rounded-xl p-5">
+                    {activities.map(a => (
+                        <div key={a.id} className="flex gap-3 pb-4 last:pb-0">
+                            <span className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${dotColor[a.event] ?? 'bg-gray-300'}`} />
+                            <div className="flex-1 min-w-0 border-b border-[#f0f0f0] pb-3 last:border-b-0">
+                                <div className="text-[13px] text-black">{a.description}</div>
+                                <div className="text-[11px] text-[#9ca3af] mt-0.5">{a.user?.name ?? a.causer_name ?? 'System'} · {rel(a.created_at)}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </>
+    );
+}
+
 // ── MAIN SHOW PAGE ─────────────────────────────────────────────────────────────
-export default function Show({ project, canManage, taskCategories = [], nextInvoiceNumber, nextProposalNumber }) {
+export default function Show({ project, canManage, taskCategories = [], activities = [], nextInvoiceNumber, nextProposalNumber }) {
     // Keep the active tab in the URL (?tab=…) so a refresh, bookmark, or shared
     // link lands on the same tab. We read it from Inertia's page URL, which is
     // identical on the server and client (unlike window.location.hash).
-    const validTabs = ['overview','proposal','invoices','meetings','documents','timeline','tasks','bills','payroll','pages'];
+    const validTabs = ['overview','proposal','invoices','meetings','documents','timeline','tasks','bills','payroll','pages','activity'];
     const { url } = usePage();
     const urlTab = new URLSearchParams(url.split('?')[1] ?? '').get('tab');
     const [tab, setTabState] = useState(validTabs.includes(urlTab) ? urlTab : 'overview');
@@ -2656,6 +2695,7 @@ export default function Show({ project, canManage, taskCategories = [], nextInvo
         { id: 'bills',      label: `Bills (${project.bills?.length ?? 0})`,        icon: <Receipt size={15} /> },
         { id: 'payroll',    label: `Payroll (${project.payroll?.length ?? 0})`,    icon: <Users size={15} /> },
         { id: 'pages',      label: `Pages (${project.pages?.length ?? 0})`,        icon: <FileText size={15} /> },
+        { id: 'activity',   label: 'Activity',    icon: <Clock size={15} /> },
     ];
 
     return (
@@ -2697,6 +2737,7 @@ export default function Show({ project, canManage, taskCategories = [], nextInvo
             {tab === 'bills'     && <BillsTab     project={project} canManage={canManage} fmt={fmt} />}
             {tab === 'payroll'   && <PayrollTab   project={project} canManage={canManage} fmt={fmt} />}
             {tab === 'pages'     && <PagesTab     project={project} canManage={canManage} />}
+            {tab === 'activity'  && <ActivityTab  activities={activities} />}
         </AppLayout>
     );
 }

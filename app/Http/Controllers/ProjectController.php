@@ -162,6 +162,11 @@ class ProjectController extends Controller
             'project'            => $projectData,
             'canManage'          => $request->user()->canManageProjects(),
             'taskCategories'     => \App\Models\TaskCategory::orderBy('position')->orderBy('name')->get(),
+            'activities'         => \App\Models\Activity::where('project_id', $project->id)
+                ->with('user:id,name')
+                ->latest()
+                ->limit(100)
+                ->get(),
             'nextInvoiceNumber'  => $company?->generateNumber('invoice') ?? 'INV-' . date('Y') . '-001',
             'nextProposalNumber' => $company?->generateNumber('proposal') ?? 'PROP-' . date('Y') . '-001',
         ]);

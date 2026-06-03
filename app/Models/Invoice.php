@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\RecordsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, RecordsActivity;
 
     protected $fillable = [
         'project_id',
@@ -52,5 +53,10 @@ class Invoice extends Model
     public function getTotalAttribute(): float
     {
         return $this->items->sum(fn ($item) => $item->quantity * $item->rate);
+    }
+
+    protected function activityLabel(): string
+    {
+        return "invoice {$this->number}";
     }
 }
