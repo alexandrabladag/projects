@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users, Tag, ListTodo, Menu } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users, Tag, ListTodo, Menu, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 // ── Reusable Badge ─────────────────────────────────────────────────────────────
 export function Badge({ status, label }) {
@@ -35,7 +35,7 @@ export function Badge({ status, label }) {
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
-function Sidebar({ projects, workspace, user, open, onClose }) {
+function Sidebar({ projects, workspace, user, open, onClose, collapsed, onToggleCollapse }) {
     const { url } = usePage();
 
     const icons = {
@@ -50,19 +50,22 @@ function Sidebar({ projects, workspace, user, open, onClose }) {
         settings:  <Settings size={18} strokeWidth={1.75} />,
     };
 
+    // When collapsed (desktop only), labels are hidden and items are centered into an icon rail.
+    const hideOnCollapse = collapsed ? 'md:hidden' : '';
     const navItem = (href, iconKey, label) => {
         const active = url === href || url.startsWith(href + '/');
         return (
             <Link
                 href={href}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-all mb-0.5
+                title={collapsed ? label : undefined}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-all mb-0.5 ${collapsed ? 'md:justify-center md:px-0' : ''}
                     ${active
                         ? 'bg-[#4f6df5]/15 text-[#4f6df5] font-medium'
                         : 'text-[#cbd5e1] hover:text-white hover:bg-white/[0.07]'
                     }`}
             >
-                {icons[iconKey]}
-                {label}
+                <span className="flex-shrink-0">{icons[iconKey]}</span>
+                <span className={hideOnCollapse}>{label}</span>
             </Link>
         );
     };
@@ -75,21 +78,42 @@ function Sidebar({ projects, workspace, user, open, onClose }) {
             {/* Mobile overlay */}
             {open && <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={onClose} />}
 
-            <aside className={`w-[232px] bg-[#1e293b] border-r border-[#334155] flex flex-col fixed h-screen z-30 overflow-y-auto transition-transform duration-200 ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+            <aside className={`w-[232px] ${collapsed ? 'md:w-[68px]' : 'md:w-[232px]'} bg-[#1e293b] border-r border-[#334155] flex flex-col fixed h-screen z-30 overflow-y-auto transition-all duration-200 ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
             {/* Logo */}
-            <div className="px-5 py-6 border-b border-[#334155]">
-                <div className="font-serif text-xl font-bold tracking-[5px] text-[#4f6df5]">FLOW</div>
-                <div className="text-[9px] tracking-[2.5px] text-[#94a3b8] uppercase mt-0.5">Project Management</div>
+            <div className={`py-6 border-b border-[#334155] flex items-center ${collapsed ? 'px-5 md:px-0 md:justify-center' : 'px-5 justify-between'}`}>
+                <div className={hideOnCollapse}>
+                    <div className="font-serif text-xl font-bold tracking-[5px] text-[#4f6df5]">FLOW</div>
+                    <div className="text-[9px] tracking-[2.5px] text-[#94a3b8] uppercase mt-0.5">Project Management</div>
+                </div>
+                {collapsed && <div className="hidden md:block font-serif text-lg font-bold text-[#4f6df5]">F</div>}
+                <button
+                    onClick={onToggleCollapse}
+                    title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                    className={`hidden md:flex items-center justify-center text-[#94a3b8] hover:text-white hover:bg-white/[0.07] rounded-lg p-1.5 transition-colors ${collapsed ? 'md:hidden' : ''}`}
+                >
+                    <ChevronsLeft size={18} />
+                </button>
             </div>
 
+            {/* Expand button (shown only when collapsed) */}
+            {collapsed && (
+                <button
+                    onClick={onToggleCollapse}
+                    title="Expand sidebar"
+                    className="hidden md:flex items-center justify-center text-[#94a3b8] hover:text-white hover:bg-white/[0.07] mx-auto mt-2 rounded-lg p-1.5 transition-colors"
+                >
+                    <ChevronsRight size={18} />
+                </button>
+            )}
+
             {/* Main Nav */}
-            <nav className="px-3 py-3 flex-1 overflow-y-auto">
+            <nav className={`py-3 flex-1 overflow-y-auto ${collapsed ? 'px-3 md:px-2' : 'px-3'}`}>
                 {navItem(route('dashboard'), 'dashboard', 'Dashboard')}
                 {navItem(route('my-tasks'), 'mytasks', 'My Tasks')}
                 {navItem(route('projects.index'), 'projects', 'All Projects')}
                 {navItem(route('clients.index'), 'clients', 'Directory')}
 
-                <div className="text-[9px] tracking-[2px] text-[#94a3b8] uppercase px-3 py-2 mt-2">
+                <div className={`text-[9px] tracking-[2px] text-[#94a3b8] uppercase px-3 py-2 mt-2 ${hideOnCollapse}`}>
                     Projects
                 </div>
 
@@ -99,7 +123,8 @@ function Sidebar({ projects, workspace, user, open, onClose }) {
                         <Link
                             key={p.id}
                             href={route('projects.show', p.id)}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] transition-all mb-px
+                            title={collapsed ? p.name : undefined}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] transition-all mb-px ${collapsed ? 'md:justify-center md:px-0' : ''}
                                 ${isActive
                                     ? 'bg-[#4f6df5]/15 text-[#4f6df5]'
                                     : 'text-[#cbd5e1] hover:text-white hover:bg-white/[0.07]'
@@ -113,22 +138,23 @@ function Sidebar({ projects, workspace, user, open, onClose }) {
                                         : '#64748b'
                                 }}
                             />
-                            <span className="truncate max-w-[148px]">{p.name}</span>
+                            <span className={`truncate max-w-[148px] ${hideOnCollapse}`}>{p.name}</span>
                         </Link>
                     );
                 })}
 
                 <Link
                     href={route('projects.create')}
-                    className="flex items-center gap-2 px-3 py-2 text-[11px] text-[#94a3b8] hover:text-[#cbd5e1] transition-colors mt-1"
+                    title={collapsed ? 'New Project' : undefined}
+                    className={`flex items-center gap-2 px-3 py-2 text-[11px] text-[#94a3b8] hover:text-[#cbd5e1] transition-colors mt-1 ${collapsed ? 'md:justify-center md:px-0' : ''}`}
                 >
-                    <Plus size={14} strokeWidth={2} /> New Project
+                    <Plus size={14} strokeWidth={2} className="flex-shrink-0" /> <span className={hideOnCollapse}>New Project</span>
                 </Link>
             </nav>
 
             {/* Account section */}
-            <div className="px-3 py-3 border-t border-[#334155]">
-                <div className="text-[9px] tracking-[2px] text-[#94a3b8] uppercase px-3 py-2">
+            <div className={`py-3 border-t border-[#334155] ${collapsed ? 'px-3 md:px-2' : 'px-3'}`}>
+                <div className={`text-[9px] tracking-[2px] text-[#94a3b8] uppercase px-3 py-2 ${hideOnCollapse}`}>
                     Account
                 </div>
                 {navItem(route('profile.edit'), 'profile', 'Profile')}
@@ -139,12 +165,12 @@ function Sidebar({ projects, workspace, user, open, onClose }) {
             </div>
 
             {/* User + Footer */}
-            <div className="px-4 py-3 border-t border-[#334155]">
-                <div className="flex items-center gap-3">
-                    <Link href={route('profile.edit')} className="w-8 h-8 rounded-full bg-[#4f6df5]/20 flex items-center justify-center text-[12px] font-bold text-[#4f6df5] flex-shrink-0">
+            <div className={`py-3 border-t border-[#334155] ${collapsed ? 'px-3 md:px-2' : 'px-4'}`}>
+                <div className={`flex items-center gap-3 ${collapsed ? 'md:justify-center' : ''}`}>
+                    <Link href={route('profile.edit')} title={collapsed ? user?.name : undefined} className="w-8 h-8 rounded-full bg-[#4f6df5]/20 flex items-center justify-center text-[12px] font-bold text-[#4f6df5] flex-shrink-0">
                         {(user?.name ?? '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
                     </Link>
-                    <div className="flex-1 min-w-0">
+                    <div className={`flex-1 min-w-0 ${hideOnCollapse}`}>
                         <Link href={route('profile.edit')} className="text-[12px] font-medium text-[#cbd5e1] truncate block hover:text-white transition-colors">{user?.name}</Link>
                         <div className="text-[10px] text-[#94a3b8] truncate">{workspace?.name ?? 'ProjectFlow'}</div>
                     </div>
@@ -152,7 +178,7 @@ function Sidebar({ projects, workspace, user, open, onClose }) {
                         href={route('logout')}
                         method="post"
                         as="button"
-                        className="text-[#64748b] hover:text-white transition-colors flex-shrink-0"
+                        className={`text-[#64748b] hover:text-white transition-colors flex-shrink-0 ${hideOnCollapse}`}
                         title="Sign out"
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" /></svg>
@@ -209,12 +235,21 @@ function Toast() {
 export default function AppLayout({ children, title, breadcrumbs = [] }) {
     const { auth, sidebarProjects } = usePage().props;
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [collapsed, setCollapsed] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return localStorage.getItem('sidebarCollapsed') === '1';
+    });
+    const toggleCollapsed = () => setCollapsed(c => {
+        const next = !c;
+        if (typeof window !== 'undefined') localStorage.setItem('sidebarCollapsed', next ? '1' : '0');
+        return next;
+    });
 
     return (
         <div className="flex min-h-screen bg-[#f8f8f8]">
-            <Sidebar projects={sidebarProjects ?? []} workspace={auth.workspace} user={auth.user} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <Sidebar projects={sidebarProjects ?? []} workspace={auth.workspace} user={auth.user} open={sidebarOpen} onClose={() => setSidebarOpen(false)} collapsed={collapsed} onToggleCollapse={toggleCollapsed} />
 
-            <div className="md:ml-[232px] flex-1 flex flex-col min-h-screen w-full">
+            <div className={`flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-200 ${collapsed ? 'md:ml-[68px]' : 'md:ml-[232px]'}`}>
                 {/* Topbar */}
                 <header className="sticky top-0 z-10 bg-[#f8f8f8] border-b border-[#e5e7eb] px-4 md:px-8 py-3 md:py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">

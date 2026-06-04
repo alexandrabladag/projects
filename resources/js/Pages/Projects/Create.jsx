@@ -10,12 +10,13 @@ export default function Create({ clients = [] }) {
     const page = usePage();
     const resolvedClients = clients.length > 0 ? clients : (page.props.clients ?? []);
     const baseCurrency = page.props.baseCurrency ?? 'USD';
+    const teamMembers = page.props.teamMembers ?? [];
     const [isNewClient, setIsNewClient] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
         name: '', client_id: '', new_client_name: '', client: '',
         contact_name: '', contact_email: '', contact_phone: '',
-        status: 'active', start_date: '', end_date: '', launch_date: '',
+        status: 'active', lead_id: '', start_date: '', end_date: '', launch_date: '',
         tax_type: '', tax_rate: 0,
         budget: '', currency: baseCurrency, description: '', tags: '', phase: 'Discovery',
     });
@@ -160,6 +161,22 @@ export default function Create({ clients = [] }) {
                                 <option value="on-hold">On Hold</option>
                                 <option value="completed">Completed</option>
                             </select>
+                        </div>
+
+                        {/* Project Lead */}
+                        <div>
+                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">Project Lead</label>
+                            <select
+                                value={data.lead_id}
+                                onChange={e => setData('lead_id', e.target.value)}
+                                className={inputCls}
+                            >
+                                <option value="">No lead assigned</option>
+                                {teamMembers.map(m => (
+                                    <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>
+                                ))}
+                            </select>
+                            {errors.lead_id && <p className="text-red-400 text-[12px] mt-1">{errors.lead_id}</p>}
                         </div>
 
                         {/* Budget + Currency */}

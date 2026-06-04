@@ -5,7 +5,7 @@ import currencies from '@/Utils/currencies';
 import {
     Pencil, Eye, Plus, Save, X, Check, Send, ChevronUp, ChevronDown, ChevronRight, GripVertical,
     FileText, Receipt, CalendarDays, Calendar, FolderOpen, Clock, ListChecks,
-    Trash2, Download, Upload, CheckCircle, XCircle, AlertCircle, Lock, Code, Users, Maximize2, Minimize2,
+    Trash2, Download, Upload, CheckCircle, XCircle, AlertCircle, Lock, Code, Users, Maximize2, Minimize2, Tag,
 } from 'lucide-react';
 
 const RichEditor = lazy(() => import('@/Components/RichEditor'));
@@ -106,11 +106,11 @@ function OverviewTab({ project, canManage, fmt }) {
     return (
         <div>
             {/* Hero */}
-            <div className="bg-white border border-[#e5e7eb] rounded-xl p-6 mb-5">
-                <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <h2 className="font-serif text-[28px] font-semibold text-black leading-snug">{project.name}</h2>
-                        <p className="text-[14px] text-[#6b7280] mt-1">
+            <div className="bg-white border border-[#e5e7eb] rounded-xl p-5 md:p-6 mb-5">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+                    <div className="min-w-0">
+                        <h2 className="font-serif text-[22px] md:text-[28px] font-semibold text-black leading-snug break-words">{project.name}</h2>
+                        <p className="text-[13px] md:text-[14px] text-[#6b7280] mt-1">
                             {project.client} · {project.contact_name}
                             {project.lead && <span> · Lead: <span className="text-[#4f6df5] font-medium">{project.lead.name}</span></span>}
                         </p>
@@ -121,7 +121,7 @@ function OverviewTab({ project, canManage, fmt }) {
                         </div>
                     </div>
                     {canManage && (
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-shrink-0">
                             <Btn ghost sm onClick={() => setShowProgressModal(true)}><Pencil size={13} /> Progress</Btn>
                             <Btn ghost sm onClick={() => setShowEditModal(true)}><Pencil size={13} /> Edit Project</Btn>
                         </div>
@@ -129,7 +129,7 @@ function OverviewTab({ project, canManage, fmt }) {
                 </div>
 
                 {/* Quick Stats */}
-                <div className={`grid grid-cols-2 ${project.launch_date ? 'md:grid-cols-5' : 'md:grid-cols-4'} border-t border-[#e5e7eb] pt-4 gap-0`}>
+                <div className={`grid grid-cols-2 ${project.launch_date ? 'md:grid-cols-5' : 'md:grid-cols-4'} border-t border-[#e5e7eb] pt-4 gap-y-4 md:gap-y-0`}>
                     {[
                         { label: 'Progress', value: `${project.progress}%` },
                         { label: 'Budget', value: `${fmt(project.spent)} / ${fmt(project.budget)}` },
@@ -137,8 +137,8 @@ function OverviewTab({ project, canManage, fmt }) {
                         { label: 'Phase', value: project.phase },
                         ...(project.launch_date ? [{ label: '🚀 Launch', value: fmtDate(project.launch_date), highlight: true }] : []),
                     ].map((s, i, arr) => (
-                        <div key={i} className={`text-center py-1 ${i < arr.length - 1 ? 'border-r border-[#e5e7eb]' : ''}`}>
-                            <div className={`text-[16px] font-medium ${s.highlight ? 'text-[#4f6df5] font-bold' : 'text-black'}`}>{s.value}</div>
+                        <div key={i} className={`text-center py-1 px-1 min-w-0 ${i < arr.length - 1 ? 'md:border-r md:border-[#e5e7eb]' : ''}`}>
+                            <div className={`text-[14px] md:text-[16px] font-medium break-words ${s.highlight ? 'text-[#4f6df5] font-bold' : 'text-black'}`}>{s.value}</div>
                             <div className="text-[11px] text-[#6b7280] mt-1">{s.label}</div>
                         </div>
                     ))}
@@ -1680,6 +1680,11 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                         <option value="all">All Categories</option>
                         {categories.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
+                )}
+                {canManage && (
+                    <Link href={route('categories.index')} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#6b7280] border border-[#d1d5db] hover:text-[#4f6df5] hover:border-[#4f6df5] transition-colors">
+                        <Tag size={13} /> Manage Categories
+                    </Link>
                 )}
             </div>
 
