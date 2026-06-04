@@ -14,10 +14,30 @@ class TeamMemberController extends Controller
     {
         $workspaceId = $request->user()?->workspace_id;
 
+        $members = TeamMember::with('user:id,name,email')->orderBy('name')->get();
+        $linkedUserIds = $members->pluck('user_id')->filter()->all();
+
+        // Staff accounts (admin/manager) with access that aren't already linked to a
+        // team member, surfaced so everyone with access counts as a team member.
+        $accounts = User::when($workspaceId, fn ($q) => $q->where('workspace_id', $workspaceId))
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', ['admin', 'manager']))
+            ->whereNotIn('id', $linkedUserIds)
+            ->with('roles:id,name')
+            ->orderBy('name')
+            ->get(['id', 'name', 'email'])
+            ->map(fn ($u) => [
+                'id'    => $u->id,
+                'name'  => $u->name,
+                'email' => $u->email,
+                'role'  => $u->roles->pluck('name')->map(fn ($r) => ucfirst($r))->join(', '),
+            ])
+            ->values();
+
         return Inertia::render('Settings/TeamMembers', [
-            'members' => TeamMember::with('user:id,name,email')->orderBy('name')->get(),
+            'members'  => $members,
+            'accounts' => $accounts,
             // Login accounts that can be linked to a team member.
-            'users'   => User::when($workspaceId, fn ($q) => $q->where('workspace_id', $workspaceId))
+            'users'    => User::when($workspaceId, fn ($q) => $q->where('workspace_id', $workspaceId))
                 ->orderBy('name')
                 ->get(['id', 'name', 'email']),
         ]);
