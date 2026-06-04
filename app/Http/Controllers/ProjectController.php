@@ -134,6 +134,7 @@ class ProjectController extends Controller
             'tasks.documents.uploader',
             'bills.vendor',
             'payroll.teamMember',
+            'timeEntries.teamMember:id,name', 'timeEntries.task:id,title',
             'members.client',
             'pages.creator', 'pages.documents.uploader',
         ]);
@@ -148,6 +149,8 @@ class ProjectController extends Controller
             'total_bills_paid'   => $project->total_bills_paid,
             'total_payroll'      => $project->total_payroll,
             'total_payroll_paid' => $project->total_payroll_paid,
+            'total_hours'        => $project->total_hours,
+            'billable_hours'     => $project->billable_hours,
         ]);
 
         // Append invoice totals
@@ -162,6 +165,7 @@ class ProjectController extends Controller
             'project'            => $projectData,
             'canManage'          => $request->user()->canManageProjects(),
             'taskCategories'     => \App\Models\TaskCategory::orderBy('position')->orderBy('name')->get(),
+            'teamMembers'        => \App\Models\TeamMember::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'activities'         => \App\Models\Activity::where('project_id', $project->id)
                 ->with('user:id,name')
                 ->latest()

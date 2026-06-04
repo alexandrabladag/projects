@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TeamMember extends Model
 {
+    use BelongsToWorkspace;
+
     protected $fillable = ['user_id', 'name', 'email', 'phone', 'role', 'department', 'pay_type', 'rate', 'rate_currency', 'is_active'];
 
     protected $casts = ['is_active' => 'boolean', 'rate' => 'decimal:2'];

@@ -73,14 +73,14 @@ export default function PublicPage({ page, company }) {
                     <div className="max-w-3xl mx-auto px-6 h-14 flex items-center gap-3">
                         {company?.logo_path && <img src={`/storage/${company.logo_path}`} alt="" className="h-6" />}
                         <span className="text-[13px] font-bold text-black">{company?.name}</span>
-                        <span className="text-[12px] text-[#9ca3af]">·</span>
-                        <span className="text-[12px] text-[#9ca3af]">{page.project?.name}</span>
+                        <span className="text-[12px] text-[#6b7280]">·</span>
+                        <span className="text-[12px] text-[#6b7280]">{page.project?.name}</span>
                     </div>
                 </header>
 
                 <main className="max-w-3xl mx-auto px-6 py-10">
                     <h1 className="text-[28px] font-extrabold text-black mb-2">{page.title}</h1>
-                    <div className="text-[12px] text-[#9ca3af] mb-8">
+                    <div className="text-[12px] text-[#6b7280] mb-8">
                         {page.creator?.name && <span>By {page.creator.name}</span>}
                         {page.updated_at && <span> · Updated {new Date(page.updated_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>}
                     </div>

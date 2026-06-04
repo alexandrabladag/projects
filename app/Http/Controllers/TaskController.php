@@ -93,6 +93,8 @@ class TaskController extends Controller
 
     public function updateStatus(Request $request, Task $task)
     {
+        $this->authorize('update', $task->project);
+
         $request->validate([
             'status' => 'required|in:not-started,in-progress,review,pending-approval,completed',
         ]);

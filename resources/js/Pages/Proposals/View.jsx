@@ -68,7 +68,7 @@ export default function View({ proposal, company }) {
 
             {/* Toolbar */}
             <div className="no-print bg-white border-b border-[#e5e7eb] px-6 py-3 flex items-center justify-between sticky top-0 z-10">
-                <button onClick={() => window.history.back()} className="inline-flex items-center gap-1.5 text-[13px] text-[#6b7280] hover:text-black transition-colors">
+                <button onClick={() => window.history.back()} className="inline-flex items-center gap-1.5 text-[13px] text-[#4b5563] hover:text-black transition-colors">
                     <ArrowLeft size={15} /> Back to Project
                 </button>
                 <button onClick={downloadPdf} className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#4f6df5] hover:bg-[#6380f7] text-white font-semibold rounded-lg text-[13px] transition-all">
@@ -102,25 +102,25 @@ export default function View({ proposal, company }) {
                         <div className="space-y-16">
                             {/* Prepared For */}
                             <div className="text-center">
-                                <div className="text-[12px] text-[#9ca3af] mb-2">Prepared for</div>
+                                <div className="text-[12px] text-[#6b7280] mb-2">Prepared for</div>
                                 <div className="text-[18px] font-bold text-black">{client.name ?? project.client}</div>
                                 {(project.contact_name || client.contact_name) && (
-                                    <div className="text-[14px] text-[#6b7280]">Attn: {project.contact_name ?? client.contact_name}</div>
+                                    <div className="text-[14px] text-[#4b5563]">Attn: {project.contact_name ?? client.contact_name}</div>
                                 )}
                             </div>
 
                             {/* Prepared By */}
                             <div className="text-center">
-                                <div className="text-[12px] text-[#9ca3af] mb-2">Prepared by</div>
+                                <div className="text-[12px] text-[#6b7280] mb-2">Prepared by</div>
                                 <div className="text-[18px] font-bold text-black">{company?.name ?? 'Your Company'}</div>
                                 {proposal.prepared_by && (
-                                    <div className="text-[14px] text-[#6b7280]">{proposal.prepared_by}</div>
+                                    <div className="text-[14px] text-[#4b5563]">{proposal.prepared_by}</div>
                                 )}
                             </div>
 
                             {/* Date */}
                             <div className="text-center">
-                                <div className="text-[12px] text-[#9ca3af] mb-2">Date</div>
+                                <div className="text-[12px] text-[#6b7280] mb-2">Date</div>
                                 <div className="text-[16px] font-bold text-black">{fmtDate(proposal.date)}</div>
                             </div>
                         </div>
@@ -129,7 +129,7 @@ export default function View({ proposal, company }) {
                     {/* Content Pages */}
                     <div className="proposal-page bg-white rounded-lg shadow-lg p-12">
                         {/* Header line */}
-                        <div className="text-[11px] text-[#9ca3af] italic mb-8 border-b border-[#e5e7eb] pb-2">
+                        <div className="text-[11px] text-[#6b7280] italic mb-8 border-b border-[#e5e7eb] pb-2">
                             {proposal.title} - Proposal
                         </div>
 
@@ -198,8 +198,8 @@ export default function View({ proposal, company }) {
                                                 {(sec.rows ?? []).map((row, j) => (
                                                     <tr key={j} className="border-b border-[#e5e7eb]">
                                                         <td className="py-2.5 text-[13px] font-bold text-black">{row.phase}</td>
-                                                        <td className="py-2.5 text-[13px] text-[#4b5563]">{row.description}</td>
-                                                        <td className="py-2.5 text-[13px] text-[#4b5563]">{row.duration}</td>
+                                                        <td className="py-2.5 text-[13px] text-[#374151]">{row.description}</td>
+                                                        <td className="py-2.5 text-[13px] text-[#374151]">{row.duration}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -227,7 +227,7 @@ export default function View({ proposal, company }) {
                                                 {(sec.rows ?? []).map((row, j) => (
                                                     <tr key={j} className="border-b border-[#e5e7eb]">
                                                         <td className="py-2.5 text-[13px] font-bold text-black">{row.phase}</td>
-                                                        <td className="py-2.5 text-[13px] text-[#4b5563]">{row.milestone}</td>
+                                                        <td className="py-2.5 text-[13px] text-[#374151]">{row.milestone}</td>
                                                         <td className="py-2.5 text-[13px] text-right text-black font-medium">{row.amount}</td>
                                                     </tr>
                                                 ))}
@@ -241,23 +241,23 @@ export default function View({ proposal, company }) {
                                 return (
                                     <div key={i} className="mt-16 pt-8 border-t-2 border-[#2d5f8a]">
                                         <h2 className="text-[22px] font-bold text-[#2d5f8a] mb-8">Approval & Agreement</h2>
-                                        <p className="text-[13px] text-[#6b7280] mb-10">This proposal constitutes a formal service agreement upon signature.</p>
+                                        <p className="text-[13px] text-[#4b5563] mb-10">This proposal constitutes a formal service agreement upon signature.</p>
                                         <div className="grid grid-cols-2 gap-12">
                                             <div>
                                                 <div className="text-[12px] font-bold text-black mb-12">Prepared By:</div>
                                                 <div className="border-b border-black mb-2 pb-1" />
                                                 <div className="text-[13px] font-bold text-black uppercase">{sec.prepared_by}</div>
-                                                {sec.prepared_by_title && <div className="text-[12px] text-[#6b7280]">{sec.prepared_by_title}</div>}
-                                                {company?.name && <div className="text-[12px] text-[#6b7280]">{company.name}</div>}
-                                                <div className="text-[12px] text-[#6b7280] mt-2">Date Signed: {fmtDate(proposal.date)}</div>
+                                                {sec.prepared_by_title && <div className="text-[12px] text-[#4b5563]">{sec.prepared_by_title}</div>}
+                                                {company?.name && <div className="text-[12px] text-[#4b5563]">{company.name}</div>}
+                                                <div className="text-[12px] text-[#4b5563] mt-2">Date Signed: {fmtDate(proposal.date)}</div>
                                             </div>
                                             <div>
                                                 <div className="text-[12px] font-bold text-black mb-12">Approved by:</div>
                                                 <div className="border-b border-black mb-2 pb-1" />
                                                 <div className="text-[13px] font-bold text-black uppercase">{sec.approved_by ?? '________________________'}</div>
-                                                {sec.approved_by_title && <div className="text-[12px] text-[#6b7280]">{sec.approved_by_title}</div>}
-                                                {client.name && <div className="text-[12px] text-[#6b7280]">{client.name}</div>}
-                                                <div className="text-[12px] text-[#6b7280] mt-2">Date Signed: _________________________</div>
+                                                {sec.approved_by_title && <div className="text-[12px] text-[#4b5563]">{sec.approved_by_title}</div>}
+                                                {client.name && <div className="text-[12px] text-[#4b5563]">{client.name}</div>}
+                                                <div className="text-[12px] text-[#4b5563] mt-2">Date Signed: _________________________</div>
                                             </div>
                                         </div>
                                     </div>

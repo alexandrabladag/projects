@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import GuestLayout from '@/Layouts/GuestLayout';
 
-const inputCls = 'w-full bg-[#f3f4f6] border border-[#d1d5db] rounded-lg px-3.5 py-2.5 text-[13px] text-black outline-none focus:border-[#4f6df5] transition-colors';
+const inputCls = 'w-full bg-white border border-[#e5e7eb] rounded-lg px-3.5 py-2.5 text-[13px] text-black placeholder:text-[#9ca3af] shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none transition-all duration-150 hover:border-[#d1d5db] focus:border-[#4f6df5] focus:ring-[3px] focus:ring-[#4f6df5]/12';
 
 const EyeIcon = ({ open }) => open ? (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -19,7 +19,7 @@ function PasswordField({ label, value, onChange, placeholder, error }) {
     const [show, setShow] = useState(false);
     return (
         <div>
-            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">{label}</label>
+            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-2">{label}</label>
             <div className="relative">
                 <input
                     type={show ? 'text' : 'password'}
@@ -31,7 +31,7 @@ function PasswordField({ label, value, onChange, placeholder, error }) {
                 <button
                     type="button"
                     onClick={() => setShow(!show)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6b7280] hover:text-black transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b5563] hover:text-black transition-colors"
                 >
                     <EyeIcon open={show} />
                 </button>
@@ -61,7 +61,7 @@ export default function Register() {
 
     const field = (label, key, type = 'text', placeholder = '') => (
         <div>
-            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">{label}</label>
+            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-2">{label}</label>
             <input
                 type={type}
                 value={data[key]}
@@ -78,7 +78,7 @@ export default function Register() {
             <Head title="Create Account" />
 
             <h2 className="font-serif text-2xl font-semibold text-black mb-1">Create account</h2>
-            <p className="text-[13px] text-[#6b7280] mb-6">Join your team on ProjectFlow</p>
+            <p className="text-[13px] text-[#4b5563] mb-6">Join your team on ProjectFlow</p>
 
             <form onSubmit={submit} className="space-y-4">
                 {/* Name row */}
@@ -110,8 +110,8 @@ export default function Register() {
 
                 {/* Company info section */}
                 <div className="pt-2">
-                    <div className="text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-3 flex items-center gap-3">
-                        Company Info <span className="text-[#9ca3af] font-normal normal-case tracking-normal">(optional)</span>
+                    <div className="text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-3 flex items-center gap-3">
+                        Company Info <span className="text-[#6b7280] font-normal normal-case tracking-normal">(optional)</span>
                         <span className="flex-1 h-px bg-[#e5e7eb]" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -132,7 +132,7 @@ export default function Register() {
                 </button>
             </form>
 
-            <p className="text-center text-[12px] text-[#6b7280] mt-5">
+            <p className="text-center text-[12px] text-[#4b5563] mt-5">
                 Already have an account?{' '}
                 <Link href={route('login')} className="text-[#4f6df5] hover:text-[#6380f7] transition-colors">
                     Sign in

@@ -25,11 +25,11 @@ export default function PasswordGate({ code, title, error }) {
                             <Lock size={24} className="text-[#4f6df5]" />
                         </div>
                         <h1 className="text-[20px] font-bold text-black">{title}</h1>
-                        <p className="text-[13px] text-[#6b7280] mt-1">This page is password protected</p>
+                        <p className="text-[13px] text-[#4b5563] mt-1">This page is password protected</p>
                     </div>
 
                     <form onSubmit={submit} className="bg-white rounded-2xl border border-[#e5e7eb] p-6 shadow-sm">
-                        <label className="block text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-2">Password</label>
+                        <label className="block text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-2">Password</label>
                         <input
                             type="password"
                             value={password}

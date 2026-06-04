@@ -1,9 +1,21 @@
 import { useState } from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
+import { UserCircle, Lock, Trash2 } from 'lucide-react';
 
-const inputCls = 'w-full bg-[#f3f4f6] border border-[#d1d5db] rounded-lg px-3.5 py-2.5 text-[13px] text-black outline-none focus:border-[#4f6df5] transition-colors';
-const labelCls = 'block text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-2';
+// Section header with a tinted icon tile — shared look across Settings.
+const SectionHead = ({ icon, title, subtitle, accent = '#4f6df5', danger }) => (
+    <div className="flex items-start gap-3">
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${danger ? '#ef4444' : accent}14`, color: danger ? '#ef4444' : accent }}>{icon}</div>
+        <div>
+            <h3 className={`text-[16px] font-bold ${danger ? 'text-red-600' : 'text-black'}`}>{title}</h3>
+            <p className="text-[13px] text-[#4b5563] mt-0.5">{subtitle}</p>
+        </div>
+    </div>
+);
+
+const inputCls = 'w-full bg-white border border-[#e5e7eb] rounded-lg px-3.5 py-2.5 text-[13px] text-black placeholder:text-[#9ca3af] shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none transition-all duration-150 hover:border-[#d1d5db] focus:border-[#4f6df5] focus:ring-[3px] focus:ring-[#4f6df5]/12';
+const labelCls = 'block text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-2';
 
 const EyeIcon = ({ open }) => open ? (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -22,7 +34,7 @@ function PasswordInput({ value, onChange, placeholder, error }) {
         <div>
             <div className="relative">
                 <input type={show ? 'text' : 'password'} value={value} onChange={onChange} placeholder={placeholder} className={`${inputCls} pr-10`} />
-                <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6b7280] hover:text-black transition-colors">
+                <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b5563] hover:text-black transition-colors">
                     <EyeIcon open={show} />
                 </button>
             </div>
@@ -57,10 +69,7 @@ function ProfileSection({ user }) {
 
     return (
         <form onSubmit={submit} className="bg-white border border-[#e5e7eb] rounded-xl p-7 space-y-5">
-            <div>
-                <h3 className="text-[16px] font-bold text-black">Personal Information</h3>
-                <p className="text-[13px] text-[#6b7280] mt-1">Update your name, email, and other details.</p>
-            </div>
+            <SectionHead icon={<UserCircle size={18} />} title="Personal Information" subtitle="Update your name, email, and other details." />
 
             {/* Avatar placeholder */}
             <div className="flex items-center gap-4">
@@ -69,7 +78,7 @@ function ProfileSection({ user }) {
                 </div>
                 <div>
                     <div className="text-[14px] font-semibold text-black">{data.first_name} {data.last_name}</div>
-                    <div className="text-[12px] text-[#6b7280]">@{data.username || '—'}</div>
+                    <div className="text-[12px] text-[#4b5563]">@{data.username || '—'}</div>
                 </div>
             </div>
 
@@ -81,8 +90,8 @@ function ProfileSection({ user }) {
             </div>
 
             <div className="pt-2">
-                <div className="text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-3 flex items-center gap-3">
-                    Work Info <span className="text-[#9ca3af] font-normal normal-case tracking-normal">(optional)</span>
+                <div className="text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-3 flex items-center gap-3">
+                    Work Info <span className="text-[#6b7280] font-normal normal-case tracking-normal">(optional)</span>
                     <span className="flex-1 h-px bg-[#e5e7eb]" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -115,10 +124,7 @@ function PasswordSection() {
 
     return (
         <form onSubmit={submit} className="bg-white border border-[#e5e7eb] rounded-xl p-7 space-y-5">
-            <div>
-                <h3 className="text-[16px] font-bold text-black">Change Password</h3>
-                <p className="text-[13px] text-[#6b7280] mt-1">Ensure your account uses a strong, unique password.</p>
-            </div>
+            <SectionHead icon={<Lock size={17} />} title="Change Password" subtitle="Ensure your account uses a strong, unique password." />
 
             <div className="space-y-4">
                 <div>
@@ -157,12 +163,7 @@ function DeleteSection() {
 
     return (
         <div className="bg-white border border-red-200 rounded-xl p-7 space-y-5">
-            <div>
-                <h3 className="text-[16px] font-bold text-red-600">Delete Account</h3>
-                <p className="text-[13px] text-[#6b7280] mt-1">
-                    Once deleted, all your data will be permanently removed. This action cannot be undone.
-                </p>
-            </div>
+            <SectionHead icon={<Trash2 size={17} />} danger title="Delete Account" subtitle="Once deleted, all your data is permanently removed. This cannot be undone." />
 
             {!confirming ? (
                 <button onClick={() => setConfirming(true)} className="px-4 py-2.5 rounded-lg text-[13px] font-medium text-red-500 border border-red-200 hover:bg-red-50 transition-colors">
@@ -178,7 +179,7 @@ function DeleteSection() {
                         <PasswordInput value={data.password} onChange={e => setData('password', e.target.value)} placeholder="Enter your password" error={errors.password} />
                     </div>
                     <div className="flex gap-3">
-                        <button type="button" onClick={() => setConfirming(false)} className="px-4 py-2.5 rounded-lg text-[13px] text-[#6b7280] border border-[#d1d5db] hover:bg-gray-50 transition-colors">
+                        <button type="button" onClick={() => setConfirming(false)} className="px-4 py-2.5 rounded-lg text-[13px] text-[#4b5563] border border-[#d1d5db] hover:bg-gray-50 transition-colors">
                             Cancel
                         </button>
                         <button type="submit" disabled={processing} className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg text-[13px] transition-all disabled:opacity-60">

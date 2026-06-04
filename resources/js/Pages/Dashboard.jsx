@@ -60,8 +60,8 @@ export default function Dashboard({ stats, attention, collection, myTasks = [], 
                     <h2 className="font-serif text-[22px] md:text-[26px] font-semibold text-black leading-tight">
                         {greeting}{firstName ? `, ${firstName}` : ''}
                     </h2>
-                    <p className="text-[13px] text-[#6b7280] mt-1 flex items-center gap-1.5">
-                        <Calendar size={13} className="text-[#9ca3af]" /> {todayStr} · here's where things stand
+                    <p className="text-[13px] text-[#4b5563] mt-1 flex items-center gap-1.5">
+                        <Calendar size={13} className="text-[#6b7280]" /> {todayStr} · here's where things stand
                     </p>
                 </div>
                 <Link
@@ -86,7 +86,7 @@ export default function Dashboard({ stats, attention, collection, myTasks = [], 
                                     <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">{a.icon}</div>
                                     <div className="min-w-0">
                                         <div className="text-[20px] font-bold text-black leading-none">{a.count}</div>
-                                        <div className="text-[12px] text-[#6b7280] mt-1">{a.label}</div>
+                                        <div className="text-[12px] text-[#4b5563] mt-1">{a.label}</div>
                                     </div>
                                     {a.href && <ArrowRight size={14} className="text-amber-400 ml-auto flex-shrink-0" />}
                                 </div>
@@ -112,10 +112,10 @@ export default function Dashboard({ stats, attention, collection, myTasks = [], 
                         <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-3.5" style={{ background: `${s.accent}14`, color: s.accent }}>{s.icon}</div>
                         {s.values.length > 0
                             ? s.values.map((val, j) => <div key={j} className={`text-[21px] md:text-[24px] font-bold leading-tight tracking-tight ${val.c}`}>{val.v}</div>)
-                            : <div className="text-[21px] md:text-[24px] font-bold text-[#d1d5db]">—</div>
+                            : <div className="text-[21px] md:text-[24px] font-bold text-[#6b7280]">—</div>
                         }
-                        <div className="text-[12px] text-[#6b7280] mt-1.5">{s.label}</div>
-                        <div className="text-[11px] text-[#9ca3af] mt-1">{s.sub}</div>
+                        <div className="text-[12px] text-[#4b5563] mt-1.5">{s.label}</div>
+                        <div className="text-[11px] text-[#6b7280] mt-1">{s.sub}</div>
                     </div>
                 ))}
             </div>
@@ -130,29 +130,29 @@ export default function Dashboard({ stats, attention, collection, myTasks = [], 
                     </div>
                     <div className="grid grid-cols-2 gap-4 mb-5">
                         <div>
-                            <div className="text-[10px] tracking-[1.5px] uppercase text-[#9ca3af] font-medium mb-1.5">Outstanding</div>
+                            <div className="text-[10px] tracking-[1.5px] uppercase text-[#6b7280] font-medium mb-1.5">Outstanding</div>
                             {outstanding.length > 0
                                 ? outstanding.map(([code, amt]) => <div key={code} className="text-[19px] font-bold text-amber-600 leading-tight">{formatMoney(amt, code)}</div>)
-                                : <div className="text-[19px] font-bold text-[#d1d5db]">—</div>}
-                            <div className="text-[11px] text-[#9ca3af] mt-1">{stats.pending_invoices} invoice{stats.pending_invoices === 1 ? '' : 's'} awaiting payment</div>
+                                : <div className="text-[19px] font-bold text-[#6b7280]">—</div>}
+                            <div className="text-[11px] text-[#6b7280] mt-1">{stats.pending_invoices} invoice{stats.pending_invoices === 1 ? '' : 's'} awaiting payment</div>
                         </div>
                         <div>
-                            <div className="text-[10px] tracking-[1.5px] uppercase text-[#9ca3af] font-medium mb-1.5">Received</div>
+                            <div className="text-[10px] tracking-[1.5px] uppercase text-[#6b7280] font-medium mb-1.5">Received</div>
                             {Object.entries(stats.received_by_currency ?? {}).length > 0
                                 ? Object.entries(stats.received_by_currency).map(([code, amt]) => <div key={code} className="text-[19px] font-bold text-emerald-600 leading-tight">{formatMoney(amt, code)}</div>)
-                                : <div className="text-[19px] font-bold text-[#d1d5db]">—</div>}
-                            <div className="text-[11px] text-[#9ca3af] mt-1">Payments collected</div>
+                                : <div className="text-[19px] font-bold text-[#6b7280]">—</div>}
+                            <div className="text-[11px] text-[#6b7280] mt-1">Payments collected</div>
                         </div>
                     </div>
                     <div>
                         <div className="flex justify-between items-center text-[12px] mb-2">
-                            <span className="text-[#6b7280]">Collection rate <span className="text-[#9ca3af]">({cur.code})</span></span>
+                            <span className="text-[#4b5563]">Collection rate <span className="text-[#6b7280]">({cur.code})</span></span>
                             <span className="font-semibold text-[#4f6df5]">{collectionPct}%</span>
                         </div>
                         <div className="h-2 bg-[#eef0f2] rounded-full overflow-hidden">
                             <div className="h-full rounded-full bg-gradient-to-r from-[#4f6df5] to-[#6380f7] progress-fill" style={{ width: `${collectionPct}%` }} />
                         </div>
-                        <div className="text-[11px] text-[#9ca3af] mt-2">{fmt(receivedBase)} received of {fmt(billedBase)} billed</div>
+                        <div className="text-[11px] text-[#6b7280] mt-2">{fmt(receivedBase)} received of {fmt(billedBase)} billed</div>
                     </div>
                 </div>
 
@@ -160,13 +160,13 @@ export default function Dashboard({ stats, attention, collection, myTasks = [], 
                 <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden flex flex-col">
                     <div className="flex items-center justify-between px-5 py-4 border-b border-[#e5e7eb]">
                         <span className="flex items-center gap-2 text-[15px] font-bold"><ListChecks size={16} className="text-indigo-500" /> My Tasks</span>
-                        <Link href={route('my-tasks')} className="inline-flex items-center gap-1 text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
+                        <Link href={route('my-tasks')} className="inline-flex items-center gap-1 text-[12px] text-[#4b5563] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
                             View All <ArrowRight size={12} />
                         </Link>
                     </div>
                     <div className="flex-1">
                         {myTasks.length === 0 && (
-                            <div className="text-center py-10 px-5 text-[#6b7280] text-[13px]">
+                            <div className="text-center py-10 px-5 text-[#4b5563] text-[13px]">
                                 {hasLinkedMember ? 'No open tasks assigned to you 🎉' : 'Link your account to a team member to see your tasks.'}
                             </div>
                         )}
@@ -177,9 +177,9 @@ export default function Dashboard({ stats, attention, collection, myTasks = [], 
                                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: PRIORITY_DOT[t.priority] ?? '#9ca3af' }} title={t.priority} />
                                     <div className="flex-1 min-w-0">
                                         <div className="text-[13px] font-medium text-black truncate group-hover:text-[#4f6df5] transition-colors">{t.title}</div>
-                                        {t.project && <div className="text-[11px] text-[#9ca3af] truncate">{t.project.name}</div>}
+                                        {t.project && <div className="text-[11px] text-[#6b7280] truncate">{t.project.name}</div>}
                                     </div>
-                                    <span className={`text-[11px] font-medium whitespace-nowrap flex-shrink-0 ${overdue ? 'text-red-500' : 'text-[#6b7280]'}`}>{dueLabel(t.due_date)}</span>
+                                    <span className={`text-[11px] font-medium whitespace-nowrap flex-shrink-0 ${overdue ? 'text-red-500' : 'text-[#4b5563]'}`}>{dueLabel(t.due_date)}</span>
                                 </Link>
                             );
                         })}
@@ -192,13 +192,13 @@ export default function Dashboard({ stats, attention, collection, myTasks = [], 
                 <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                     <div className="flex items-center justify-between px-5 py-4 border-b border-[#e5e7eb]">
                         <span className="flex items-center gap-2 text-[16px] font-bold"><Briefcase size={16} className="text-indigo-500" /> Active Projects</span>
-                        <Link href={route('projects.index')} className="inline-flex items-center gap-1 text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
+                        <Link href={route('projects.index')} className="inline-flex items-center gap-1 text-[12px] text-[#4b5563] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
                             View All <ArrowRight size={12} />
                         </Link>
                     </div>
                     <div>
                         {activeProjects.length === 0 && (
-                            <div className="text-center py-10 text-[#6b7280] text-[13px]">No active projects</div>
+                            <div className="text-center py-10 text-[#4b5563] text-[13px]">No active projects</div>
                         )}
                         {activeProjects.map(p => (
                             <Link
@@ -209,12 +209,12 @@ export default function Dashboard({ stats, attention, collection, myTasks = [], 
                                 <div className="flex justify-between items-start mb-2">
                                     <div className="min-w-0">
                                         <div className="text-[13.5px] font-semibold text-black truncate group-hover:text-[#4f6df5] transition-colors">{p.name}</div>
-                                        <div className="text-[11.5px] text-[#6b7280]">{p.client}</div>
+                                        <div className="text-[11.5px] text-[#4b5563]">{p.client}</div>
                                     </div>
                                     <Badge status="active" />
                                 </div>
                                 <div className="flex justify-between items-center text-[11.5px] mb-1.5">
-                                    <span className="text-[#6b7280]">{p.phase}</span>
+                                    <span className="text-[#4b5563]">{p.phase}</span>
                                     <span className="font-semibold text-[#4f6df5]">{p.progress}%</span>
                                 </div>
                                 <div className="h-1.5 bg-[#eef0f2] rounded-full overflow-hidden">
@@ -232,7 +232,7 @@ export default function Dashboard({ stats, attention, collection, myTasks = [], 
                     </div>
                     <div className="px-5">
                         {upcomingMeetings.length === 0 && (
-                            <div className="text-center py-10 text-[#6b7280] text-[13px]">No upcoming meetings</div>
+                            <div className="text-center py-10 text-[#4b5563] text-[13px]">No upcoming meetings</div>
                         )}
                         {upcomingMeetings.map(m => {
                             const { day, mon } = parseDay(m.date);
@@ -244,10 +244,10 @@ export default function Dashboard({ stats, attention, collection, myTasks = [], 
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="text-[13px] font-semibold text-black truncate">{m.title}</div>
-                                        <div className="text-[11.5px] text-[#6b7280] flex items-center gap-1 mt-0.5"><Clock size={11} className="text-[#9ca3af]" /> {m.time} · {m.duration} · {m.location}</div>
-                                        {m.project && <div className="text-[11px] text-[#9ca3af] mt-0.5">{m.project.client}</div>}
+                                        <div className="text-[11.5px] text-[#4b5563] flex items-center gap-1 mt-0.5"><Clock size={11} className="text-[#6b7280]" /> {m.time} · {m.duration} · {m.location}</div>
+                                        {m.project && <div className="text-[11px] text-[#6b7280] mt-0.5">{m.project.client}</div>}
                                     </div>
-                                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#f3f4f6] text-[#6b7280] self-start capitalize whitespace-nowrap">{MTG_LABELS[m.type]}</span>
+                                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#f3f4f6] text-[#4b5563] self-start capitalize whitespace-nowrap">{MTG_LABELS[m.type]}</span>
                                 </div>
                             );
                         })}
@@ -265,7 +265,7 @@ export default function Dashboard({ stats, attention, collection, myTasks = [], 
                         <thead>
                             <tr className="border-b border-[#e5e7eb]">
                                 {['Invoice', 'Project', 'Client', 'Billed', `Received (${cur.code})`, 'Due Date', 'Status'].map(h => (
-                                    <th key={h} className="text-left text-[10.5px] tracking-[1.5px] uppercase text-[#6b7280] font-medium px-4 py-3">{h}</th>
+                                    <th key={h} className="text-left text-[10.5px] tracking-[1.5px] uppercase text-[#4b5563] font-medium px-4 py-3">{h}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -276,16 +276,16 @@ export default function Dashboard({ stats, attention, collection, myTasks = [], 
                                     <tr key={inv.id} className="border-b border-[#e5e7eb] last:border-b-0 hover:bg-gray-50 transition-colors">
                                         <td className="px-4 py-3.5 text-[13px] font-semibold text-[#4f6df5]">{inv.number}</td>
                                         <td className="px-4 py-3.5 text-[13px] text-black">{inv.project?.name ?? '—'}</td>
-                                        <td className="px-4 py-3.5 text-[13px] text-[#6b7280]">{inv.project?.client ?? '—'}</td>
+                                        <td className="px-4 py-3.5 text-[13px] text-[#4b5563]">{inv.project?.client ?? '—'}</td>
                                         <td className="px-4 py-3.5 text-[13px] font-medium">{formatMoney(inv.total, invCur)}</td>
                                         <td className="px-4 py-3.5 text-[13px]">
                                             {inv.received_amount ? (
                                                 <span className="font-medium text-emerald-600">{formatMoney(inv.received_amount, inv.received_currency ?? cur.code)}</span>
                                             ) : (
-                                                <span className="text-[#d1d5db]">—</span>
+                                                <span className="text-[#6b7280]">—</span>
                                             )}
                                         </td>
-                                        <td className="px-4 py-3.5 text-[13px] text-[#6b7280]">{fmtDate(inv.due_date)}</td>
+                                        <td className="px-4 py-3.5 text-[13px] text-[#4b5563]">{fmtDate(inv.due_date)}</td>
                                         <td className="px-4 py-3.5"><Badge status={inv.status} /></td>
                                     </tr>
                                 );

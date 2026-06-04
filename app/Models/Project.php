@@ -119,6 +119,21 @@ class Project extends Model
         return $this->payroll->where('status', 'paid')->sum('amount');
     }
 
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(TimeEntry::class)->orderBy('date', 'desc');
+    }
+
+    public function getTotalHoursAttribute(): float
+    {
+        return (float) $this->timeEntries->sum('hours');
+    }
+
+    public function getBillableHoursAttribute(): float
+    {
+        return (float) $this->timeEntries->where('billable', true)->sum('hours');
+    }
+
     public function pages(): HasMany
     {
         return $this->hasMany(ProjectPage::class);

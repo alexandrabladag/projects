@@ -39,7 +39,7 @@ export default function Remittance({ bill, company }) {
 
             {/* Toolbar */}
             <div className="no-print bg-white border-b border-[#e5e7eb] px-6 py-3 flex items-center justify-between sticky top-0 z-10">
-                <button onClick={() => window.history.back()} className="inline-flex items-center gap-1.5 text-[13px] text-[#6b7280] hover:text-black transition-colors">
+                <button onClick={() => window.history.back()} className="inline-flex items-center gap-1.5 text-[13px] text-[#4b5563] hover:text-black transition-colors">
                     <ArrowLeft size={15} /> Back to Project
                 </button>
                 <button onClick={downloadPdf} className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#4f6df5] hover:bg-[#6380f7] text-white font-semibold rounded-lg text-[13px] transition-all">
@@ -58,14 +58,14 @@ export default function Remittance({ bill, company }) {
                             )}
                             <div>
                                 <div className="text-[14px] font-bold text-black leading-tight">{company?.name ?? 'Your Company'}</div>
-                                <div className="text-[11px] text-[#6b7280] leading-snug mt-0.5">
+                                <div className="text-[11px] text-[#4b5563] leading-snug mt-0.5">
                                     {[
                                         company?.address_line_1,
                                         [company?.city, company?.state, company?.postal_code].filter(Boolean).join(', '),
                                         company?.country,
                                     ].filter(Boolean).join(' · ')}
                                 </div>
-                                <div className="text-[11px] text-[#6b7280] leading-snug">
+                                <div className="text-[11px] text-[#4b5563] leading-snug">
                                     {[company?.email, company?.phone, company?.website].filter(Boolean).join(' · ')}
                                 </div>
                             </div>
@@ -81,10 +81,10 @@ export default function Remittance({ bill, company }) {
                     {/* Payee & Payment Info */}
                     <div className="flex justify-between items-start py-6">
                         <div>
-                            <div className="text-[9px] tracking-[1.5px] uppercase text-[#9ca3af] font-semibold mb-1.5">Paid To</div>
+                            <div className="text-[9px] tracking-[1.5px] uppercase text-[#6b7280] font-semibold mb-1.5">Paid To</div>
                             {vendor.name && <div className="text-[14px] font-bold text-black">{vendor.name}</div>}
-                            {vendor.contact_name && <div className="text-[12px] text-[#4b5563]">Attn: {vendor.contact_name}</div>}
-                            <div className="text-[11px] text-[#6b7280] leading-snug mt-1">
+                            {vendor.contact_name && <div className="text-[12px] text-[#374151]">Attn: {vendor.contact_name}</div>}
+                            <div className="text-[11px] text-[#4b5563] leading-snug mt-1">
                                 {[
                                     vendor.address_line_1,
                                     vendor.address_line_2,
@@ -100,10 +100,10 @@ export default function Remittance({ bill, company }) {
                         <div className="text-right">
                             <table className="ml-auto text-[12px]">
                                 <tbody>
-                                    <tr><td className="text-[#6b7280] pr-4 py-0.5">Payment Date</td><td className="font-medium text-black">{fmtDate(bill.paid_date ?? bill.date)}</td></tr>
-                                    <tr><td className="text-[#6b7280] pr-4 py-0.5">Invoice Ref</td><td className="font-medium text-black">{bill.number ? `#${bill.number}` : '—'}</td></tr>
-                                    <tr><td className="text-[#6b7280] pr-4 py-0.5">Invoice Date</td><td className="font-medium text-black">{fmtDate(bill.date)}</td></tr>
-                                    <tr><td className="text-[#6b7280] pr-4 py-0.5">Status</td><td className="font-medium text-black capitalize">{bill.status}</td></tr>
+                                    <tr><td className="text-[#4b5563] pr-4 py-0.5">Payment Date</td><td className="font-medium text-black">{fmtDate(bill.paid_date ?? bill.date)}</td></tr>
+                                    <tr><td className="text-[#4b5563] pr-4 py-0.5">Invoice Ref</td><td className="font-medium text-black">{bill.number ? `#${bill.number}` : '—'}</td></tr>
+                                    <tr><td className="text-[#4b5563] pr-4 py-0.5">Invoice Date</td><td className="font-medium text-black">{fmtDate(bill.date)}</td></tr>
+                                    <tr><td className="text-[#4b5563] pr-4 py-0.5">Status</td><td className="font-medium text-black capitalize">{bill.status}</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -111,24 +111,24 @@ export default function Remittance({ bill, company }) {
 
                     {/* Project Reference */}
                     <div className="bg-[#f8f9fb] rounded-lg px-5 py-3.5 mb-6">
-                        <div className="text-[9px] tracking-[1.5px] uppercase text-[#9ca3af] font-semibold mb-1">Project</div>
+                        <div className="text-[9px] tracking-[1.5px] uppercase text-[#6b7280] font-semibold mb-1">Project</div>
                         <div className="text-[14px] font-semibold text-black">{project.name}</div>
-                        {bill.category && <div className="text-[12px] text-[#6b7280] mt-0.5">Category: {bill.category}</div>}
+                        {bill.category && <div className="text-[12px] text-[#4b5563] mt-0.5">Category: {bill.category}</div>}
                     </div>
 
                     {/* Payment Details Table */}
                     <table className="w-full mb-6">
                         <thead>
                             <tr className="border-b-2 border-[#4f6df5]">
-                                <th className="text-left text-[11px] font-semibold text-[#4b5563] uppercase tracking-wide py-2.5">Description</th>
-                                <th className="text-right text-[11px] font-semibold text-[#4b5563] uppercase tracking-wide py-2.5 w-40">Amount</th>
+                                <th className="text-left text-[11px] font-semibold text-[#374151] uppercase tracking-wide py-2.5">Description</th>
+                                <th className="text-right text-[11px] font-semibold text-[#374151] uppercase tracking-wide py-2.5 w-40">Amount</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr className="border-b border-[#f0f0f0]">
                                 <td className="py-3 text-[13px] text-black">
                                     <div>{bill.description || `Payment for Invoice ${bill.number ? '#' + bill.number : ''}`}</div>
-                                    {bill.number && <div className="text-[11px] text-[#6b7280] mt-0.5">Ref: Invoice #{bill.number}</div>}
+                                    {bill.number && <div className="text-[11px] text-[#4b5563] mt-0.5">Ref: Invoice #{bill.number}</div>}
                                 </td>
                                 <td className="py-3 text-[13px] text-right text-black font-medium">{fmt(bill.amount)}</td>
                             </tr>
@@ -138,12 +138,12 @@ export default function Remittance({ bill, company }) {
                     {/* Total */}
                     <div className="flex justify-end mb-8">
                         <div className="w-72">
-                            <div className="flex justify-between items-center py-2 text-[12px] text-[#6b7280]">
+                            <div className="flex justify-between items-center py-2 text-[12px] text-[#4b5563]">
                                 <span>Subtotal</span>
                                 <span className="text-black">{fmt(bill.amount)}</span>
                             </div>
                             <div className="flex justify-between items-center py-3 border-t-2 border-[#4f6df5]">
-                                <span className="text-[12px] font-semibold text-[#4b5563] uppercase tracking-wide">Total Paid ({cur.code})</span>
+                                <span className="text-[12px] font-semibold text-[#374151] uppercase tracking-wide">Total Paid ({cur.code})</span>
                                 <span className="text-[20px] font-extrabold text-[#4f6df5]">{fmt(bill.paid_amount ?? bill.amount)}</span>
                             </div>
                         </div>
@@ -167,8 +167,8 @@ export default function Remittance({ bill, company }) {
                     {/* Notes */}
                     {bill.notes && (
                         <div className="border-t border-[#e5e7eb] pt-5 mt-6">
-                            <div className="text-[9px] tracking-[1.5px] uppercase text-[#9ca3af] font-semibold mb-1.5">Notes</div>
-                            <div className="text-[12px] text-[#6b7280] leading-relaxed whitespace-pre-line">{bill.notes}</div>
+                            <div className="text-[9px] tracking-[1.5px] uppercase text-[#6b7280] font-semibold mb-1.5">Notes</div>
+                            <div className="text-[12px] text-[#4b5563] leading-relaxed whitespace-pre-line">{bill.notes}</div>
                         </div>
                     )}
 
@@ -176,7 +176,7 @@ export default function Remittance({ bill, company }) {
                     <div className="flex-1" />
 
                     {/* Footer */}
-                    <div className="pt-4 border-t border-[#e5e7eb] text-center text-[11px] text-[#9ca3af]">
+                    <div className="pt-4 border-t border-[#e5e7eb] text-center text-[11px] text-[#6b7280]">
                         {company?.name} {company?.website ? `· ${company.website}` : ''}
                         <div className="mt-1">This remittance advice is for informational purposes and confirms payment as described above.</div>
                     </div>

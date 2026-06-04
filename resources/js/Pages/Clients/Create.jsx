@@ -1,8 +1,9 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Save, X } from 'lucide-react';
+import Select from '@/Components/ui/Select';
 
-const inputCls = 'w-full bg-[#f3f4f6] border border-[#d1d5db] rounded-lg px-3.5 py-2.5 text-[13px] text-black outline-none focus:border-[#4f6df5] transition-colors';
+const inputCls = 'w-full bg-white border border-[#e5e7eb] rounded-lg px-3.5 py-2.5 text-[13px] text-black placeholder:text-[#9ca3af] shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none transition-all duration-150 hover:border-[#d1d5db] focus:border-[#4f6df5] focus:ring-[3px] focus:ring-[#4f6df5]/12';
 
 export default function Create({ client: existing }) {
     const isEdit = !!existing;
@@ -40,7 +41,7 @@ export default function Create({ client: existing }) {
 
     const field = (label, key, type = 'text', placeholder = '', half = false) => (
         <div className={half ? '' : 'col-span-2'}>
-            <label className="block text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-2">{label}</label>
+            <label className="block text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-2">{label}</label>
             <input
                 type={type}
                 value={data[key]}
@@ -67,16 +68,16 @@ export default function Create({ client: existing }) {
                     <div className="grid grid-cols-2 gap-4">
                         {/* Type */}
                         <div>
-                            <label className="block text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-2">Type</label>
-                            <select
+                            <label className="block text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-2">Type</label>
+                            <Select
                                 value={data.type}
-                                onChange={e => setData('type', e.target.value)}
-                                className={inputCls}
-                            >
-                                <option value="client">Client (Business)</option>
-                                <option value="vendor">Vendor (Business)</option>
-                                <option value="contractor">Independent Contractor</option>
-                            </select>
+                                onChange={v => setData('type', v)}
+                                options={[
+                                    { value: 'client', label: 'Client (Business)' },
+                                    { value: 'vendor', label: 'Vendor (Business)' },
+                                    { value: 'contractor', label: 'Independent Contractor' },
+                                ]}
+                            />
                         </div>
 
                         {/* Name field adapts to type */}
@@ -93,7 +94,7 @@ export default function Create({ client: existing }) {
                     {/* Contact Person — only for businesses */}
                     {!isContractor && (
                         <div className="pt-2">
-                            <div className="text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-3 flex items-center gap-3">
+                            <div className="text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-3 flex items-center gap-3">
                                 Primary Contact <span className="flex-1 h-px bg-[#e5e7eb]" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -106,8 +107,8 @@ export default function Create({ client: existing }) {
 
                     {/* Address */}
                     <div className="pt-2">
-                        <div className="text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-3 flex items-center gap-3">
-                            Address <span className="text-[#9ca3af] font-normal normal-case tracking-normal">(optional)</span>
+                        <div className="text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-3 flex items-center gap-3">
+                            Address <span className="text-[#6b7280] font-normal normal-case tracking-normal">(optional)</span>
                             <span className="flex-1 h-px bg-[#e5e7eb]" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -122,7 +123,7 @@ export default function Create({ client: existing }) {
 
                     {/* Notes */}
                     <div>
-                        <label className="block text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-2">Notes</label>
+                        <label className="block text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-2">Notes</label>
                         <textarea
                             value={data.notes}
                             onChange={e => setData('notes', e.target.value)}
@@ -133,7 +134,7 @@ export default function Create({ client: existing }) {
                     </div>
 
                     <div className="flex justify-end gap-3 pt-2 border-t border-[#e5e7eb]">
-                        <Link href={route('clients.index')} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[13px] text-[#6b7280] border border-[#d1d5db] hover:bg-gray-50 transition-colors">
+                        <Link href={route('clients.index')} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[13px] text-[#4b5563] border border-[#d1d5db] hover:bg-gray-50 transition-colors">
                             <X size={14} /> Cancel
                         </Link>
                         <button

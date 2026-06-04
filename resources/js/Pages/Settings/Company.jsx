@@ -1,6 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import currencies from '@/Utils/currencies';
+import Select from '@/Components/ui/Select';
 import { Building2, MapPin, Hash, Save } from 'lucide-react';
 
 export default function Company({ company }) {
@@ -43,13 +44,13 @@ export default function Company({ company }) {
 
     const field = (label, key, type = 'text', placeholder = '', half = false) => (
         <div className={half ? '' : 'col-span-2'}>
-            <label className="block text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-2">{label}</label>
+            <label className="block text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-2">{label}</label>
             <input
                 type={type}
                 value={data[key]}
                 onChange={e => setData(key, e.target.value)}
                 placeholder={placeholder}
-                className="w-full bg-[#f3f4f6] border border-[#d1d5db] rounded-lg px-3.5 py-2.5 text-[13px] text-black outline-none focus:border-[#4f6df5] transition-colors"
+                className="w-full bg-white border border-[#e5e7eb] rounded-lg px-3.5 py-2.5 text-[13px] text-black placeholder:text-[#9ca3af] shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none transition-all duration-150 hover:border-[#d1d5db] focus:border-[#4f6df5] focus:ring-[3px] focus:ring-[#4f6df5]/12"
             />
             {errors[key] && <p className="text-red-500 text-[12px] mt-1">{errors[key]}</p>}
         </div>
@@ -63,14 +64,18 @@ export default function Company({ company }) {
             <Head title="Company Settings" />
 
             <div className="max-w-2xl">
-                <p className="text-[13px] text-[#6b7280] mb-6">
-                    Your company information appears on invoices, proposals, and documents.
-                </p>
+                <div className="flex items-start gap-3 mb-5">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-indigo-50 text-[#4f6df5]"><Building2 size={19} /></div>
+                    <div>
+                        <h2 className="font-serif text-[20px] font-semibold text-black leading-tight">Company Profile</h2>
+                        <p className="text-[13px] text-[#4b5563] mt-0.5">Your company information appears on invoices, proposals, and documents.</p>
+                    </div>
+                </div>
 
                 <form onSubmit={submit} className="bg-white border border-[#e5e7eb] rounded-xl p-7 space-y-5">
                     {/* Logo */}
                     <div>
-                        <label className="block text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-2">Company Logo</label>
+                        <label className="block text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-2">Company Logo</label>
                         <div className="flex items-center gap-5">
                             <div className="w-20 h-20 rounded-xl border-2 border-dashed border-[#d1d5db] flex items-center justify-center bg-[#f9fafb] overflow-hidden flex-shrink-0">
                                 {(data.logo || company.logo_path) ? (
@@ -80,7 +85,7 @@ export default function Company({ company }) {
                                         className="w-full h-full object-contain p-1"
                                     />
                                 ) : (
-                                    <span className="text-[#9ca3af] text-[24px]">+</span>
+                                    <span className="text-[#6b7280] text-[24px]">+</span>
                                 )}
                             </div>
                             <div>
@@ -93,7 +98,7 @@ export default function Company({ company }) {
                                         className="hidden"
                                     />
                                 </label>
-                                <p className="text-[11px] text-[#9ca3af] mt-1.5">PNG, JPG, SVG. Max 2MB.</p>
+                                <p className="text-[11px] text-[#6b7280] mt-1.5">PNG, JPG, SVG. Max 2MB.</p>
                             </div>
                         </div>
                         {errors.logo && <p className="text-red-500 text-[12px] mt-1">{errors.logo}</p>}
@@ -109,21 +114,17 @@ export default function Company({ company }) {
 
                     {/* Base Currency */}
                     <div>
-                        <label className="block text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-2">Base Currency</label>
-                        <select
+                        <label className="block text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-2">Base Currency</label>
+                        <Select
                             value={data.base_currency}
-                            onChange={e => setData('base_currency', e.target.value)}
-                            className="w-full bg-[#f3f4f6] border border-[#d1d5db] rounded-lg px-3.5 py-2.5 text-[13px] text-black outline-none focus:border-[#4f6df5] transition-colors"
-                        >
-                            {currencies.map(c => (
-                                <option key={c.code} value={c.code}>{c.country} — {c.name} ({c.symbol})</option>
-                            ))}
-                        </select>
-                        <p className="text-[11px] text-[#9ca3af] mt-1.5">This is your main operating currency. All dashboard totals and reports will display in this currency.</p>
+                            onChange={v => setData('base_currency', v)}
+                            options={currencies.map(c => ({ value: c.code, label: `${c.country} — ${c.name} (${c.symbol})` }))}
+                        />
+                        <p className="text-[11px] text-[#6b7280] mt-1.5">This is your main operating currency. All dashboard totals and reports will display in this currency.</p>
                     </div>
 
                     <div className="pt-2">
-                        <div className="text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-3 flex items-center gap-3">
+                        <div className="text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-3 flex items-center gap-3">
                             Address <span className="flex-1 h-px bg-[#e5e7eb]" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -138,11 +139,11 @@ export default function Company({ company }) {
 
                     {/* Document Numbering */}
                     <div className="pt-2">
-                        <div className="text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-3 flex items-center gap-3">
+                        <div className="text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-3 flex items-center gap-3">
                             Document Numbering <span className="flex-1 h-px bg-[#e5e7eb]" />
                         </div>
 
-                        <div className="text-[12px] text-[#6b7280] mb-4 bg-[#f9fafb] border border-[#e5e7eb] rounded-lg px-3 py-2.5">
+                        <div className="text-[12px] text-[#4b5563] mb-4 bg-[#f9fafb] border border-[#e5e7eb] rounded-lg px-3 py-2.5">
                             Use these variables in the format: <code className="text-[#4f6df5] font-mono">{'{PREFIX}'}</code> <code className="text-[#4f6df5] font-mono">{'{YEAR}'}</code> <code className="text-[#4f6df5] font-mono">{'{MONTH}'}</code> <code className="text-[#4f6df5] font-mono">{'{NUMBER}'}</code>
                         </div>
 
@@ -152,18 +153,18 @@ export default function Company({ company }) {
                             <div className="grid grid-cols-3 gap-3">
                                 {field('Prefix', 'invoice_prefix', 'text', 'INV', true)}
                                 <div>
-                                    <label className="block text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-2">Format</label>
+                                    <label className="block text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-2">Format</label>
                                     <input
                                         type="text"
                                         value={data.invoice_format}
                                         onChange={e => setData('invoice_format', e.target.value)}
                                         placeholder="{PREFIX}-{YEAR}-{NUMBER}"
-                                        className="w-full bg-[#f3f4f6] border border-[#d1d5db] rounded-lg px-3.5 py-2.5 text-[13px] text-black outline-none focus:border-[#4f6df5] transition-colors font-mono"
+                                        className="w-full bg-white border border-[#e5e7eb] rounded-lg px-3.5 py-2.5 text-[13px] text-black placeholder:text-[#9ca3af] shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none transition-all duration-150 hover:border-[#d1d5db] focus:border-[#4f6df5] focus:ring-[3px] focus:ring-[#4f6df5]/12 font-mono"
                                     />
                                 </div>
                                 {field('Next Number', 'next_invoice_number', 'number', '1', true)}
                             </div>
-                            <div className="mt-2 text-[12px] text-[#6b7280]">
+                            <div className="mt-2 text-[12px] text-[#4b5563]">
                                 Preview: <span className="font-semibold text-black font-mono">{previewNumber(data.invoice_prefix, data.invoice_format, data.next_invoice_number, data.number_padding)}</span>
                             </div>
                         </div>
@@ -174,18 +175,18 @@ export default function Company({ company }) {
                             <div className="grid grid-cols-3 gap-3">
                                 {field('Prefix', 'proposal_prefix', 'text', 'PROP', true)}
                                 <div>
-                                    <label className="block text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-2">Format</label>
+                                    <label className="block text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-2">Format</label>
                                     <input
                                         type="text"
                                         value={data.proposal_format}
                                         onChange={e => setData('proposal_format', e.target.value)}
                                         placeholder="{PREFIX}-{YEAR}-{NUMBER}"
-                                        className="w-full bg-[#f3f4f6] border border-[#d1d5db] rounded-lg px-3.5 py-2.5 text-[13px] text-black outline-none focus:border-[#4f6df5] transition-colors font-mono"
+                                        className="w-full bg-white border border-[#e5e7eb] rounded-lg px-3.5 py-2.5 text-[13px] text-black placeholder:text-[#9ca3af] shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none transition-all duration-150 hover:border-[#d1d5db] focus:border-[#4f6df5] focus:ring-[3px] focus:ring-[#4f6df5]/12 font-mono"
                                     />
                                 </div>
                                 {field('Next Number', 'next_proposal_number', 'number', '1', true)}
                             </div>
-                            <div className="mt-2 text-[12px] text-[#6b7280]">
+                            <div className="mt-2 text-[12px] text-[#4b5563]">
                                 Preview: <span className="font-semibold text-black font-mono">{previewNumber(data.proposal_prefix, data.proposal_format, data.next_proposal_number, data.number_padding)}</span>
                             </div>
                         </div>
@@ -200,7 +201,7 @@ export default function Company({ company }) {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="px-5 py-2.5 bg-[#4f6df5] hover:bg-[#6380f7] text-white font-semibold rounded-lg text-[13px] transition-all disabled:opacity-60"
+                            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#4f6df5] hover:bg-[#6380f7] text-white font-semibold rounded-lg text-[13px] transition-all disabled:opacity-60"
                         >
                             {processing ? 'Saving…' : <><Save size={14} /> Save Changes</>}
                         </button>

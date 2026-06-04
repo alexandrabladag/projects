@@ -28,7 +28,7 @@ export default function Index({ clients }) {
                             className={`px-3.5 py-1.5 rounded-full text-[12px] font-medium border transition-all
                                 ${filter === key
                                     ? 'bg-[#4f6df5]/10 border-[#4f6df5]/30 text-[#4f6df5]'
-                                    : 'bg-transparent border-[#d1d5db] text-[#6b7280] hover:text-black hover:bg-gray-50'
+                                    : 'bg-transparent border-[#d1d5db] text-[#4b5563] hover:text-black hover:bg-gray-50'
                                 }`}
                         >
                             {label}
@@ -45,7 +45,7 @@ export default function Index({ clients }) {
             </div>
 
             {filtered.length === 0 && (
-                <div className="text-center py-20 text-[#6b7280]">
+                <div className="text-center py-20 text-[#4b5563]">
                     <div className="mb-3 opacity-30 flex justify-center"><Building2 size={40} /></div>
                     <div className="text-[14px] mb-5">
                         No {{ client: 'clients', vendor: 'vendors', contractor: 'contractors' }[filter] ?? 'entries'} found
@@ -61,7 +61,7 @@ export default function Index({ clients }) {
                     <thead>
                         <tr className="border-b border-[#e5e7eb]">
                             {['Name', 'Type', 'Contact', 'Email', 'Phone', 'Projects', ''].map(h => (
-                                <th key={h} className="text-left text-[11px] tracking-[1.5px] uppercase text-[#6b7280] font-medium px-4 py-3">{h}</th>
+                                <th key={h} className="text-left text-[11px] tracking-[1.5px] uppercase text-[#4b5563] font-medium px-4 py-3">{h}</th>
                             ))}
                         </tr>
                     </thead>
@@ -72,17 +72,17 @@ export default function Index({ clients }) {
                                     <Link href={route('clients.show', client.id)} className="text-[13px] font-semibold text-black hover:text-[#4f6df5] transition-colors">
                                         {client.name}
                                     </Link>
-                                    {client.city && <div className="text-[11.5px] text-[#6b7280]">{client.city}{client.country ? `, ${client.country}` : ''}</div>}
+                                    {client.city && <div className="text-[11.5px] text-[#4b5563]">{client.city}{client.country ? `, ${client.country}` : ''}</div>}
                                 </td>
                                 <td className="px-4 py-3.5">
                                     <Badge status={client.type === 'vendor' ? 'review' : client.type === 'contractor' ? 'in-progress' : 'active'} label={client.type} />
                                 </td>
-                                <td className="px-4 py-3.5 text-[13px] text-[#4b5563]">{client.contact_name ?? '—'}</td>
+                                <td className="px-4 py-3.5 text-[13px] text-[#374151]">{client.contact_name ?? '—'}</td>
                                 <td className="px-4 py-3.5 text-[13px] text-[#4f6df5]">{client.contact_email ?? client.email ?? '—'}</td>
-                                <td className="px-4 py-3.5 text-[13px] text-[#6b7280]">{client.contact_phone ?? client.phone ?? '—'}</td>
-                                <td className="px-4 py-3.5 text-[13px] text-[#4b5563]">{client.projects_count}</td>
+                                <td className="px-4 py-3.5 text-[13px] text-[#4b5563]">{client.contact_phone ?? client.phone ?? '—'}</td>
+                                <td className="px-4 py-3.5 text-[13px] text-[#374151]">{client.projects_count}</td>
                                 <td className="px-4 py-3.5">
-                                    <Link href={route('clients.show', client.id)} className="inline-flex items-center gap-1 text-[12px] text-[#6b7280] hover:text-black transition-colors">
+                                    <Link href={route('clients.show', client.id)} className="inline-flex items-center gap-1 text-[12px] text-[#4b5563] hover:text-black transition-colors">
                                         View <ArrowRight size={12} />
                                     </Link>
                                 </td>

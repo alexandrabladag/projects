@@ -40,10 +40,10 @@ export default function Transfer() {
                         </div>
                         <div className="flex-1">
                             <h3 className="text-[16px] font-bold text-black">Export Workspace Data</h3>
-                            <p className="text-[13px] text-[#6b7280] mt-1 mb-4">
+                            <p className="text-[13px] text-[#4b5563] mt-1 mb-4">
                                 Download all your workspace data as a JSON file. Includes company settings, clients, contacts, projects, proposals, invoices, meetings, tasks, and team members.
                             </p>
-                            <div className="bg-[#f8f9fb] border border-[#e5e7eb] rounded-lg px-4 py-3 text-[12px] text-[#6b7280] mb-4">
+                            <div className="bg-[#f8f9fb] border border-[#e5e7eb] rounded-lg px-4 py-3 text-[12px] text-[#4b5563] mb-4">
                                 <strong className="text-black">What's included:</strong> Company info, clients & contacts, all projects with proposals, invoices, meetings, tasks, and team members. Document files are not included (metadata only).
                             </div>
                             <button
@@ -64,24 +64,24 @@ export default function Transfer() {
                         </div>
                         <div className="flex-1">
                             <h3 className="text-[16px] font-bold text-black">Import Workspace Data</h3>
-                            <p className="text-[13px] text-[#6b7280] mt-1 mb-4">
+                            <p className="text-[13px] text-[#4b5563] mt-1 mb-4">
                                 Import data from a previously exported JSON file. This will create new records in your workspace — existing data won't be overwritten.
                             </p>
 
                             {/* File picker */}
                             <div className="mb-4">
                                 <label className="flex items-center gap-3 p-4 border-2 border-dashed border-[#d1d5db] rounded-xl cursor-pointer hover:border-[#4f6df5] transition-colors bg-[#fafbfc]">
-                                    <FileJson size={24} className="text-[#9ca3af]" />
+                                    <FileJson size={24} className="text-[#6b7280]" />
                                     <div className="flex-1">
                                         {file ? (
                                             <div>
                                                 <div className="text-[13px] font-medium text-black">{file.name}</div>
-                                                <div className="text-[11px] text-[#9ca3af]">{(file.size / 1024).toFixed(1)} KB</div>
+                                                <div className="text-[11px] text-[#6b7280]">{(file.size / 1024).toFixed(1)} KB</div>
                                             </div>
                                         ) : (
                                             <div>
-                                                <div className="text-[13px] text-[#6b7280]">Choose a .json export file</div>
-                                                <div className="text-[11px] text-[#9ca3af]">Max 10MB</div>
+                                                <div className="text-[13px] text-[#4b5563]">Choose a .json export file</div>
+                                                <div className="text-[11px] text-[#6b7280]">Max 10MB</div>
                                             </div>
                                         )}
                                     </div>

@@ -13,7 +13,7 @@ export default function GuestLayout({ children }) {
                 {/* Logo */}
                 <div className="text-center mb-10">
                     <div className="font-serif text-3xl font-bold tracking-[6px] text-[#4f6df5] mb-1">FLOW</div>
-                    <div className="text-[10px] tracking-[3px] text-[#6b7280] uppercase">Project Management</div>
+                    <div className="text-[10px] tracking-[3px] text-[#4b5563] uppercase">Project Management</div>
                 </div>
 
                 {/* Card */}

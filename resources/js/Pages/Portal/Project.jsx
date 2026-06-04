@@ -30,14 +30,14 @@ export default function Project({ project }) {
             <Head title={project.name} />
 
             {/* Back link */}
-            <Link href={route('portal.dashboard')} className="text-[13px] text-[#6b7280] hover:text-black transition-colors mb-4 inline-block">← Back to Projects</Link>
+            <Link href={route('portal.dashboard')} className="text-[13px] text-[#4b5563] hover:text-black transition-colors mb-4 inline-block">← Back to Projects</Link>
 
             {/* Header */}
             <div className="bg-white border border-[#e5e7eb] rounded-xl p-6 mb-6">
                 <div className="flex justify-between items-start mb-4">
                     <div>
                         <h1 className="text-[22px] font-bold text-black">{project.name}</h1>
-                        <div className="text-[13px] text-[#6b7280] mt-1">{project.phase} · {fmtDate(project.start_date)} – {fmtDate(project.end_date)}</div>
+                        <div className="text-[13px] text-[#4b5563] mt-1">{project.phase} · {fmtDate(project.start_date)} – {fmtDate(project.end_date)}</div>
                     </div>
                     <Badge status={project.status} />
                 </div>
@@ -45,7 +45,7 @@ export default function Project({ project }) {
                 {/* Progress */}
                 <div className="mb-4">
                     <div className="flex justify-between text-[12px] mb-1.5">
-                        <span className="text-[#6b7280]">Overall Progress</span>
+                        <span className="text-[#4b5563]">Overall Progress</span>
                         <span className="font-bold text-black">{project.progress}%</span>
                     </div>
                     <div className="h-2.5 bg-[#f0f0f0] rounded-full overflow-hidden">
@@ -56,7 +56,7 @@ export default function Project({ project }) {
                 {/* Stats */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-[#f0f0f0]">
                     <div>
-                        <div className="text-[10px] uppercase tracking-wide text-[#9ca3af] font-medium">Budget</div>
+                        <div className="text-[10px] uppercase tracking-wide text-[#6b7280] font-medium">Budget</div>
                         <div className="text-[18px] font-bold text-black">{fmt(project.budget)}</div>
                     </div>
                 </div>
@@ -69,7 +69,7 @@ export default function Project({ project }) {
                         key={t.id}
                         onClick={() => setTab(t.id)}
                         className={`flex items-center gap-1.5 px-4 py-3 text-[13px] font-medium border-b-2 transition-all ${
-                            tab === t.id ? 'border-[#4f6df5] text-[#4f6df5]' : 'border-transparent text-[#6b7280] hover:text-black'
+                            tab === t.id ? 'border-[#4f6df5] text-[#4f6df5]' : 'border-transparent text-[#4b5563] hover:text-black'
                         }`}
                     >
                         {t.icon}{t.label}
@@ -83,7 +83,7 @@ export default function Project({ project }) {
                     {project.description && (
                         <div className="bg-white border border-[#e5e7eb] rounded-xl p-5">
                             <div className="text-[14px] font-bold text-black mb-2">About This Project</div>
-                            <p className="text-[13px] text-[#4b5563] leading-relaxed">{project.description}</p>
+                            <p className="text-[13px] text-[#374151] leading-relaxed">{project.description}</p>
                         </div>
                     )}
 
@@ -92,19 +92,19 @@ export default function Project({ project }) {
                         <div className="text-[14px] font-bold text-black mb-3">Timeline</div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                             <div>
-                                <div className="text-[10px] uppercase tracking-wide text-[#9ca3af] mb-1">Start</div>
+                                <div className="text-[10px] uppercase tracking-wide text-[#6b7280] mb-1">Start</div>
                                 <div className="text-[13px] font-medium text-black">{fmtDate(project.start_date)}</div>
                             </div>
                             <div>
-                                <div className="text-[10px] uppercase tracking-wide text-[#9ca3af] mb-1">End</div>
+                                <div className="text-[10px] uppercase tracking-wide text-[#6b7280] mb-1">End</div>
                                 <div className="text-[13px] font-medium text-black">{fmtDate(project.end_date)}</div>
                             </div>
                             <div>
-                                <div className="text-[10px] uppercase tracking-wide text-[#9ca3af] mb-1">Phase</div>
+                                <div className="text-[10px] uppercase tracking-wide text-[#6b7280] mb-1">Phase</div>
                                 <div className="text-[13px] font-medium text-black">{project.phase}</div>
                             </div>
                             <div>
-                                <div className="text-[10px] uppercase tracking-wide text-[#9ca3af] mb-1">Progress</div>
+                                <div className="text-[10px] uppercase tracking-wide text-[#6b7280] mb-1">Progress</div>
                                 <div className="text-[13px] font-bold text-[#4f6df5]">{project.progress}%</div>
                             </div>
                         </div>
@@ -115,7 +115,7 @@ export default function Project({ project }) {
             {/* Documents */}
             {tab === 'documents' && (
                 <div className="space-y-3">
-                    {documents.length === 0 && <div className="text-center py-10 text-[13px] text-[#6b7280]">No documents available</div>}
+                    {documents.length === 0 && <div className="text-center py-10 text-[13px] text-[#4b5563]">No documents available</div>}
                     {documents.map(doc => (
                         <div key={doc.id} className="bg-white border border-[#e5e7eb] rounded-xl p-4 flex items-center gap-3.5">
                             <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-[18px] flex-shrink-0 ${
@@ -125,18 +125,18 @@ export default function Project({ project }) {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="text-[13px] font-medium text-black truncate">{doc.name}</div>
-                                <div className="text-[11.5px] text-[#6b7280]">
+                                <div className="text-[11.5px] text-[#4b5563]">
                                     {doc.uploader?.name ?? 'Team'} · {fmtDate(doc.created_at)} {doc.file_size ? `· ${doc.file_size}` : ''}
                                 </div>
                             </div>
                             <Badge status={doc.type} label={doc.type} />
                             {doc.file_path && (
-                                <button onClick={() => setPreviewDoc(doc)} className="inline-flex items-center gap-1.5 text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
+                                <button onClick={() => setPreviewDoc(doc)} className="inline-flex items-center gap-1.5 text-[12px] text-[#4b5563] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
                                     <Eye size={13} /> View
                                 </button>
                             )}
                             {doc.file_path && (
-                                <a href={`/documents/${doc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
+                                <a href={`/documents/${doc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-[#4b5563] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
                                     <Download size={13} /> Download
                                 </a>
                             )}
@@ -177,21 +177,21 @@ export default function Project({ project }) {
                             <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb]">
                                 <div>
                                     <div className="text-[15px] font-bold text-black">{previewDoc.name}</div>
-                                    <div className="text-[12px] text-[#6b7280]">{previewDoc.type} {previewDoc.file_size ? `· ${previewDoc.file_size}` : ''}</div>
+                                    <div className="text-[12px] text-[#4b5563]">{previewDoc.type} {previewDoc.file_size ? `· ${previewDoc.file_size}` : ''}</div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    {canPreview && <button onClick={() => setFullscreen(true)} className="p-1.5 rounded-lg text-[#6b7280] hover:text-black hover:bg-gray-100" title="Fullscreen"><Maximize2 size={16} /></button>}
-                                    <a href={`/documents/${previewDoc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-[#6b7280] hover:text-black px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
+                                    {canPreview && <button onClick={() => setFullscreen(true)} className="p-1.5 rounded-lg text-[#4b5563] hover:text-black hover:bg-gray-100" title="Fullscreen"><Maximize2 size={16} /></button>}
+                                    <a href={`/documents/${previewDoc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-[#4b5563] hover:text-black px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
                                         <Download size={13} /> Download
                                     </a>
-                                    <button onClick={() => setPreviewDoc(null)} className="p-1.5 rounded-lg text-[#6b7280] hover:text-black hover:bg-gray-100"><X size={16} /></button>
+                                    <button onClick={() => setPreviewDoc(null)} className="p-1.5 rounded-lg text-[#4b5563] hover:text-black hover:bg-gray-100"><X size={16} /></button>
                                 </div>
                             </div>
                             <div className="flex-1 overflow-auto p-6">
                                 {canPreview ? (
                                     isImg ? <img src={previewUrl} alt={previewDoc.name} className="max-w-full mx-auto rounded-lg" /> : <iframe src={previewUrl} className="w-full rounded-lg" style={{ height: '70vh' }} title={previewDoc.name} />
                                 ) : (
-                                    <div className="text-center py-16 text-[#6b7280]">
+                                    <div className="text-center py-16 text-[#4b5563]">
                                         <div className="text-3xl mb-3">📄</div>
                                         <div className="text-[14px] font-medium text-black mb-1">Preview not available</div>
                                         <div className="text-[13px]">This file type cannot be previewed. Download it to view.</div>
@@ -206,7 +206,7 @@ export default function Project({ project }) {
             {/* Meetings */}
             {tab === 'meetings' && (
                 <div className="space-y-3">
-                    {meetings.length === 0 && <div className="text-center py-10 text-[13px] text-[#6b7280]">No meetings scheduled</div>}
+                    {meetings.length === 0 && <div className="text-center py-10 text-[13px] text-[#4b5563]">No meetings scheduled</div>}
                     {meetings.map(m => (
                         <div key={m.id} className="bg-white border border-[#e5e7eb] rounded-xl p-5 flex gap-4">
                             <div className="w-12 h-12 bg-[#4f6df5]/10 border border-[#4f6df5]/20 rounded-lg flex flex-col items-center justify-center flex-shrink-0">
@@ -218,8 +218,8 @@ export default function Project({ project }) {
                                     <span className="text-[14px] font-semibold text-black">{m.title}</span>
                                     <Badge status={m.status} />
                                 </div>
-                                <div className="text-[12px] text-[#6b7280]">{m.time} · {m.duration} · {m.location}</div>
-                                {m.notes && <div className="text-[12px] text-[#6b7280] mt-2 bg-[#fafbfc] rounded-lg p-3 border-l-2 border-[#e5e7eb]">{m.notes}</div>}
+                                <div className="text-[12px] text-[#4b5563]">{m.time} · {m.duration} · {m.location}</div>
+                                {m.notes && <div className="text-[12px] text-[#4b5563] mt-2 bg-[#fafbfc] rounded-lg p-3 border-l-2 border-[#e5e7eb]">{m.notes}</div>}
                             </div>
                         </div>
                     ))}

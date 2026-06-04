@@ -54,6 +54,12 @@ h1, h2, h3, h4, .font-serif {
 }
 .animate-slide-in { animation: slide-in 0.3s ease-out; }
 
+/* Dropdown / select panel entrance */
+@keyframes selectIn {
+  from { transform: translateY(-4px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
 /* Inertia page transition */
 #nprogress .bar { background: var(--gold) !important; }
 #nprogress .peg  { box-shadow: 0 0 10px var(--gold), 0 0 5px var(--gold) !important; }

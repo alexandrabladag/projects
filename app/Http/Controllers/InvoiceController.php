@@ -12,6 +12,11 @@ class InvoiceController extends Controller
 {
     public function show(Invoice $invoice)
     {
+        // Resolve the parent through the workspace-scoped query (404s across
+        // workspaces), then authorize — prevents cross-tenant invoice access.
+        $project = Project::findOrFail($invoice->project_id);
+        $this->authorize('view', $project);
+
         $invoice->load(['project.clientRecord', 'items']);
 
         return Inertia::render('Invoices/View', [

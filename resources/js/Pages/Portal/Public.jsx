@@ -48,7 +48,7 @@ export default function Public({ project, company, code }) {
                 <header className="bg-white/80 backdrop-blur-md border-b border-[#e5e7eb]/50 sticky top-0 z-10">
                     <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
                         {company?.logo_path && <img src={`/storage/${company.logo_path}`} alt="" className="h-7" />}
-                        <span className="text-[13px] font-medium text-[#4b5563]">{project.client}</span>
+                        <span className="text-[13px] font-medium text-[#374151]">{project.client}</span>
                     </div>
                 </header>
 
@@ -56,7 +56,7 @@ export default function Public({ project, company, code }) {
                     {/* Hero */}
                     <div className="text-center mb-10">
                         <Badge status={project.status} />
-                        <h2 className="text-[16px] font-semibold text-[#6b7280] mt-3">
+                        <h2 className="text-[16px] font-semibold text-[#4b5563] mt-3">
                             {project.client}
                             {project.client_record?.website && (
                                 <a href={project.client_record.website.startsWith('http') ? project.client_record.website : `https://${project.client_record.website}`} target="_blank" className="text-[13px] font-normal text-[#4f6df5] hover:text-[#6380f7] ml-2">
@@ -66,7 +66,7 @@ export default function Public({ project, company, code }) {
                         </h2>
                         <h1 className="text-[22px] md:text-[32px] font-extrabold text-black mt-1 leading-tight">{project.name}</h1>
                         {project.description && (
-                            <p className="text-[15px] text-[#6b7280] mt-3 max-w-2xl mx-auto leading-relaxed">{project.description}</p>
+                            <p className="text-[15px] text-[#4b5563] mt-3 max-w-2xl mx-auto leading-relaxed">{project.description}</p>
                         )}
                     </div>
 
@@ -95,7 +95,7 @@ export default function Public({ project, company, code }) {
                                     { l: 'End Date', v: fmtDate(project.end_date) },
                                 ].map(({ l, v }) => v && (
                                     <div key={l} className="flex justify-between text-[13px]">
-                                        <span className="text-[#9ca3af]">{l}</span>
+                                        <span className="text-[#6b7280]">{l}</span>
                                         <span className="font-medium text-black">{v}</span>
                                     </div>
                                 ))}
@@ -120,9 +120,9 @@ export default function Public({ project, company, code }) {
                                         <div>
                                             <div className="text-[13px] font-semibold text-black">{project.lead.name}</div>
                                             <div className="text-[11px] text-[#4f6df5] font-medium">Project Lead</div>
-                                            {project.lead.email && <a href={`mailto:${project.lead.email}`} className="text-[12px] text-[#6b7280] block mt-0.5">{project.lead.email}</a>}
-                                            {project.lead.phone && <a href={`tel:${project.lead.phone}`} className="text-[12px] text-[#6b7280] block">{project.lead.phone}</a>}
-                                            {company?.name && <div className="text-[11px] text-[#9ca3af] mt-1">{company.name}</div>}
+                                            {project.lead.email && <a href={`mailto:${project.lead.email}`} className="text-[12px] text-[#4b5563] block mt-0.5">{project.lead.email}</a>}
+                                            {project.lead.phone && <a href={`tel:${project.lead.phone}`} className="text-[12px] text-[#4b5563] block">{project.lead.phone}</a>}
+                                            {company?.name && <div className="text-[11px] text-[#6b7280] mt-1">{company.name}</div>}
                                         </div>
                                     </div>
                                 )}
@@ -136,9 +136,9 @@ export default function Public({ project, company, code }) {
                                         <div>
                                             <div className="text-[13px] font-semibold text-black">{project.contact_name}</div>
                                             <div className="text-[11px] text-emerald-600 font-medium">Client Contact</div>
-                                            {project.contact_email && <a href={`mailto:${project.contact_email}`} className="text-[12px] text-[#6b7280] block mt-0.5">{project.contact_email}</a>}
-                                            {project.contact_phone && <a href={`tel:${project.contact_phone}`} className="text-[12px] text-[#6b7280] block">{project.contact_phone}</a>}
-                                            {project.client && <div className="text-[11px] text-[#9ca3af] mt-1">{project.client}</div>}
+                                            {project.contact_email && <a href={`mailto:${project.contact_email}`} className="text-[12px] text-[#4b5563] block mt-0.5">{project.contact_email}</a>}
+                                            {project.contact_phone && <a href={`tel:${project.contact_phone}`} className="text-[12px] text-[#4b5563] block">{project.contact_phone}</a>}
+                                            {project.client && <div className="text-[11px] text-[#6b7280] mt-1">{project.client}</div>}
                                         </div>
                                     </div>
                                 )}
@@ -149,7 +149,7 @@ export default function Public({ project, company, code }) {
                     {/* Progress Card */}
                     <div className="bg-white rounded-2xl border border-[#e5e7eb] p-8 mb-8 shadow-sm">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-[13px] font-medium text-[#6b7280]">Overall Progress</span>
+                            <span className="text-[13px] font-medium text-[#4b5563]">Overall Progress</span>
                             <span className="text-[28px] font-extrabold text-[#4f6df5]">{project.progress}%</span>
                         </div>
                         <div className="h-3 bg-[#f0f0f0] rounded-full overflow-hidden mb-6">
@@ -166,13 +166,13 @@ export default function Public({ project, company, code }) {
                                         <div className="flex items-center w-full">
                                             {i > 0 && <div className={`flex-1 h-0.5 ${done || active ? 'bg-emerald-300' : 'bg-[#e5e7eb]'}`} />}
                                             <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                                done ? 'bg-emerald-500 text-white' : active ? 'bg-[#4f6df5] text-white ring-4 ring-[#4f6df5]/20' : 'bg-[#f0f0f0] text-[#d1d5db]'
+                                                done ? 'bg-emerald-500 text-white' : active ? 'bg-[#4f6df5] text-white ring-4 ring-[#4f6df5]/20' : 'bg-[#f0f0f0] text-[#6b7280]'
                                             }`}>
                                                 {done ? <CheckCircle size={14} /> : active ? <Circle size={8} fill="white" /> : <Circle size={8} />}
                                             </div>
                                             {i < PROJECT_PHASES.length - 1 && <div className={`flex-1 h-0.5 ${done ? 'bg-emerald-300' : 'bg-[#e5e7eb]'}`} />}
                                         </div>
-                                        <span className={`text-[9px] text-center leading-tight mt-1.5 hidden md:block ${active ? 'text-[#4f6df5] font-bold' : done ? 'text-emerald-600 font-medium' : 'text-[#9ca3af]'}`}>{phase}</span>
+                                        <span className={`text-[9px] text-center leading-tight mt-1.5 hidden md:block ${active ? 'text-[#4f6df5] font-bold' : done ? 'text-emerald-600 font-medium' : 'text-[#6b7280]'}`}>{phase}</span>
                                     </div>
                                 );
                             })}
@@ -189,7 +189,7 @@ export default function Public({ project, company, code }) {
                         ].map((s, i) => (
                             <div key={i} className="bg-white rounded-xl border border-[#e5e7eb] p-4 shadow-sm">
                                 <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center ${s.ic} mb-2`}>{s.icon}</div>
-                                <div className="text-[10px] uppercase tracking-wide text-[#9ca3af] font-medium">{s.label}</div>
+                                <div className="text-[10px] uppercase tracking-wide text-[#6b7280] font-medium">{s.label}</div>
                                 <div className="text-[15px] font-bold text-black mt-0.5">{s.value}</div>
                             </div>
                         ))}
@@ -207,7 +207,7 @@ export default function Public({ project, company, code }) {
                                         <div key={i} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border transition-all ${isDone ? 'bg-emerald-50 border-emerald-200' : 'bg-[#fafbfc] border-[#e5e7eb]'}`}>
                                             {isDone
                                                 ? <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
-                                                : <Circle size={16} className="text-[#d1d5db] flex-shrink-0" />
+                                                : <Circle size={16} className="text-[#6b7280] flex-shrink-0" />
                                             }
                                             <span className={`text-[13px] ${isDone ? 'text-emerald-700' : 'text-black'}`}>{d}</span>
                                         </div>
@@ -235,7 +235,7 @@ export default function Public({ project, company, code }) {
                                         <h2 className="text-[18px] font-bold text-black">Work Progress</h2>
                                         <div className="text-right">
                                             <span className="text-[22px] font-extrabold text-[#4f6df5]">{totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0}%</span>
-                                            <div className="text-[11px] text-[#9ca3af]">{completedTasks} of {totalTasks} tasks</div>
+                                            <div className="text-[11px] text-[#6b7280]">{completedTasks} of {totalTasks} tasks</div>
                                         </div>
                                     </div>
                                     <div className="h-3 bg-[#f0f0f0] rounded-full overflow-hidden">
@@ -266,18 +266,18 @@ export default function Public({ project, company, code }) {
                                                     <div className="flex items-start justify-between">
                                                         <div>
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                {collapsed ? <ChevronRight size={14} className="text-[#9ca3af]" /> : <ChevronDown size={14} className="text-[#9ca3af]" />}
-                                                                <span className="text-[10px] font-bold uppercase tracking-wider text-[#9ca3af]">Phase {idx+1}</span>
-                                                                {info.duration && <span className="text-[10px] text-[#9ca3af]">· {info.duration}</span>}
+                                                                {collapsed ? <ChevronRight size={14} className="text-[#6b7280]" /> : <ChevronDown size={14} className="text-[#6b7280]" />}
+                                                                <span className="text-[10px] font-bold uppercase tracking-wider text-[#6b7280]">Phase {idx+1}</span>
+                                                                {info.duration && <span className="text-[10px] text-[#6b7280]">· {info.duration}</span>}
                                                                 {isAllDone && <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">Complete</span>}
-                                                                {isActive && !isAllDone && <span className="text-[10px] bg-[#f3f4f6] text-[#6b7280] border border-[#e5e7eb] px-2 py-0.5 rounded-full font-medium">In Progress</span>}
+                                                                {isActive && !isAllDone && <span className="text-[10px] bg-[#f3f4f6] text-[#4b5563] border border-[#e5e7eb] px-2 py-0.5 rounded-full font-medium">In Progress</span>}
                                                             </div>
                                                             <div className="text-[16px] font-bold text-black">{cat.replace(/^Phase \d+ — /,'')}</div>
-                                                            {dateRange && <div className="text-[12px] text-[#9ca3af] mt-0.5">{dateRange}</div>}
+                                                            {dateRange && <div className="text-[12px] text-[#6b7280] mt-0.5">{dateRange}</div>}
                                                         </div>
                                                         <div className="text-right">
                                                             <div className={`text-[24px] font-extrabold ${isAllDone ? 'text-emerald-600' : 'text-black'}`}>{pct}%</div>
-                                                            <div className="text-[11px] text-[#9ca3af]">{done}/{catTasks.length}</div>
+                                                            <div className="text-[11px] text-[#6b7280]">{done}/{catTasks.length}</div>
                                                         </div>
                                                     </div>
                                                     <div className="h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden mt-3">
@@ -285,12 +285,12 @@ export default function Public({ project, company, code }) {
                                                     </div>
                                                 </div>
                                                 {!collapsed && (<>
-                                                {info.note && <div className="px-6 py-2.5 bg-[#fafbfc] border-b border-[#f0f0f0] text-[12px] text-[#6b7280] italic">{info.note}</div>}
+                                                {info.note && <div className="px-6 py-2.5 bg-[#fafbfc] border-b border-[#f0f0f0] text-[12px] text-[#4b5563] italic">{info.note}</div>}
                                                 {info.scope && (
                                                     <div className="px-6 py-3 border-b border-[#f0f0f0]">
-                                                        <div className="text-[10px] uppercase tracking-wider text-[#9ca3af] font-medium mb-2">Scope</div>
+                                                        <div className="text-[10px] uppercase tracking-wider text-[#6b7280] font-medium mb-2">Scope</div>
                                                         <div className="flex flex-wrap gap-1.5">
-                                                            {info.scope.map((s,i) => <span key={i} className="text-[11px] px-2 py-0.5 bg-[#f3f4f6] border border-[#e5e7eb] rounded-full text-[#4b5563]">{s}</span>)}
+                                                            {info.scope.map((s,i) => <span key={i} className="text-[11px] px-2 py-0.5 bg-[#f3f4f6] border border-[#e5e7eb] rounded-full text-[#374151]">{s}</span>)}
                                                         </div>
                                                     </div>
                                                 )}
@@ -304,19 +304,19 @@ export default function Public({ project, company, code }) {
                                                                         ? <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
                                                                         : t.status === 'in-progress'
                                                                             ? <div className="w-4 h-4 rounded-full border-2 border-[#4f6df5] flex items-center justify-center flex-shrink-0"><div className="w-2 h-2 rounded-full bg-[#4f6df5]" /></div>
-                                                                            : <Circle size={16} className="text-[#d1d5db] flex-shrink-0" />
+                                                                            : <Circle size={16} className="text-[#6b7280] flex-shrink-0" />
                                                                     }
                                                                     <span className={`text-[13px] flex-1 ${t.status === 'completed' ? 'text-emerald-600' : 'text-black'}`}>{t.title}</span>
-                                                                    {t.due_date && <span className="text-[11px] text-[#9ca3af]">{new Date(t.due_date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>}
+                                                                    {t.due_date && <span className="text-[11px] text-[#6b7280]">{new Date(t.due_date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>}
                                                                     <Badge status={t.status} label={t.status==='completed'?'Done':t.status==='in-progress'?'In Progress':t.status==='review'?'Review':t.status==='pending-approval'?'Pending Approval':'To Do'} />
                                                                 </div>
                                                                 {docs.length > 0 && (
                                                                     <div className="ml-7 mt-1.5 flex flex-wrap gap-2">
                                                                         {docs.map(doc => (
                                                                             <div key={doc.id} className="inline-flex items-center gap-2 bg-[#f3f4f6] border border-[#e5e7eb] rounded-lg px-2.5 py-1.5">
-                                                                                <span className="text-[11px] font-medium text-[#4b5563] truncate max-w-[150px]">{doc.name}</span>
-                                                                                <button onClick={() => setPreviewDoc(doc)} className="text-[#6b7280] hover:text-[#4f6df5] transition-colors"><Eye size={12} /></button>
-                                                                                <a href={`/documents/${doc.id}/download`} className="text-[#6b7280] hover:text-black transition-colors"><Download size={12} /></a>
+                                                                                <span className="text-[11px] font-medium text-[#374151] truncate max-w-[150px]">{doc.name}</span>
+                                                                                <button onClick={() => setPreviewDoc(doc)} className="text-[#4b5563] hover:text-[#4f6df5] transition-colors"><Eye size={12} /></button>
+                                                                                <a href={`/documents/${doc.id}/download`} className="text-[#4b5563] hover:text-black transition-colors"><Download size={12} /></a>
                                                                             </div>
                                                                         ))}
                                                                     </div>
@@ -348,17 +348,17 @@ export default function Public({ project, company, code }) {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="text-[13px] font-medium text-black truncate">{doc.name}</div>
-                                            <div className="text-[11.5px] text-[#6b7280]">
+                                            <div className="text-[11.5px] text-[#4b5563]">
                                                 {doc.uploader?.name ?? 'Team'} · {fmtDate(doc.created_at)} {doc.file_size ? `· ${doc.file_size}` : ''}
                                             </div>
                                         </div>
                                         {doc.file_path && (
-                                            <button onClick={() => setPreviewDoc(doc)} className="inline-flex items-center gap-1.5 text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
+                                            <button onClick={() => setPreviewDoc(doc)} className="inline-flex items-center gap-1.5 text-[12px] text-[#4b5563] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
                                                 <Eye size={13} /> View
                                             </button>
                                         )}
                                         {doc.file_path && (
-                                            <a href={`/documents/${doc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
+                                            <a href={`/documents/${doc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-[#4b5563] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
                                                 <Download size={13} /> Download
                                             </a>
                                         )}
@@ -400,21 +400,21 @@ export default function Public({ project, company, code }) {
                                     <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb]">
                                         <div>
                                             <div className="text-[15px] font-bold text-black">{previewDoc.name}</div>
-                                            <div className="text-[12px] text-[#6b7280]">{previewDoc.type} {previewDoc.file_size ? `· ${previewDoc.file_size}` : ''}</div>
+                                            <div className="text-[12px] text-[#4b5563]">{previewDoc.type} {previewDoc.file_size ? `· ${previewDoc.file_size}` : ''}</div>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            {canPreview && <button onClick={() => setFullscreen(true)} className="p-1.5 rounded-lg text-[#6b7280] hover:text-black hover:bg-gray-100" title="Fullscreen"><Maximize2 size={16} /></button>}
-                                            <a href={`/documents/${previewDoc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-[#6b7280] hover:text-black px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
+                                            {canPreview && <button onClick={() => setFullscreen(true)} className="p-1.5 rounded-lg text-[#4b5563] hover:text-black hover:bg-gray-100" title="Fullscreen"><Maximize2 size={16} /></button>}
+                                            <a href={`/documents/${previewDoc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-[#4b5563] hover:text-black px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100">
                                                 <Download size={13} /> Download
                                             </a>
-                                            <button onClick={() => setPreviewDoc(null)} className="p-1.5 rounded-lg text-[#6b7280] hover:text-black hover:bg-gray-100"><X size={16} /></button>
+                                            <button onClick={() => setPreviewDoc(null)} className="p-1.5 rounded-lg text-[#4b5563] hover:text-black hover:bg-gray-100"><X size={16} /></button>
                                         </div>
                                     </div>
                                     <div className="flex-1 overflow-auto p-6">
                                         {canPreview ? (
                                             isImg ? <img src={previewUrl} alt={previewDoc.name} className="max-w-full mx-auto rounded-lg" /> : <iframe src={previewUrl} className="w-full rounded-lg" style={{ height: '70vh' }} title={previewDoc.name} />
                                         ) : (
-                                            <div className="text-center py-16 text-[#6b7280]">
+                                            <div className="text-center py-16 text-[#4b5563]">
                                                 <div className="text-3xl mb-3">📄</div>
                                                 <div className="text-[14px] font-medium text-black mb-1">Preview not available</div>
                                                 <div className="text-[13px]">This file type cannot be previewed. Download it to view.</div>
@@ -439,13 +439,13 @@ export default function Public({ project, company, code }) {
                                         </div>
                                         <div>
                                             <div className="text-[15px] font-semibold text-black mb-1">{m.title}</div>
-                                            <div className="flex items-center gap-3 text-[12px] text-[#6b7280]">
+                                            <div className="flex items-center gap-3 text-[12px] text-[#4b5563]">
                                                 {m.time && <span className="flex items-center gap-1"><Clock size={12} /> {m.time}</span>}
                                                 {m.duration && <span>{m.duration}</span>}
                                                 {m.location && <span className="flex items-center gap-1"><MapPin size={12} /> {m.location}</span>}
                                             </div>
                                             {m.attendees && m.attendees.length > 0 && (
-                                                <div className="flex items-center gap-1 mt-2 text-[11px] text-[#9ca3af]">
+                                                <div className="flex items-center gap-1 mt-2 text-[11px] text-[#6b7280]">
                                                     <Users size={12} /> {m.attendees.join(', ')}
                                                 </div>
                                             )}
@@ -458,7 +458,7 @@ export default function Public({ project, company, code }) {
 
                     {/* Footer */}
                     <div className="text-center pt-8 pb-4 border-t border-[#e5e7eb]/50">
-                        <div className="text-[12px] text-[#9ca3af]">
+                        <div className="text-[12px] text-[#6b7280]">
                             {company?.name && <span>{company.name}</span>}
                             {company?.website && <span> · {company.website}</span>}
                         </div>

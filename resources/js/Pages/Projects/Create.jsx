@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import currencies from '@/Utils/currencies';
+import Select from '@/Components/ui/Select';
 import { Save, X, Plus, Info } from 'lucide-react';
 
-const inputCls = 'w-full bg-[#f3f4f6] border border-[#d1d5db] rounded-lg px-3.5 py-2.5 text-[13px] text-black outline-none focus:border-[#4f6df5] transition-colors';
+const inputCls = 'w-full bg-white border border-[#e5e7eb] rounded-lg px-3.5 py-2.5 text-[13px] text-black placeholder:text-[#9ca3af] shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none transition-all duration-150 hover:border-[#d1d5db] focus:border-[#4f6df5] focus:ring-[3px] focus:ring-[#4f6df5]/12';
 
 export default function Create({ clients = [] }) {
     const page = usePage();
@@ -47,7 +48,7 @@ export default function Create({ clients = [] }) {
 
     const field = (label, key, type = 'text', placeholder = '', half = false) => (
         <div className={half ? '' : 'col-span-2'}>
-            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">{label}</label>
+            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-2">{label}</label>
             <input
                 type={type}
                 value={data[key]}
@@ -76,20 +77,17 @@ export default function Create({ clients = [] }) {
 
                         {/* Client Selection */}
                         <div className="col-span-2">
-                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">Client / Company *</label>
-                            <select
+                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-2">Client / Company *</label>
+                            <Select
                                 value={isNewClient ? '__new__' : data.client_id}
-                                onChange={e => handleClientSelect(e.target.value)}
-                                className={inputCls}
-                            >
-                                <option value="">Select a client...</option>
-                                {resolvedClients.map(c => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.name}{c.type === 'vendor' ? ' (Vendor)' : ''}
-                                    </option>
-                                ))}
-                                <option value="__new__">＋ Create new client</option>
-                            </select>
+                                onChange={v => handleClientSelect(v)}
+                                placeholder="Select a client..."
+                                clearable
+                                options={[
+                                    ...resolvedClients.map(c => ({ value: c.id, label: `${c.name}${c.type === 'vendor' ? ' (Vendor)' : ''}` })),
+                                    { value: '__new__', label: '＋ Create new client' },
+                                ]}
+                            />
                             {errors.client_id && <p className="text-red-400 text-[12px] mt-1">{errors.client_id}</p>}
                             {errors.new_client_name && !isNewClient && <p className="text-red-400 text-[12px] mt-1">Please select or create a client</p>}
                         </div>
@@ -105,13 +103,13 @@ export default function Create({ clients = [] }) {
                                     <button
                                         type="button"
                                         onClick={() => { setIsNewClient(false); setData(prev => ({ ...prev, client_id: '', new_client_name: '' })); }}
-                                        className="text-[11px] text-[#6b7280] hover:text-black transition-colors"
+                                        className="text-[11px] text-[#4b5563] hover:text-black transition-colors"
                                     >
                                         Cancel
                                     </button>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">Company Name *</label>
+                                    <label className="block text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-2">Company Name *</label>
                                     <input
                                         type="text"
                                         value={data.new_client_name}
@@ -130,68 +128,62 @@ export default function Create({ clients = [] }) {
 
                         {/* Contact fields */}
                         <div className="col-span-2">
-                            <div className="text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-3 flex items-center gap-3">
+                            <div className="text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-3 flex items-center gap-3">
                                 Contact Person <span className="flex-1 h-px bg-[#e5e7eb]" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">Contact Name</label>
+                                    <label className="block text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-2">Contact Name</label>
                                     <input type="text" value={data.contact_name} onChange={e => setData('contact_name', e.target.value)} placeholder="Full name" className={inputCls} />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">Contact Email</label>
+                                    <label className="block text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-2">Contact Email</label>
                                     <input type="email" value={data.contact_email} onChange={e => setData('contact_email', e.target.value)} placeholder="email@company.com" className={inputCls} />
                                     {errors.contact_email && <p className="text-red-400 text-[12px] mt-1">{errors.contact_email}</p>}
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">Contact Phone</label>
+                                    <label className="block text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-2">Contact Phone</label>
                                     <input type="text" value={data.contact_phone} onChange={e => setData('contact_phone', e.target.value)} placeholder="+1 (___) ___-____" className={inputCls} />
                                 </div>
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">Status</label>
-                            <select
+                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-2">Status</label>
+                            <Select
                                 value={data.status}
-                                onChange={e => setData('status', e.target.value)}
-                                className={inputCls}
-                            >
-                                <option value="active">Active</option>
-                                <option value="on-hold">On Hold</option>
-                                <option value="completed">Completed</option>
-                            </select>
+                                onChange={v => setData('status', v)}
+                                options={[
+                                    { value: 'active', label: 'Active' },
+                                    { value: 'on-hold', label: 'On Hold' },
+                                    { value: 'completed', label: 'Completed' },
+                                ]}
+                            />
                         </div>
 
                         {/* Project Lead */}
                         <div>
-                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">Project Lead</label>
-                            <select
+                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-2">Project Lead</label>
+                            <Select
                                 value={data.lead_id}
-                                onChange={e => setData('lead_id', e.target.value)}
-                                className={inputCls}
-                            >
-                                <option value="">No lead assigned</option>
-                                {teamMembers.map(m => (
-                                    <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>
-                                ))}
-                            </select>
+                                onChange={v => setData('lead_id', v)}
+                                placeholder="No lead assigned"
+                                clearable
+                                options={teamMembers.map(m => ({ value: m.id, label: `${m.name}${m.role ? ` — ${m.role}` : ''}` }))}
+                            />
                             {errors.lead_id && <p className="text-red-400 text-[12px] mt-1">{errors.lead_id}</p>}
                         </div>
 
                         {/* Budget + Currency */}
                         <div>
-                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">Budget</label>
+                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-2">Budget</label>
                             <div className="flex gap-2">
-                                <select
+                                <Select
                                     value={data.currency}
-                                    onChange={e => setData('currency', e.target.value)}
-                                    className={`${inputCls} w-[140px] flex-shrink-0`}
-                                >
-                                    {currencies.map(c => (
-                                        <option key={c.code} value={c.code}>{c.country} ({c.symbol})</option>
-                                    ))}
-                                </select>
+                                    onChange={v => setData('currency', v)}
+                                    className="w-[140px] flex-shrink-0"
+                                    options={currencies.map(c => ({ value: c.code, label: `${c.country} (${c.symbol})` }))}
+                                />
                                 <input
                                     type="number"
                                     value={data.budget}
@@ -204,23 +196,23 @@ export default function Create({ clients = [] }) {
                         </div>
                         {/* Phase */}
                         <div>
-                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">Phase</label>
-                            <select
+                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-2">Phase</label>
+                            <Select
                                 value={data.phase}
-                                onChange={e => setData('phase', e.target.value)}
-                                className={inputCls}
-                            >
-                                <option value="Discovery">Discovery</option>
-                                <option value="Planning">Planning</option>
-                                <option value="Design">Design</option>
-                                <option value="Development">Development</option>
-                                <option value="Testing / QA">Testing / QA</option>
-                                <option value="Staging">Staging</option>
-                                <option value="Deployment">Deployment</option>
-                                <option value="Launch">Launch</option>
-                                <option value="Maintenance">Maintenance</option>
-                                <option value="Support">Support</option>
-                            </select>
+                                onChange={v => setData('phase', v)}
+                                options={[
+                                    { value: 'Discovery', label: 'Discovery' },
+                                    { value: 'Planning', label: 'Planning' },
+                                    { value: 'Design', label: 'Design' },
+                                    { value: 'Development', label: 'Development' },
+                                    { value: 'Testing / QA', label: 'Testing / QA' },
+                                    { value: 'Staging', label: 'Staging' },
+                                    { value: 'Deployment', label: 'Deployment' },
+                                    { value: 'Launch', label: 'Launch' },
+                                    { value: 'Maintenance', label: 'Maintenance' },
+                                    { value: 'Support', label: 'Support' },
+                                ]}
+                            />
                         </div>
                         {field('Start Date', 'start_date', 'date', '', true)}
                         {field('End Date', 'end_date', 'date', '', true)}
@@ -228,21 +220,26 @@ export default function Create({ clients = [] }) {
 
                         {/* Tax */}
                         <div>
-                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">Tax Type</label>
-                            <select value={data.tax_type} onChange={e => setData('tax_type', e.target.value)} className={inputCls}>
-                                <option value="">No Tax</option>
-                                <option value="vat">VAT</option>
-                                <option value="gst">GST</option>
-                                <option value="sales_tax">Sales Tax</option>
-                                <option value="withholding">Withholding Tax</option>
-                                <option value="consumption">Consumption Tax (Japan)</option>
-                                <option value="custom">Custom</option>
-                            </select>
+                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-2">Tax Type</label>
+                            <Select
+                                value={data.tax_type}
+                                onChange={v => setData('tax_type', v)}
+                                placeholder="No Tax"
+                                clearable
+                                options={[
+                                    { value: 'vat', label: 'VAT' },
+                                    { value: 'gst', label: 'GST' },
+                                    { value: 'sales_tax', label: 'Sales Tax' },
+                                    { value: 'withholding', label: 'Withholding Tax' },
+                                    { value: 'consumption', label: 'Consumption Tax (Japan)' },
+                                    { value: 'custom', label: 'Custom' },
+                                ]}
+                            />
                         </div>
                         {field('Tax Rate (%)', 'tax_rate', 'number', '0', true)}
 
                         <div className="col-span-2">
-                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">Description</label>
+                            <label className="block text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium mb-2">Description</label>
                             <textarea
                                 value={data.description}
                                 onChange={e => setData('description', e.target.value)}
@@ -256,7 +253,7 @@ export default function Create({ clients = [] }) {
                     </div>
 
                     <div className="flex justify-end gap-3 pt-2 border-t border-[#e5e7eb]">
-                        <Link href={route('projects.index')} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[13px] text-[#4b5563] border border-[#d1d5db] hover:bg-gray-100 transition-colors">
+                        <Link href={route('projects.index')} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[13px] text-[#374151] border border-[#d1d5db] hover:bg-gray-100 transition-colors">
                             <X size={14} /> Cancel
                         </Link>
                         <button

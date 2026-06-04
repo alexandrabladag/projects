@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users, Tag, ListTodo, Menu, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users, Tag, ListTodo, ReceiptText, Menu, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 // ── Reusable Badge ─────────────────────────────────────────────────────────────
 export function Badge({ status, label }) {
@@ -8,19 +8,19 @@ export function Badge({ status, label }) {
         active:       'bg-emerald-50 text-emerald-600 border border-emerald-200',
         completed:    'bg-blue-50 text-blue-600 border border-blue-200',
         'on-hold':    'bg-amber-50 text-amber-600 border border-amber-200',
-        draft:        'bg-gray-50 text-gray-500 border border-gray-200',
+        draft:        'bg-gray-50 text-gray-700 border border-gray-200',
         sent:         'bg-indigo-50 text-indigo-600 border border-indigo-200',
         approved:     'bg-emerald-50 text-emerald-600 border border-emerald-200',
         rejected:     'bg-red-50 text-red-600 border border-red-200',
         paid:         'bg-emerald-50 text-emerald-600 border border-emerald-200',
         overdue:      'bg-red-50 text-red-600 border border-red-200',
         scheduled:    'bg-sky-50 text-sky-600 border border-sky-200',
-        cancelled:    'bg-gray-50 text-gray-500 border border-gray-200',
+        cancelled:    'bg-gray-50 text-gray-700 border border-gray-200',
         high:         'bg-red-50 text-red-600 border border-red-200',
         medium:       'bg-amber-50 text-amber-600 border border-amber-200',
         low:          'bg-emerald-50 text-emerald-600 border border-emerald-200',
         'in-progress':'bg-indigo-50 text-indigo-600 border border-indigo-200',
-        'not-started':'bg-gray-50 text-gray-500 border border-gray-200',
+        'not-started':'bg-gray-50 text-gray-700 border border-gray-200',
         review:       'bg-violet-50 text-violet-600 border border-violet-200',
         'pending-approval':'bg-amber-50 text-amber-600 border border-amber-200',
         client:       'bg-blue-50 text-blue-600 border border-blue-200',
@@ -28,7 +28,7 @@ export function Badge({ status, label }) {
         contractor:   'bg-amber-50 text-amber-600 border border-amber-200',
     };
     return (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium capitalize ${map[status] ?? 'bg-gray-50 text-gray-500 border border-gray-200'}`}>
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium capitalize ${map[status] ?? 'bg-gray-50 text-gray-700 border border-gray-200'}`}>
             {label ?? status}
         </span>
     );
@@ -42,6 +42,7 @@ function Sidebar({ projects, workspace, user, open, onClose, collapsed, onToggle
         dashboard: <LayoutDashboard size={18} strokeWidth={1.75} />,
         mytasks:   <ListTodo size={18} strokeWidth={1.75} />,
         projects:  <FolderKanban size={18} strokeWidth={1.75} />,
+        billing:   <ReceiptText size={18} strokeWidth={1.75} />,
         clients:   <Building2 size={18} strokeWidth={1.75} />,
         profile:   <UserCircle size={18} strokeWidth={1.75} />,
         team:      <Users size={18} strokeWidth={1.75} />,
@@ -111,6 +112,7 @@ function Sidebar({ projects, workspace, user, open, onClose, collapsed, onToggle
                 {navItem(route('dashboard'), 'dashboard', 'Dashboard')}
                 {navItem(route('my-tasks'), 'mytasks', 'My Tasks')}
                 {navItem(route('projects.index'), 'projects', 'All Projects')}
+                {navItem(route('billing.index'), 'billing', 'Billing')}
                 {navItem(route('clients.index'), 'clients', 'Directory')}
 
                 <div className={`text-[9px] tracking-[2px] text-[#94a3b8] uppercase px-3 py-2 mt-2 ${hideOnCollapse}`}>
@@ -253,7 +255,7 @@ export default function AppLayout({ children, title, breadcrumbs = [] }) {
                 {/* Topbar */}
                 <header className="sticky top-0 z-10 bg-[#f8f8f8] border-b border-[#e5e7eb] px-4 md:px-8 py-3 md:py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <button onClick={() => setSidebarOpen(true)} className="md:hidden p-1.5 -ml-1.5 rounded-lg text-[#6b7280] hover:text-black hover:bg-gray-100 transition-colors">
+                        <button onClick={() => setSidebarOpen(true)} className="md:hidden p-1.5 -ml-1.5 rounded-lg text-[#4b5563] hover:text-black hover:bg-gray-100 transition-colors">
                             <Menu size={20} />
                         </button>
                         <div>
@@ -261,7 +263,7 @@ export default function AppLayout({ children, title, breadcrumbs = [] }) {
                                 <h1 className="font-serif text-xl md:text-2xl font-semibold text-black">{title}</h1>
                             )}
                             {breadcrumbs.length > 0 && (
-                                <nav className="flex items-center gap-1.5 text-[11.5px] text-[#6b7280] mt-0.5">
+                                <nav className="flex items-center gap-1.5 text-[11.5px] text-[#4b5563] mt-0.5">
                                     {breadcrumbs.map((bc, i) => (
                                         <span key={i} className="flex items-center gap-1.5">
                                             {bc.href

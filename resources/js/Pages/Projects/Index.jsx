@@ -39,7 +39,7 @@ export default function Index({ projects, canManage }) {
                                 key={s.key}
                                 onClick={() => setFilter(s.key)}
                                 className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all ${
-                                    filter === s.key ? 'bg-white text-black shadow-sm' : 'text-[#6b7280] hover:text-black'
+                                    filter === s.key ? 'bg-white text-black shadow-sm' : 'text-[#4b5563] hover:text-black'
                                 }`}
                             >
                                 {s.label} <span className="text-[10px] opacity-50 ml-0.5">{counts[s.key]}</span>
@@ -48,7 +48,7 @@ export default function Index({ projects, canManage }) {
                     </div>
 
                     <div className="relative">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]" />
                         <input
                             type="text" value={search} onChange={e => setSearch(e.target.value)}
                             placeholder="Search projects..."
@@ -60,8 +60,8 @@ export default function Index({ projects, canManage }) {
                 <div className="flex items-center gap-2">
                     {/* View toggle */}
                     <div className="flex bg-[#f3f4f6] rounded-lg p-0.5">
-                        <button onClick={() => setView('list')} className={`p-1.5 rounded-md transition-all ${view === 'list' ? 'bg-white text-black shadow-sm' : 'text-[#9ca3af]'}`}><List size={15} /></button>
-                        <button onClick={() => setView('grid')} className={`p-1.5 rounded-md transition-all ${view === 'grid' ? 'bg-white text-black shadow-sm' : 'text-[#9ca3af]'}`}><LayoutGrid size={15} /></button>
+                        <button onClick={() => setView('list')} className={`p-1.5 rounded-md transition-all ${view === 'list' ? 'bg-white text-black shadow-sm' : 'text-[#6b7280]'}`}><List size={15} /></button>
+                        <button onClick={() => setView('grid')} className={`p-1.5 rounded-md transition-all ${view === 'grid' ? 'bg-white text-black shadow-sm' : 'text-[#6b7280]'}`}><LayoutGrid size={15} /></button>
                     </div>
 
                     {canManage && (
@@ -77,7 +77,7 @@ export default function Index({ projects, canManage }) {
                 <div className="text-center py-20">
                     <div className="mb-4 flex justify-center"><div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center"><FolderKanban size={28} className="text-indigo-400" /></div></div>
                     <div className="text-[16px] font-semibold text-black mb-1">{search ? 'No matches' : 'No projects yet'}</div>
-                    <div className="text-[13px] text-[#6b7280] mb-5">{search ? 'Try a different search term' : 'Create your first project to get started'}</div>
+                    <div className="text-[13px] text-[#4b5563] mb-5">{search ? 'Try a different search term' : 'Create your first project to get started'}</div>
                     {canManage && !search && (
                         <Link href={route('projects.create')} className="inline-flex items-center gap-1.5 bg-[#4f6df5] text-white font-medium rounded-lg px-4 py-2 text-[13px]"><Plus size={15} /> Create Project</Link>
                     )}
@@ -91,7 +91,7 @@ export default function Index({ projects, canManage }) {
                         <thead>
                             <tr className="border-b border-[#e5e7eb] bg-[#fafbfc]">
                                 {['Project', 'Client', 'Status', 'Phase', 'Progress', 'Budget', 'Due Date', ''].map(h => (
-                                    <th key={h} className="text-left text-[10px] tracking-[1.5px] uppercase text-[#9ca3af] font-medium px-4 py-3">{h}</th>
+                                    <th key={h} className="text-left text-[10px] tracking-[1.5px] uppercase text-[#6b7280] font-medium px-4 py-3">{h}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -112,11 +112,11 @@ export default function Index({ projects, canManage }) {
                                                     {(p.tags ?? []).slice(0, 2).map(t => (
                                                         <span key={t} className="text-[9px] px-1.5 py-0.5 bg-indigo-50 border border-indigo-100 rounded text-indigo-500 font-medium">{t}</span>
                                                     ))}
-                                                    {(p.tags ?? []).length > 2 && <span className="text-[9px] text-[#9ca3af]">+{p.tags.length - 2}</span>}
+                                                    {(p.tags ?? []).length > 2 && <span className="text-[9px] text-[#6b7280]">+{p.tags.length - 2}</span>}
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="px-4 py-3.5 text-[12px] text-[#6b7280]">{p.client}</td>
+                                        <td className="px-4 py-3.5 text-[12px] text-[#4b5563]">{p.client}</td>
                                         <td className="px-4 py-3.5"><Badge status={p.status} /></td>
                                         <td className="px-4 py-3.5">
                                             <span className="text-[11px] px-2 py-0.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-500 font-medium">{p.phase}</span>
@@ -132,20 +132,20 @@ export default function Index({ projects, canManage }) {
                                         <td className="px-4 py-3.5 text-[12px]">
                                             {p.budget > 0 ? (
                                                 <span>
-                                                    <span className="text-[#6b7280]">{formatMoney(p.spent, p.currency)}</span>
-                                                    <span className="text-[#d1d5db]"> / </span>
+                                                    <span className="text-[#4b5563]">{formatMoney(p.spent, p.currency)}</span>
+                                                    <span className="text-[#6b7280]"> / </span>
                                                     <span className="font-medium text-black">{formatMoney(p.budget, p.currency)}</span>
                                                 </span>
-                                            ) : <span className="text-[#d1d5db]">—</span>}
+                                            ) : <span className="text-[#6b7280]">—</span>}
                                         </td>
-                                        <td className="px-4 py-3.5 text-[12px] text-[#6b7280]">
+                                        <td className="px-4 py-3.5 text-[12px] text-[#4b5563]">
                                             <div className="flex items-center gap-1">
                                                 <Calendar size={12} />
                                                 {fmtDate(p.end_date)}
                                             </div>
                                         </td>
                                         <td className="px-4 py-3.5">
-                                            <Link href={route('projects.show', p.id)} className="text-[#d1d5db] group-hover:text-[#4f6df5] transition-colors">
+                                            <Link href={route('projects.show', p.id)} className="text-[#6b7280] group-hover:text-[#4f6df5] transition-colors">
                                                 <ArrowRight size={16} />
                                             </Link>
                                         </td>
@@ -175,7 +175,7 @@ export default function Index({ projects, canManage }) {
                                     <div className="flex justify-between items-start mb-3">
                                         <div className="flex-1 min-w-0">
                                             <div className="text-[15px] font-bold text-black leading-snug mb-0.5 group-hover:text-[#4f6df5] transition-colors truncate">{p.name}</div>
-                                            <div className="text-[12px] text-[#6b7280]">{p.client}</div>
+                                            <div className="text-[12px] text-[#4b5563]">{p.client}</div>
                                         </div>
                                         <Badge status={p.status} />
                                     </div>
@@ -190,7 +190,7 @@ export default function Index({ projects, canManage }) {
 
                                     <div className="mb-3">
                                         <div className="flex justify-between items-center mb-1.5">
-                                            <span className="text-[11px] text-[#6b7280]">{p.phase}</span>
+                                            <span className="text-[11px] text-[#4b5563]">{p.phase}</span>
                                             <span className="text-[12px] font-semibold text-black">{p.progress}%</span>
                                         </div>
                                         <div className="h-1.5 bg-[#f0f0f0] rounded-full overflow-hidden">
@@ -199,11 +199,11 @@ export default function Index({ projects, canManage }) {
                                     </div>
 
                                     <div className="flex items-center justify-between pt-3 border-t border-[#f0f0f0]">
-                                        <div className="flex items-center gap-1 text-[11px] text-[#6b7280]"><Calendar size={12} /> {fmtDate(p.end_date)}</div>
+                                        <div className="flex items-center gap-1 text-[11px] text-[#4b5563]"><Calendar size={12} /> {fmtDate(p.end_date)}</div>
                                         {p.budget > 0 && (
-                                            <div className="text-[11px]"><span className="text-[#6b7280]">{formatMoney(p.spent, p.currency)}</span><span className="text-[#d1d5db] mx-1">/</span><span className="font-medium text-black">{formatMoney(p.budget, p.currency)}</span></div>
+                                            <div className="text-[11px]"><span className="text-[#4b5563]">{formatMoney(p.spent, p.currency)}</span><span className="text-[#6b7280] mx-1">/</span><span className="font-medium text-black">{formatMoney(p.budget, p.currency)}</span></div>
                                         )}
-                                        <ArrowRight size={14} className="text-[#d1d5db] group-hover:text-[#4f6df5] transition-colors" />
+                                        <ArrowRight size={14} className="text-[#6b7280] group-hover:text-[#4f6df5] transition-colors" />
                                     </div>
                                 </div>
                             </Link>

@@ -12,6 +12,11 @@ class ProposalController extends Controller
 {
     public function show(Proposal $proposal)
     {
+        // Resolve the parent through the workspace-scoped query (404s across
+        // workspaces), then authorize — prevents cross-tenant proposal access.
+        $project = Project::findOrFail($proposal->project_id);
+        $this->authorize('view', $project);
+
         $proposal->load(['project.clientRecord']);
 
         return Inertia::render('Proposals/View', [

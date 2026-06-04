@@ -41,6 +41,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/my-tasks', [\App\Http\Controllers\MyTasksController::class, 'index'])->name('my-tasks');
 
+    Route::get('/billing', [\App\Http\Controllers\BillingController::class, 'index'])->name('billing.index');
+
     Route::resource('projects', ProjectController::class);
     Route::resource('directory', ClientController::class)->parameters(['directory' => 'client'])->names('clients');
     Route::post('directory/{client}/contacts', [ContactController::class, 'store'])->name('clients.contacts.store');
@@ -110,6 +112,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('payroll/{payroll}',  [\App\Http\Controllers\ProjectPayrollController::class, 'destroy'])->name('payroll.destroy');
         Route::patch('bills/{bill}',         [\App\Http\Controllers\BillController::class, 'update'])->name('bills.update');
         Route::delete('bills/{bill}',        [\App\Http\Controllers\BillController::class, 'destroy'])->name('bills.destroy');
+
+        Route::post('time',                  [\App\Http\Controllers\TimeEntryController::class, 'store'])->name('time.store');
+        Route::put('time/{entry}',           [\App\Http\Controllers\TimeEntryController::class, 'update'])->name('time.update');
+        Route::delete('time/{entry}',        [\App\Http\Controllers\TimeEntryController::class, 'destroy'])->name('time.destroy');
 
         Route::post('tasks',                 [TaskController::class, 'store'])->name('tasks.store');
         Route::patch('tasks/reorder',        [TaskController::class, 'reorder'])->name('tasks.reorder');

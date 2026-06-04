@@ -1,6 +1,8 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import AppLayout, { Badge } from '@/Layouts/AppLayout';
+import { useConfirm } from '@/Components/ui/ConfirmDialog';
+import Select from '@/Components/ui/Select';
 import currencies from '@/Utils/currencies';
 import {
     Pencil, Eye, Plus, Save, X, Check, Send, ChevronUp, ChevronDown, ChevronRight, GripVertical,
@@ -40,9 +42,9 @@ function Modal({ title, subtitle, large, onClose, children, footer }) {
                 <div className="flex justify-between items-start p-4 md:p-6 pb-3 md:pb-4 flex-shrink-0">
                     <div>
                         <div className="font-serif text-[21px] font-semibold text-black">{title}</div>
-                        {subtitle && <div className="text-[12px] text-[#6b7280] mt-1">{subtitle}</div>}
+                        {subtitle && <div className="text-[12px] text-[#4b5563] mt-1">{subtitle}</div>}
                     </div>
-                    <button onClick={onClose} className="text-[#6b7280] hover:text-black text-[22px] leading-none transition-colors">×</button>
+                    <button onClick={onClose} className="text-[#4b5563] hover:text-black text-[22px] leading-none transition-colors">×</button>
                 </div>
                 <div className="px-4 md:px-6 pb-2 overflow-y-auto flex-1">{children}</div>
                 {footer && <div className="flex justify-end gap-2.5 p-4 md:p-6 pt-3 md:pt-4 flex-shrink-0">{footer}</div>}
@@ -52,14 +54,15 @@ function Modal({ title, subtitle, large, onClose, children, footer }) {
 }
 
 // ── Shared form field ─────────────────────────────────────────────────────────
-const FG = ({ label, error, children }) => (
+const FG = ({ label, error, hint, children }) => (
     <div>
-        {label && <label className="block text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-2">{label}</label>}
+        {label && <label className="block text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-semibold mb-1.5">{label}</label>}
         {children}
-        {error && <p className="text-red-400 text-[12px] mt-1">{error}</p>}
+        {hint && !error && <p className="text-[#6b7280] text-[11px] mt-1.5">{hint}</p>}
+        {error && <p className="text-red-500 text-[11px] font-medium mt-1.5 flex items-center gap-1"><AlertCircle size={12} className="flex-shrink-0" /> {error}</p>}
     </div>
 );
-const inputCls = 'w-full bg-[#f3f4f6] border border-[#d1d5db] rounded-lg px-3.5 py-2.5 text-[13px] text-black outline-none focus:border-[#4f6df5] transition-colors';
+const inputCls = 'w-full bg-white border border-[#e5e7eb] rounded-lg px-3.5 py-2.5 text-[13px] text-black placeholder:text-[#9ca3af] shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none transition-all duration-150 hover:border-[#d1d5db] focus:border-[#4f6df5] focus:ring-[3px] focus:ring-[#4f6df5]/12';
 const Btn = ({ children, primary, ghost, danger, sm, onClick, type = 'button', disabled }) => (
     <button
         type={type}
@@ -68,7 +71,7 @@ const Btn = ({ children, primary, ghost, danger, sm, onClick, type = 'button', d
         className={`inline-flex items-center gap-1.5 rounded-lg font-medium transition-all disabled:opacity-60 whitespace-nowrap
             ${sm ? 'px-3 py-1.5 text-[12px]' : 'px-4 py-2.5 text-[13px]'}
             ${primary ? 'bg-[#4f6df5] hover:bg-[#6380f7] text-white' : ''}
-            ${ghost  ? 'bg-transparent text-[#4b5563] border border-[#d1d5db] hover:bg-gray-100 hover:text-black' : ''}
+            ${ghost  ? 'bg-transparent text-[#374151] border border-[#d1d5db] hover:bg-gray-100 hover:text-black' : ''}
             ${danger ? 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/15' : ''}
         `}
     >{children}</button>
@@ -130,13 +133,13 @@ function OverviewTab({ project, canManage, fmt }) {
         <div className="bg-white border border-[#e5e7eb] rounded-xl p-4 md:p-5 hover:shadow-[0_2px_14px_rgba(17,24,39,0.05)] hover:border-[#d6dae0] transition-all">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-3.5" style={{ background: `${accent}14`, color: accent }}>{icon}</div>
             <div className="text-[24px] md:text-[27px] font-bold text-black leading-none tracking-tight">{value}</div>
-            <div className="text-[12px] text-[#6b7280] mt-1.5">{label}</div>
+            <div className="text-[12px] text-[#4b5563] mt-1.5">{label}</div>
             {bar !== undefined && bar !== null && (
                 <div className="h-1.5 bg-[#eef0f2] rounded-full overflow-hidden mt-3">
                     <div className="h-full rounded-full transition-all duration-500" style={{ width: `${bar}%`, background: barColor || accent }} />
                 </div>
             )}
-            {sub && <div className="text-[11px] text-[#9ca3af] mt-2 truncate">{sub}</div>}
+            {sub && <div className="text-[11px] text-[#6b7280] mt-2 truncate">{sub}</div>}
         </div>
     );
 
@@ -155,13 +158,13 @@ function OverviewTab({ project, canManage, fmt }) {
                             <Badge status={project.status} />
                         </div>
                         <h2 className="font-serif text-[24px] md:text-[30px] font-semibold text-black leading-tight break-words">{project.name}</h2>
-                        <p className="text-[13px] md:text-[14px] text-[#6b7280] mt-1.5">
+                        <p className="text-[13px] md:text-[14px] text-[#4b5563] mt-1.5">
                             {project.client} · {project.contact_name}
                             {project.lead && <span> · Lead: <span className="text-[#4f6df5] font-medium">{project.lead.name}</span></span>}
                         </p>
                         <div className="flex gap-2 flex-wrap mt-3">
                             <span className="text-[11px] px-2.5 py-0.5 bg-indigo-50 border border-indigo-200 rounded-full text-indigo-600 font-medium">{project.phase}</span>
-                            {(project.tags ?? []).map(t => <span key={t} className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 bg-[#f3f4f6] border border-[#e5e7eb] rounded-full text-[#6b7280] font-medium"><Tag size={9} />{t}</span>)}
+                            {(project.tags ?? []).map(t => <span key={t} className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 bg-[#f3f4f6] border border-[#e5e7eb] rounded-full text-[#4b5563] font-medium"><Tag size={9} />{t}</span>)}
                         </div>
                     </div>
                     {canManage && (
@@ -194,7 +197,7 @@ function OverviewTab({ project, canManage, fmt }) {
             <div className="bg-white border border-[#e5e7eb] rounded-xl p-5 mb-5">
                 <div className="flex items-center justify-between mb-4">
                     <span className="text-[14px] font-bold text-black flex items-center gap-2"><Flag size={14} className="text-[#4f6df5]" /> Project Lifecycle</span>
-                    <span className="text-[12px] text-[#6b7280]">{phaseIdx >= 0 ? `Stage ${phaseIdx + 1} of ${PROJECT_PHASES.length}` : project.phase}</span>
+                    <span className="text-[12px] text-[#4b5563]">{phaseIdx >= 0 ? `Stage ${phaseIdx + 1} of ${PROJECT_PHASES.length}` : project.phase}</span>
                 </div>
                 <div className="flex items-start overflow-x-auto pb-1 -mx-1 px-1">
                     {PROJECT_PHASES.map((p, i) => {
@@ -202,10 +205,10 @@ function OverviewTab({ project, canManage, fmt }) {
                         return (
                             <div key={p.name} className="flex flex-col items-center flex-1 min-w-[62px] relative">
                                 {i > 0 && <div className="absolute top-[11px] right-1/2 w-full h-0.5" style={{ background: (done || current) ? '#4f6df5' : '#e5e7eb' }} />}
-                                <div className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${done ? 'bg-[#4f6df5] text-white' : current ? 'bg-white text-[#4f6df5] ring-2 ring-[#4f6df5]' : 'bg-[#f3f4f6] text-[#9ca3af] ring-1 ring-[#e5e7eb]'}`}>
+                                <div className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${done ? 'bg-[#4f6df5] text-white' : current ? 'bg-white text-[#4f6df5] ring-2 ring-[#4f6df5]' : 'bg-[#f3f4f6] text-[#6b7280] ring-1 ring-[#e5e7eb]'}`}>
                                     {done ? <Check size={12} /> : i + 1}
                                 </div>
-                                <div className={`text-[10px] mt-2 text-center leading-tight px-0.5 ${current ? 'text-[#4f6df5] font-semibold' : done ? 'text-[#4b5563]' : 'text-[#9ca3af]'}`}>{p.name}</div>
+                                <div className={`text-[10px] mt-2 text-center leading-tight px-0.5 ${current ? 'text-[#4f6df5] font-semibold' : done ? 'text-[#374151]' : 'text-[#6b7280]'}`}>{p.name}</div>
                             </div>
                         );
                     })}
@@ -223,7 +226,7 @@ function OverviewTab({ project, canManage, fmt }) {
                     {/* Description */}
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                         <div className="px-5 py-3.5 border-b border-[#e5e7eb] flex items-center gap-2"><FileText size={14} className="text-[#4f6df5]" /><span className="text-[14px] font-bold">Project Description</span></div>
-                        <div className="px-5 py-4 text-[13.5px] text-[#4b5563] leading-relaxed">{project.description || '—'}</div>
+                        <div className="px-5 py-4 text-[13.5px] text-[#374151] leading-relaxed">{project.description || '—'}</div>
                     </div>
 
                     {/* Client Info */}
@@ -237,7 +240,7 @@ function OverviewTab({ project, canManage, fmt }) {
                                 { l: 'Company', v: project.client },
                             ].map(({ l, v, gold }) => (
                                 <div key={l}>
-                                    <div className="text-[10px] tracking-[1.5px] uppercase text-[#6b7280] mb-1">{l}</div>
+                                    <div className="text-[10px] tracking-[1.5px] uppercase text-[#4b5563] mb-1">{l}</div>
                                     <div className={`text-[13.5px] ${gold ? 'text-[#4f6df5]' : 'text-black'}`}>{v ?? '—'}</div>
                                 </div>
                             ))}
@@ -260,12 +263,12 @@ function OverviewTab({ project, canManage, fmt }) {
                                     { l: 'Bills Paid', v: fmt(project.total_bills_paid), green: true },
                                 ].map(({ l, v, serif, warn, green }) => (
                                     <div key={l}>
-                                        <div className="text-[10px] tracking-[1.5px] uppercase text-[#6b7280] mb-1">{l}</div>
+                                        <div className="text-[10px] tracking-[1.5px] uppercase text-[#4b5563] mb-1">{l}</div>
                                         <div className={`${serif ? 'font-serif text-[20px] font-semibold' : 'text-[14px]'} ${warn ? 'text-red-400' : green ? 'text-green-400' : 'text-black'}`}>{v}</div>
                                     </div>
                                 ))}
                             </div>
-                            <div className="text-[12px] text-[#6b7280] flex justify-between mb-1.5"><span>Budget utilization</span><span style={{ color: budgetColor || '#4b5563' }}>{budgetPct}%</span></div>
+                            <div className="text-[12px] text-[#4b5563] flex justify-between mb-1.5"><span>Budget utilization</span><span style={{ color: budgetColor || '#4b5563' }}>{budgetPct}%</span></div>
                             <div className="h-1.5 bg-[#d1d5db] rounded-full overflow-hidden">
                                 <div className="h-full rounded-full progress-fill" style={{ width: `${budgetPct}%`, background: budgetColor || 'linear-gradient(90deg, #4f6df5, #6380f7)' }} />
                             </div>
@@ -283,7 +286,7 @@ function OverviewTab({ project, canManage, fmt }) {
                                 { l: 'Tasks', v: `${project.tasks?.filter(t => t.status === 'completed').length ?? 0} / ${project.tasks?.length ?? 0} complete` },
                             ].map(({ l, v }) => (
                                 <div key={l} className="flex justify-between py-2.5 border-b border-[#e5e7eb] last:border-b-0 text-[13px]">
-                                    <span className="text-[#6b7280]">{l}</span>
+                                    <span className="text-[#4b5563]">{l}</span>
                                     <span className="text-black">{v}</span>
                                 </div>
                             ))}
@@ -302,7 +305,7 @@ function OverviewTab({ project, canManage, fmt }) {
                         {/* Progress circle + slider */}
                         <div>
                             <div className="flex items-center justify-between mb-3">
-                                <label className="text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium">Progress</label>
+                                <label className="text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium">Progress</label>
                                 <span className="text-[24px] font-bold text-[#4f6df5]">{progressForm.data.progress}%</span>
                             </div>
                             <div className="relative">
@@ -316,14 +319,14 @@ function OverviewTab({ project, canManage, fmt }) {
                                     className="absolute inset-0 w-full h-3 opacity-0 cursor-pointer"
                                 />
                             </div>
-                            <div className="flex justify-between text-[10px] text-[#9ca3af] mt-1.5 px-0.5">
+                            <div className="flex justify-between text-[10px] text-[#6b7280] mt-1.5 px-0.5">
                                 <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
                             </div>
                         </div>
 
                         {/* Quick set buttons */}
                         <div>
-                            <label className="text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-2 block">Quick Set</label>
+                            <label className="text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-2 block">Quick Set</label>
                             <div className="flex gap-2">
                                 {[0, 10, 25, 50, 75, 90, 100].map(v => (
                                     <button
@@ -333,7 +336,7 @@ function OverviewTab({ project, canManage, fmt }) {
                                         className={`flex-1 py-1.5 rounded-lg text-[12px] font-medium border transition-all ${
                                             Number(progressForm.data.progress) === v
                                                 ? 'bg-[#4f6df5] text-white border-[#4f6df5]'
-                                                : 'bg-white text-[#6b7280] border-[#d1d5db] hover:border-[#4f6df5] hover:text-[#4f6df5]'
+                                                : 'bg-white text-[#4b5563] border-[#d1d5db] hover:border-[#4f6df5] hover:text-[#4f6df5]'
                                         }`}
                                     >
                                         {v}%
@@ -353,7 +356,7 @@ function OverviewTab({ project, canManage, fmt }) {
                                         className={`px-3 py-2 rounded-lg text-[12px] font-medium border text-left transition-all flex justify-between items-center ${
                                             progressForm.data.phase === ph.name
                                                 ? 'bg-[#4f6df5]/10 text-[#4f6df5] border-[#4f6df5]/30'
-                                                : 'bg-white text-[#4b5563] border-[#e5e7eb] hover:border-[#4f6df5]/30 hover:text-[#4f6df5]'
+                                                : 'bg-white text-[#374151] border-[#e5e7eb] hover:border-[#4f6df5]/30 hover:text-[#4f6df5]'
                                         }`}
                                     >
                                         <span>{ph.name}</span>
@@ -373,46 +376,39 @@ function OverviewTab({ project, canManage, fmt }) {
                         <div className="flex justify-between items-start p-6 pb-4 flex-shrink-0">
                             <div>
                                 <div className="text-[21px] font-bold text-black">Edit Project</div>
-                                <div className="text-[12px] text-[#6b7280] mt-1">{project.name}</div>
+                                <div className="text-[12px] text-[#4b5563] mt-1">{project.name}</div>
                             </div>
-                            <button onClick={() => setShowEditModal(false)} className="text-[#6b7280] hover:text-black text-[22px] leading-none transition-colors">×</button>
+                            <button onClick={() => setShowEditModal(false)} className="text-[#4b5563] hover:text-black text-[22px] leading-none transition-colors">×</button>
                         </div>
                         <div className="px-6 pb-4 overflow-y-auto flex-1">
                     <div className="space-y-5 pb-2">
                         {/* Section: General */}
                         <div>
-                            <div className="text-[11px] tracking-[1px] uppercase text-[#9ca3af] font-medium mb-3 flex items-center gap-3">General <span className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                            <div className="text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-3 flex items-center gap-3">General <span className="flex-1 h-px bg-[#e5e7eb]" /></div>
                             <div className="grid grid-cols-2 gap-3 mb-3">
                                 <FG label="Project Name *" error={editForm.errors.name}><input className={inputCls} value={editForm.data.name} onChange={e => editForm.setData('name', e.target.value)} /></FG>
                                 <FG label="Client / Company" error={editForm.errors.client}><input className={inputCls} value={editForm.data.client} onChange={e => editForm.setData('client', e.target.value)} /></FG>
                             </div>
                             <div className="grid grid-cols-3 gap-3">
                                 <FG label="Status">
-                                    <select className={inputCls} value={editForm.data.status} onChange={e => editForm.setData('status', e.target.value)}>
-                                        <option value="active">Active</option>
-                                        <option value="on-hold">On Hold</option>
-                                        <option value="completed">Completed</option>
-                                    </select>
+                                    <Select value={editForm.data.status} onChange={v => editForm.setData('status', v)} options={[
+                                        { value: 'active', label: 'Active' },
+                                        { value: 'on-hold', label: 'On Hold' },
+                                        { value: 'completed', label: 'Completed' },
+                                    ]} />
                                 </FG>
                                 <FG label="Phase">
-                                    <select className={inputCls} value={editForm.data.phase} onChange={e => editForm.setData('phase', e.target.value)}>
-                                        {PROJECT_PHASES.map(ph => <option key={ph.name} value={ph.name}>{ph.name}</option>)}
-                                    </select>
+                                    <Select value={editForm.data.phase} onChange={v => editForm.setData('phase', v)} options={PROJECT_PHASES.map(ph => ({ value: ph.name, label: ph.name }))} />
                                 </FG>
                                 <FG label="Project Lead">
-                                    <select className={inputCls} value={editForm.data.lead_id} onChange={e => editForm.setData('lead_id', e.target.value)}>
-                                        <option value="">No lead assigned</option>
-                                        {(usePage().props.teamMembers ?? []).map(m => (
-                                            <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>
-                                        ))}
-                                    </select>
+                                    <Select value={editForm.data.lead_id} onChange={v => editForm.setData('lead_id', v)} placeholder="No lead assigned" clearable options={(usePage().props.teamMembers ?? []).map(m => ({ value: m.id, label: `${m.name}${m.role ? ` — ${m.role}` : ''}` }))} />
                                 </FG>
                             </div>
                         </div>
 
                         {/* Section: Client Contact */}
                         <div>
-                            <div className="text-[11px] tracking-[1px] uppercase text-[#9ca3af] font-medium mb-3 flex items-center gap-3">Client Contact <span className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                            <div className="text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-3 flex items-center gap-3">Client Contact <span className="flex-1 h-px bg-[#e5e7eb]" /></div>
                             <div className="grid grid-cols-3 gap-3">
                                 <FG label="Contact Name"><input className={inputCls} value={editForm.data.contact_name} onChange={e => editForm.setData('contact_name', e.target.value)} /></FG>
                                 <FG label="Contact Email"><input className={inputCls} type="email" value={editForm.data.contact_email} onChange={e => editForm.setData('contact_email', e.target.value)} /></FG>
@@ -422,7 +418,7 @@ function OverviewTab({ project, canManage, fmt }) {
 
                         {/* Section: Timeline */}
                         <div>
-                            <div className="text-[11px] tracking-[1px] uppercase text-[#9ca3af] font-medium mb-3 flex items-center gap-3">Timeline <span className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                            <div className="text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-3 flex items-center gap-3">Timeline <span className="flex-1 h-px bg-[#e5e7eb]" /></div>
                             <div className="grid grid-cols-3 gap-3">
                                 <FG label="Start Date"><input className={inputCls} type="date" value={editForm.data.start_date} onChange={e => editForm.setData('start_date', e.target.value)} /></FG>
                                 <FG label="End Date"><input className={inputCls} type="date" value={editForm.data.end_date} onChange={e => editForm.setData('end_date', e.target.value)} /></FG>
@@ -434,16 +430,14 @@ function OverviewTab({ project, canManage, fmt }) {
 
                         {/* Section: Budget & Tax */}
                         <div>
-                            <div className="text-[11px] tracking-[1px] uppercase text-[#9ca3af] font-medium mb-3 flex items-center gap-3">Budget & Tax <span className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                            <div className="text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-3 flex items-center gap-3">Budget & Tax <span className="flex-1 h-px bg-[#e5e7eb]" /></div>
                             <div className="grid grid-cols-2 gap-3 mb-3">
                                 <FG label="Currency">
-                                    <select className={inputCls} value={editForm.data.currency} onChange={e => editForm.setData('currency', e.target.value)}>
-                                        {currencies.map(c => <option key={c.code} value={c.code}>{c.code} — {c.country} ({c.symbol})</option>)}
-                                    </select>
+                                    <Select value={editForm.data.currency} onChange={v => editForm.setData('currency', v)} options={currencies.map(c => ({ value: c.code, label: `${c.code} — ${c.country} (${c.symbol})` }))} />
                                 </FG>
                                 <FG label="Budget" error={editForm.errors.budget}>
                                     <div className="relative">
-                                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-[#6b7280]">
+                                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-[#4b5563]">
                                             {(currencies.find(c => c.code === editForm.data.currency) ?? currencies[0]).symbol}
                                         </span>
                                         <input className={`${inputCls} pl-8 text-[16px] font-semibold`} type="number" value={editForm.data.budget} onChange={e => editForm.setData('budget', e.target.value)} placeholder="0.00" />
@@ -452,20 +446,19 @@ function OverviewTab({ project, canManage, fmt }) {
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <FG label="Tax Type">
-                                    <select className={inputCls} value={editForm.data.tax_type} onChange={e => editForm.setData('tax_type', e.target.value)}>
-                                        <option value="">No Tax</option>
-                                        <option value="vat">VAT (Value Added Tax)</option>
-                                        <option value="gst">GST (Goods & Services Tax)</option>
-                                        <option value="sales_tax">Sales Tax</option>
-                                        <option value="withholding">Withholding Tax</option>
-                                        <option value="consumption">Consumption Tax (Japan)</option>
-                                        <option value="custom">Custom</option>
-                                    </select>
+                                    <Select value={editForm.data.tax_type} onChange={v => editForm.setData('tax_type', v)} placeholder="No Tax" clearable options={[
+                                        { value: 'vat', label: 'VAT (Value Added Tax)' },
+                                        { value: 'gst', label: 'GST (Goods & Services Tax)' },
+                                        { value: 'sales_tax', label: 'Sales Tax' },
+                                        { value: 'withholding', label: 'Withholding Tax' },
+                                        { value: 'consumption', label: 'Consumption Tax (Japan)' },
+                                        { value: 'custom', label: 'Custom' },
+                                    ]} />
                                 </FG>
                                 <FG label="Tax Rate (%)">
                                     <div className="relative">
                                         <input className={`${inputCls} pr-8`} type="number" step="0.01" min="0" max="100" value={editForm.data.tax_rate} onChange={e => editForm.setData('tax_rate', e.target.value)} placeholder="0" />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-[#9ca3af]">%</span>
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-[#6b7280]">%</span>
                                     </div>
                                 </FG>
                             </div>
@@ -473,7 +466,7 @@ function OverviewTab({ project, canManage, fmt }) {
 
                         {/* Section: Details */}
                         <div>
-                            <div className="text-[11px] tracking-[1px] uppercase text-[#9ca3af] font-medium mb-3 flex items-center gap-3">Details <span className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                            <div className="text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-3 flex items-center gap-3">Details <span className="flex-1 h-px bg-[#e5e7eb]" /></div>
                             <FG label="Description">
                                 <textarea className={`${inputCls} resize-y min-h-[100px]`} value={editForm.data.description} onChange={e => editForm.setData('description', e.target.value)} placeholder="Project overview and goals…" />
                             </FG>
@@ -496,6 +489,7 @@ function OverviewTab({ project, canManage, fmt }) {
 
 // ── TEAM SECTION ─────────────────────────────────────────────────────────────
 function TeamSection({ project, canManage }) {
+    const confirm = useConfirm();
     const [showAdd, setShowAdd] = useState(false);
     const { props } = usePage();
     const allClients = props.clients ?? [];
@@ -508,8 +502,8 @@ function TeamSection({ project, canManage }) {
         post(route('projects.members.store', project.id), { onSuccess: () => { setShowAdd(false); reset(); } });
     };
 
-    const removeMember = (member) => {
-        if (confirm(`Remove ${member.client?.name} from this project?`)) {
+    const removeMember = async (member) => {
+        if (await confirm({ title: `Remove ${member.client?.name}?`, message: 'They will be removed from this project team.', danger: true, confirmLabel: 'Remove' })) {
             router.delete(route('projects.members.destroy', [project.id, member.id]));
         }
     };
@@ -528,12 +522,7 @@ function TeamSection({ project, canManage }) {
                 <div className="px-5 py-4 bg-[#fafbfc] border-b border-[#e5e7eb]">
                     <div className="grid grid-cols-3 gap-3">
                         <FG label="Contractor / Vendor">
-                            <select className={inputCls} value={data.client_id} onChange={e => setData('client_id', e.target.value)}>
-                                <option value="">Select...</option>
-                                {contractors.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name} ({c.type})</option>
-                                ))}
-                            </select>
+                            <Select value={data.client_id} onChange={v => setData('client_id', v)} placeholder="Select..." clearable options={contractors.map(c => ({ value: c.id, label: `${c.name} (${c.type})` }))} />
                         </FG>
                         <FG label="Role in Project">
                             <input className={inputCls} value={data.role} onChange={e => setData('role', e.target.value)} placeholder="e.g. Designer, Developer" />
@@ -546,7 +535,7 @@ function TeamSection({ project, canManage }) {
             )}
 
             {members.length === 0 && !showAdd && (
-                <div className="px-5 py-6 text-center text-[13px] text-[#6b7280]">No team members added yet</div>
+                <div className="px-5 py-6 text-center text-[13px] text-[#4b5563]">No team members added yet</div>
             )}
 
             {members.length > 0 && (
@@ -558,12 +547,12 @@ function TeamSection({ project, canManage }) {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="text-[13px] font-semibold text-black truncate">{m.client?.name}</div>
-                                <div className="text-[11px] text-[#6b7280]">
+                                <div className="text-[11px] text-[#4b5563]">
                                     {[m.role, m.client?.type].filter(Boolean).join(' · ')}
                                 </div>
                             </div>
                             {canManage && (
-                                <button onClick={() => removeMember(m)} className="text-[#9ca3af] hover:text-red-500 transition-colors">
+                                <button onClick={() => removeMember(m)} className="text-[#6b7280] hover:text-red-500 transition-colors">
                                     <Trash2 size={14} />
                                 </button>
                             )}
@@ -606,7 +595,7 @@ function ClientAccessSection({ project, canManage }) {
 
             {project.portal_enabled && portalUrl ? (
                 <div className="px-5 py-4">
-                    <p className="text-[12px] text-[#6b7280] mb-3">Share this private link with your client. No login required — they can view proposals, invoices, and meetings.</p>
+                    <p className="text-[12px] text-[#4b5563] mb-3">Share this private link with your client. No login required — they can view proposals, invoices, and meetings.</p>
                     <div className="flex items-center gap-2">
                         <input
                             readOnly
@@ -620,7 +609,7 @@ function ClientAccessSection({ project, canManage }) {
                     </div>
                 </div>
             ) : (
-                <div className="px-5 py-5 text-center text-[13px] text-[#6b7280]">Enable the toggle to generate a private client link</div>
+                <div className="px-5 py-5 text-center text-[13px] text-[#4b5563]">Enable the toggle to generate a private client link</div>
             )}
         </div>
     );
@@ -682,10 +671,10 @@ function ProposalTab({ project, canManage, nextNumber, fmt }) {
 
     if (proposals.length === 0 && !showModal) {
         return (
-            <div className="text-center py-16 text-[#6b7280]">
+            <div className="text-center py-16 text-[#4b5563]">
                 <div className="mb-4 flex justify-center"><div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center"><FileText size={28} className="text-indigo-400" /></div></div>
                 <div className="text-[16px] font-semibold text-black mb-1">No proposals yet</div>
-                <div className="text-[13px] text-[#6b7280] mb-5">Create your first proposal for this project</div>
+                <div className="text-[13px] text-[#4b5563] mb-5">Create your first proposal for this project</div>
                 {canManage && <Btn primary onClick={openCreate}><Plus size={15} /> Create Proposal</Btn>}
                 {showModal && <ProposalModal nextNumber={nextNumber} isEdit={false} project={project} data={data} setData={setData} processing={processing} errors={errors} onClose={() => { setShowModal(false); setEditingProposal(null); }} onSubmit={submit} />}
             </div>
@@ -711,7 +700,7 @@ function ProposalTab({ project, canManage, nextNumber, fmt }) {
                                         <span className="text-[15px] font-bold text-black truncate">{pr.title}</span>
                                         <Badge status={pr.status} />
                                     </div>
-                                    <div className="flex items-center gap-3 text-[12px] text-[#6b7280]">
+                                    <div className="flex items-center gap-3 text-[12px] text-[#4b5563]">
                                         <span>Issued {fmtDate(pr.date)}</span>
                                         {pr.valid_until && <span>· Valid until {fmtDate(pr.valid_until)}</span>}
                                         {pr.sent_date && <span>· Sent {fmtDate(pr.sent_date)}</span>}
@@ -725,10 +714,10 @@ function ProposalTab({ project, canManage, nextNumber, fmt }) {
 
                             {/* Content preview */}
                             {pr.content && (
-                                <div className="text-[12px] text-[#6b7280] line-clamp-2 leading-relaxed mb-3 border-l-2 border-[#e5e7eb] pl-3" dangerouslySetInnerHTML={{ __html: pr.content.replace(/<[^>]*>/g, ' ').slice(0, 200) + '…' }} />
+                                <div className="text-[12px] text-[#4b5563] line-clamp-2 leading-relaxed mb-3 border-l-2 border-[#e5e7eb] pl-3" dangerouslySetInnerHTML={{ __html: pr.content.replace(/<[^>]*>/g, ' ').slice(0, 200) + '…' }} />
                             )}
                             {!pr.content && pr.summary && (
-                                <div className="text-[12px] text-[#6b7280] line-clamp-2 leading-relaxed mb-3 border-l-2 border-[#e5e7eb] pl-3">{pr.summary.slice(0, 200)}…</div>
+                                <div className="text-[12px] text-[#4b5563] line-clamp-2 leading-relaxed mb-3 border-l-2 border-[#e5e7eb] pl-3">{pr.summary.slice(0, 200)}…</div>
                             )}
 
                             {/* Signed file */}
@@ -754,7 +743,7 @@ function ProposalTab({ project, canManage, nextNumber, fmt }) {
                                     </Btn>
                                 )}
                                 {canManage && pr.status !== 'draft' && (
-                                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#4b5563] border border-[#d1d5db] hover:bg-gray-100 cursor-pointer transition-all">
+                                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#374151] border border-[#d1d5db] hover:bg-gray-100 cursor-pointer transition-all">
                                         <Upload size={13} /> {pr.signed_file_path ? 'Replace Signed' : 'Upload Signed'}
                                         <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={e => {
                                             if (!e.target.files[0]) return;
@@ -781,15 +770,15 @@ function ProposalModal({ nextNumber, isEdit, project, data, setData, processing,
                 <div className="flex justify-between items-start p-6 pb-4 flex-shrink-0">
                     <div>
                         <div className="font-serif text-[21px] font-semibold text-black">{isEdit ? 'Edit Proposal' : 'New Proposal'}</div>
-                        <div className="text-[12px] text-[#6b7280] mt-1">For {project.name}{!isEdit && nextNumber ? ` · ${nextNumber}` : ''}</div>
+                        <div className="text-[12px] text-[#4b5563] mt-1">For {project.name}{!isEdit && nextNumber ? ` · ${nextNumber}` : ''}</div>
                     </div>
-                    <button onClick={onClose} className="text-[#6b7280] hover:text-black text-[22px] leading-none transition-colors">×</button>
+                    <button onClick={onClose} className="text-[#4b5563] hover:text-black text-[22px] leading-none transition-colors">×</button>
                 </div>
                 <div className="px-6 pb-2 overflow-y-auto flex-1">
             <div className="space-y-4 pb-2">
                 {/* Proposal Number */}
                 {!isEdit && nextNumber && (
-                    <FG label="Proposal #"><input className={`${inputCls} bg-[#e5e7eb] font-mono font-semibold`} value={nextNumber} readOnly /></FG>
+                    <FG label="Proposal #"><input className={`${inputCls} bg-[#f3f4f6] text-[#4b5563] font-mono font-semibold cursor-default`} value={nextNumber} readOnly /></FG>
                 )}
                 <FG label="Proposal Title" error={errors.title}><input className={inputCls} value={data.title} onChange={e => setData('title', e.target.value)} placeholder="e.g. Website Redesign Proposal" /></FG>
                 <div className="grid grid-cols-2 gap-3">
@@ -803,10 +792,10 @@ function ProposalModal({ nextNumber, isEdit, project, data, setData, processing,
                 </div>
 
                 <div className="pt-2">
-                    <div className="text-[11px] tracking-[1px] uppercase text-[#6b7280] font-medium mb-3 flex items-center gap-3">
+                    <div className="text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-3 flex items-center gap-3">
                         Proposal Content <span className="flex-1 h-px bg-[#e5e7eb]" />
                     </div>
-                    <Suspense fallback={<div className="text-[13px] text-[#6b7280] p-4">Loading editor…</div>}>
+                    <Suspense fallback={<div className="text-[13px] text-[#4b5563] p-4">Loading editor…</div>}>
                         <RichEditor content={data.content} onChange={val => setData('content', val)} placeholder="Write your proposal — use headings for sections, lists for scope/deliverables, tables for timelines…" projectId={project.id} />
                     </Suspense>
                 </div>
@@ -862,19 +851,19 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                 {[
                     { l: 'Total Billed', v: fmt(totalBilled), icon: <Receipt size={16} />, bg: 'bg-indigo-50 border-indigo-100', iconC: 'text-indigo-500', textC: 'text-indigo-700' },
                     { l: 'Paid', v: fmt(totalPaid), icon: <Check size={16} />, bg: 'bg-emerald-50 border-emerald-100', iconC: 'text-emerald-500', textC: 'text-emerald-700' },
-                    { l: 'Outstanding', v: fmt(outstanding), icon: <Clock size={16} />, bg: outstanding > 0 ? 'bg-amber-50 border-amber-100' : 'bg-gray-50 border-gray-100', iconC: outstanding > 0 ? 'text-amber-500' : 'text-gray-400', textC: outstanding > 0 ? 'text-amber-700' : 'text-gray-600' },
+                    { l: 'Outstanding', v: fmt(outstanding), icon: <Clock size={16} />, bg: outstanding > 0 ? 'bg-amber-50 border-amber-100' : 'bg-gray-50 border-gray-100', iconC: outstanding > 0 ? 'text-amber-500' : 'text-gray-600', textC: outstanding > 0 ? 'text-amber-700' : 'text-gray-600' },
                 ].map(({ l, v, icon, bg, iconC, textC }) => (
                     <div key={l} className={`${bg} border rounded-xl p-4 flex items-center gap-3`}>
                         <div className={`w-9 h-9 rounded-lg bg-white flex items-center justify-center ${iconC} shadow-sm`}>{icon}</div>
                         <div>
-                            <div className="text-[10px] tracking-[1.5px] uppercase text-[#6b7280] font-medium">{l}</div>
+                            <div className="text-[10px] tracking-[1.5px] uppercase text-[#4b5563] font-medium">{l}</div>
                             <div className={`text-[20px] font-bold ${textC} leading-tight`}>{v}</div>
                         </div>
                     </div>
                 ))}
             </div>
 
-            {invoices.length === 0 && <div className="text-center py-14 text-[#6b7280]"><div className="mb-3 opacity-30 flex justify-center"><Receipt size={40} /></div><div className="text-[14px] mb-5">No invoices yet</div>{canManage && <Btn primary onClick={() => setShowModal(true)}><Plus size={15} /> Create First Invoice</Btn>}</div>}
+            {invoices.length === 0 && <div className="text-center py-14 text-[#4b5563]"><div className="mb-3 opacity-30 flex justify-center"><Receipt size={40} /></div><div className="text-[14px] mb-5">No invoices yet</div>{canManage && <Btn primary onClick={() => setShowModal(true)}><Plus size={15} /> Create First Invoice</Btn>}</div>}
 
             {/* Invoice List */}
             <div className="space-y-3">
@@ -893,11 +882,11 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                                         <span className="text-[13px] font-mono font-bold text-black">{inv.number}</span>
                                         <Badge status={inv.status} />
                                     </div>
-                                    <div className="text-[12px] text-[#6b7280] truncate">{inv.description || 'No description'}</div>
+                                    <div className="text-[12px] text-[#4b5563] truncate">{inv.description || 'No description'}</div>
                                 </div>
                                 <div className="text-right mr-2 flex-shrink-0">
                                     <div className="text-[17px] font-bold text-black">{fmt(inv.total)}</div>
-                                    <div className="text-[11px] text-[#9ca3af]">{inv.status === 'paid' ? `Paid ${fmtDate(inv.date)}` : inv.due_date ? `Due ${fmtDate(inv.due_date)}` : fmtDate(inv.date)}</div>
+                                    <div className="text-[11px] text-[#6b7280]">{inv.status === 'paid' ? `Paid ${fmtDate(inv.date)}` : inv.due_date ? `Due ${fmtDate(inv.due_date)}` : fmtDate(inv.date)}</div>
                                 </div>
                                 <div className="flex items-center gap-1.5 flex-shrink-0">
                                     <Link href={route('invoices.view', inv.id)} onClick={e => e.stopPropagation()}>
@@ -919,7 +908,7 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                                         </span>
                                     )}
                                     {canManage && inv.status !== 'draft' && (
-                                        <label className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium text-[#6b7280] border border-[#d1d5db] hover:bg-gray-100 cursor-pointer transition-all" onClick={e => e.stopPropagation()}>
+                                        <label className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium text-[#4b5563] border border-[#d1d5db] hover:bg-gray-100 cursor-pointer transition-all" onClick={e => e.stopPropagation()}>
                                             <Upload size={12} /> {inv.signed_file_path ? 'Signed ✓' : 'Upload'}
                                             <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={e => {
                                                 if (!e.target.files[0]) return;
@@ -928,7 +917,7 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                                             }} />
                                         </label>
                                     )}
-                                    <span className="text-[#9ca3af]">{expanded === inv.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</span>
+                                    <span className="text-[#6b7280]">{expanded === inv.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</span>
                                 </div>
                             </div>
                             {expanded === inv.id && (
@@ -936,18 +925,18 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                                     <table className="w-full">
                                         <thead>
                                             <tr className="border-b border-[#e5e7eb]">
-                                                <th className="text-left text-[10px] tracking-wide uppercase text-[#9ca3af] font-medium pb-2">Description</th>
-                                                <th className="text-center text-[10px] tracking-wide uppercase text-[#9ca3af] font-medium pb-2 w-16">Qty</th>
-                                                <th className="text-right text-[10px] tracking-wide uppercase text-[#9ca3af] font-medium pb-2 w-24">Rate</th>
-                                                <th className="text-right text-[10px] tracking-wide uppercase text-[#9ca3af] font-medium pb-2 w-24">Amount</th>
+                                                <th className="text-left text-[10px] tracking-wide uppercase text-[#6b7280] font-medium pb-2">Description</th>
+                                                <th className="text-center text-[10px] tracking-wide uppercase text-[#6b7280] font-medium pb-2 w-16">Qty</th>
+                                                <th className="text-right text-[10px] tracking-wide uppercase text-[#6b7280] font-medium pb-2 w-24">Rate</th>
+                                                <th className="text-right text-[10px] tracking-wide uppercase text-[#6b7280] font-medium pb-2 w-24">Amount</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {(inv.items ?? []).map((item, i) => (
                                                 <tr key={i} className="border-b border-[#f0f0f0] last:border-b-0">
                                                     <td className="py-2.5 text-[13px] text-black">{item.description}</td>
-                                                    <td className="py-2.5 text-[13px] text-center text-[#6b7280]">{item.quantity}</td>
-                                                    <td className="py-2.5 text-[13px] text-right text-[#6b7280]">{fmt(item.rate)}</td>
+                                                    <td className="py-2.5 text-[13px] text-center text-[#4b5563]">{item.quantity}</td>
+                                                    <td className="py-2.5 text-[13px] text-right text-[#4b5563]">{fmt(item.rate)}</td>
                                                     <td className="py-2.5 text-[13px] text-right font-medium text-black">{fmt(item.quantity * item.rate)}</td>
                                                 </tr>
                                             ))}
@@ -955,7 +944,7 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                                     </table>
                                     <div className="flex justify-end pt-3 mt-2 border-t border-[#e5e7eb]">
                                         <div className="flex items-center gap-6 text-[13px]">
-                                            <span className="text-[#9ca3af] uppercase tracking-wide text-[10px] font-medium">Total</span>
+                                            <span className="text-[#6b7280] uppercase tracking-wide text-[10px] font-medium">Total</span>
                                             <span className="text-[16px] font-bold text-black">{fmt(inv.total)}</span>
                                         </div>
                                     </div>
@@ -986,8 +975,8 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                             <FG label="Due Date"><input className={inputCls} type="date" value={data.due_date} onChange={e => setData('due_date', e.target.value)} /></FG>
                         </div>
                         <div className="pt-2">
-                            <div className="text-[10px] tracking-[2px] uppercase text-[#6b7280] mb-3 flex items-center gap-3">Line Items<span className="flex-1 h-px bg-[#e5e7eb]" /></div>
-                            <div className="grid grid-cols-[1fr_70px_90px_28px] gap-2 text-[10px] uppercase tracking-wide text-[#6b7280] mb-2 px-0.5">
+                            <div className="text-[10px] tracking-[2px] uppercase text-[#4b5563] mb-3 flex items-center gap-3">Line Items<span className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                            <div className="grid grid-cols-[1fr_70px_90px_28px] gap-2 text-[10px] uppercase tracking-wide text-[#4b5563] mb-2 px-0.5">
                                 <span>Description</span><span>Qty</span><span>Rate</span><span />
                             </div>
                             {data.items.map((item, i) => (
@@ -995,12 +984,12 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                                     <input className={inputCls} style={{fontSize:12}} value={item.description} onChange={e => updateItem(i,'description',e.target.value)} placeholder="Item description" />
                                     <input className={inputCls} style={{fontSize:12}} type="number" value={item.quantity} onChange={e => updateItem(i,'quantity',e.target.value)} min="1" />
                                     <input className={inputCls} style={{fontSize:12}} type="number" value={item.rate} onChange={e => updateItem(i,'rate',e.target.value)} placeholder="0" />
-                                    <button onClick={() => removeItem(i)} className="text-[#6b7280] hover:text-red-400 text-[18px] pb-0.5">×</button>
+                                    <button onClick={() => removeItem(i)} className="text-[#4b5563] hover:text-red-400 text-[18px] pb-0.5">×</button>
                                 </div>
                             ))}
                             <div className="flex justify-between items-center mt-3">
                                 <Btn ghost sm onClick={addItem}>+ Add Line Item</Btn>
-                                <div className="flex gap-8 text-[13.5px]"><span className="text-[#6b7280]">Total</span><span className="font-semibold text-black">{fmt(total)}</span></div>
+                                <div className="flex gap-8 text-[13.5px]"><span className="text-[#4b5563]">Total</span><span className="font-semibold text-black">{fmt(total)}</span></div>
                             </div>
                         </div>
                     </div>
@@ -1073,9 +1062,7 @@ function PaymentModal({ invoice, onClose }) {
                     <div className="text-[10px] uppercase tracking-wide text-emerald-500 font-medium mb-3">What Landed in Your Account</div>
 
                     <FG label="Currency" error={errors.received_currency}>
-                        <select className={inputCls} value={data.received_currency} onChange={e => setData('received_currency', e.target.value)}>
-                            {currencyOptions.map(c => <option key={c.code} value={c.code}>{c.label} ({c.symbol})</option>)}
-                        </select>
+                        <Select value={data.received_currency} onChange={v => setData('received_currency', v)} options={currencyOptions.map(c => ({ value: c.code, label: `${c.label} (${c.symbol})` }))} />
                     </FG>
 
                     <div className="mt-3">
@@ -1234,13 +1221,13 @@ function MeetingsTab({ project, canManage }) {
             </div>
             <div className="flex gap-2 mb-5">
                 {['all','scheduled','completed','cancelled'].map(s => (
-                    <button key={s} onClick={() => setFilter(s)} className={`px-3.5 py-1.5 rounded-full text-[12px] font-medium border transition-all capitalize ${filter === s ? 'bg-[#4f6df5]/10 border-[#4f6df5]/30 text-[#4f6df5]' : 'border-[#d1d5db] text-[#4b5563] hover:text-black hover:bg-gray-100'}`}>
+                    <button key={s} onClick={() => setFilter(s)} className={`px-3.5 py-1.5 rounded-full text-[12px] font-medium border transition-all capitalize ${filter === s ? 'bg-[#4f6df5]/10 border-[#4f6df5]/30 text-[#4f6df5]' : 'border-[#d1d5db] text-[#374151] hover:text-black hover:bg-gray-100'}`}>
                         {s.charAt(0).toUpperCase() + s.slice(1)}
                     </button>
                 ))}
             </div>
 
-            {filtered.length === 0 && <div className="text-center py-14 text-[#6b7280]"><div className="mb-3 opacity-30 flex justify-center"><CalendarDays size={40} /></div><div className="text-[14px] mb-5">No meetings scheduled</div>{canManage && <Btn primary onClick={() => setShowModal(true)}><Plus size={15} /> Schedule a Meeting</Btn>}</div>}
+            {filtered.length === 0 && <div className="text-center py-14 text-[#4b5563]"><div className="mb-3 opacity-30 flex justify-center"><CalendarDays size={40} /></div><div className="text-[14px] mb-5">No meetings scheduled</div>{canManage && <Btn primary onClick={() => setShowModal(true)}><Plus size={15} /> Schedule a Meeting</Btn>}</div>}
 
             <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                 {[...filtered].sort((a,b) => b.date.localeCompare(a.date)).map(m => {
@@ -1256,11 +1243,11 @@ function MeetingsTab({ project, canManage }) {
                                     <div className="flex flex-wrap items-center gap-2 mb-1">
                                         <span className="text-[14px] font-medium text-black">{m.title}</span>
                                         <Badge status={m.status} />
-                                        <span className="text-[10px] px-2 py-0.5 bg-gray-100 rounded-full text-[#4b5563]">{MTG_TYPES[m.type]}</span>
+                                        <span className="text-[10px] px-2 py-0.5 bg-gray-100 rounded-full text-[#374151]">{MTG_TYPES[m.type]}</span>
                                     </div>
-                                    <div className="text-[12.5px] text-[#6b7280] mb-2">{m.time} · {m.duration} · {m.location}</div>
-                                    {(m.attendees ?? []).length > 0 && <div className="text-[12px] text-[#6b7280]">👥 {m.attendees.join(', ')}</div>}
-                                    {m.notes && <div className="mt-3 px-3 py-2.5 bg-[#f3f4f6] rounded-lg text-[12.5px] text-[#4b5563] leading-relaxed border-l-2 border-[#d1d5db]">{m.notes}</div>}
+                                    <div className="text-[12.5px] text-[#4b5563] mb-2">{m.time} · {m.duration} · {m.location}</div>
+                                    {(m.attendees ?? []).length > 0 && <div className="text-[12px] text-[#4b5563]">👥 {m.attendees.join(', ')}</div>}
+                                    {m.notes && <div className="mt-3 px-3 py-2.5 bg-[#f3f4f6] rounded-lg text-[12.5px] text-[#374151] leading-relaxed border-l-2 border-[#d1d5db]">{m.notes}</div>}
                                 </div>
                                 {canManage && (
                                     <div className="flex gap-2 flex-shrink-0">
@@ -1289,9 +1276,7 @@ function MeetingsTab({ project, canManage }) {
                         )}
                         <div className="grid grid-cols-2 gap-3">
                             <FG label="Meeting Type">
-                                <select className={inputCls} value={kickoffNotes ? 'kickoff' : data.type} onChange={e => setData('type', e.target.value)}>
-                                    {Object.entries(MTG_TYPES).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                                </select>
+                                <Select value={kickoffNotes ? 'kickoff' : data.type} onChange={v => setData('type', v)} options={Object.entries(MTG_TYPES).map(([v, l]) => ({ value: v, label: l }))} />
                             </FG>
                             <FG label="Title"><input className={inputCls} value={kickoffNotes ? `Project Kickoff — ${project.name}` : data.title} onChange={e => setData('title', e.target.value)} /></FG>
                         </div>
@@ -1366,7 +1351,7 @@ function DocPreviewModal({ doc, onClose }) {
                     </div>
                 </div>
             ) : (
-                <div className="text-center py-16 text-[#6b7280]">
+                <div className="text-center py-16 text-[#4b5563]">
                     <div className="mb-4 flex justify-center"><div className="w-16 h-16 rounded-2xl bg-[#f3f4f6] flex items-center justify-center text-3xl">{DOC_ICONS[doc.type] ?? '📁'}</div></div>
                     <div className="text-[14px] font-medium text-black mb-1">Preview not available</div>
                     <div className="text-[13px] mb-4">This file type cannot be previewed in the browser. Download it to view.</div>
@@ -1378,6 +1363,7 @@ function DocPreviewModal({ doc, onClose }) {
 
 // ── DOCUMENTS TAB ─────────────────────────────────────────────────────────────
 function DocumentsTab({ project, canManage }) {
+    const confirm = useConfirm();
     const [showModal, setShowModal] = useState(false);
     const [previewDoc, setPreviewDoc] = useState(null);
     const [editDoc, setEditDoc] = useState(null);
@@ -1400,8 +1386,8 @@ function DocumentsTab({ project, canManage }) {
             onSuccess: () => { setEditDoc(null); editForm.reset(); },
         });
     };
-    const deleteDoc = (doc) => {
-        if (confirm('Delete this document?')) {
+    const deleteDoc = async (doc) => {
+        if (await confirm({ title: 'Delete this document?', message: 'This file will be permanently removed.', danger: true })) {
             router.delete(route('projects.documents.destroy', [project.id, doc.id]));
         }
     };
@@ -1414,11 +1400,11 @@ function DocumentsTab({ project, canManage }) {
             </div>
             <div className="flex gap-2 mb-5">
                 {['all','contract','brief','report','asset','other'].map(t => (
-                    <button key={t} onClick={() => setFilter(t)} className={`px-3.5 py-1.5 rounded-full text-[12px] font-medium border transition-all capitalize ${filter === t ? 'bg-[#4f6df5]/10 border-[#4f6df5]/30 text-[#4f6df5]' : 'border-[#d1d5db] text-[#4b5563] hover:text-black hover:bg-gray-100'}`}>{t}</button>
+                    <button key={t} onClick={() => setFilter(t)} className={`px-3.5 py-1.5 rounded-full text-[12px] font-medium border transition-all capitalize ${filter === t ? 'bg-[#4f6df5]/10 border-[#4f6df5]/30 text-[#4f6df5]' : 'border-[#d1d5db] text-[#374151] hover:text-black hover:bg-gray-100'}`}>{t}</button>
                 ))}
             </div>
 
-            {filtered.length === 0 && <div className="text-center py-14 text-[#6b7280]"><div className="mb-3 opacity-30 flex justify-center"><FolderOpen size={40} /></div><div className="text-[14px] mb-5">No documents found</div>{canManage && <Btn primary onClick={() => setShowModal(true)}><Upload size={15} /> Add Document</Btn>}</div>}
+            {filtered.length === 0 && <div className="text-center py-14 text-[#4b5563]"><div className="mb-3 opacity-30 flex justify-center"><FolderOpen size={40} /></div><div className="text-[14px] mb-5">No documents found</div>{canManage && <Btn primary onClick={() => setShowModal(true)}><Upload size={15} /> Add Document</Btn>}</div>}
 
             <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                 {filtered.map(doc => (
@@ -1426,18 +1412,18 @@ function DocumentsTab({ project, canManage }) {
                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-[18px] flex-shrink-0 ${DOC_COLORS[doc.type] ?? 'bg-gray-100'}`}>{DOC_ICONS[doc.type] ?? '📁'}</div>
                         <div className="flex-1 min-w-0">
                             <div className="text-[13px] font-medium text-black truncate">{doc.name}</div>
-                            <div className="text-[11.5px] text-[#6b7280]">
+                            <div className="text-[11.5px] text-[#4b5563]">
                                 Added by {doc.uploader?.name ?? 'Team'} · {fmtDate(doc.created_at)} {doc.file_size ? `· ${doc.file_size}` : ''}
                             </div>
                         </div>
                         <Badge status={doc.type} label={doc.type} />
-                        {doc.task_id && <span className="text-[10px] text-[#9ca3af] bg-[#f3f4f6] px-2 py-0.5 rounded-full">Task</span>}
-                        <button onClick={() => setPreviewDoc(doc)} className="inline-flex items-center gap-1.5 text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100"><Eye size={13} /> View</button>
-                        <a href={`/documents/${doc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-[#6b7280] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100"><Download size={13} /> Download</a>
+                        {doc.task_id && <span className="text-[10px] text-[#6b7280] bg-[#f3f4f6] px-2 py-0.5 rounded-full">Task</span>}
+                        <button onClick={() => setPreviewDoc(doc)} className="inline-flex items-center gap-1.5 text-[12px] text-[#4b5563] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100"><Eye size={13} /> View</button>
+                        <a href={`/documents/${doc.id}/download`} className="inline-flex items-center gap-1.5 text-[12px] text-[#4b5563] hover:text-black transition-colors px-3 py-1.5 rounded-lg border border-[#d1d5db] hover:bg-gray-100"><Download size={13} /> Download</a>
                         {canManage && (
                             <>
-                                <button onClick={() => openEditDoc(doc)} className="p-1.5 rounded-md text-[#9ca3af] hover:text-[#4f6df5] transition-colors" title="Edit"><Pencil size={14} /></button>
-                                <button onClick={() => deleteDoc(doc)} className="p-1.5 rounded-md text-[#9ca3af] hover:text-red-500 transition-colors" title="Delete"><Trash2 size={14} /></button>
+                                <button onClick={() => openEditDoc(doc)} className="p-1.5 rounded-md text-[#6b7280] hover:text-[#4f6df5] transition-colors" title="Edit"><Pencil size={14} /></button>
+                                <button onClick={() => deleteDoc(doc)} className="p-1.5 rounded-md text-[#6b7280] hover:text-red-500 transition-colors" title="Delete"><Trash2 size={14} /></button>
                             </>
                         )}
                     </div>
@@ -1451,11 +1437,9 @@ function DocumentsTab({ project, canManage }) {
                     <div className="space-y-4 pb-2">
                         <FG label="Document Name *"><input className={inputCls} value={data.name} onChange={e => setData('name', e.target.value)} placeholder="e.g. Signed Contract — Project Name" /></FG>
                         <FG label="Document Type">
-                            <select className={inputCls} value={data.type} onChange={e => setData('type', e.target.value)}>
-                                {['contract','brief','report','asset','other'].map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
-                            </select>
+                            <Select value={data.type} onChange={v => setData('type', v)} options={['contract','brief','report','asset','other'].map(t => ({ value: t, label: t.charAt(0).toUpperCase()+t.slice(1) }))} />
                         </FG>
-                        <div className="border-2 border-dashed border-[#d1d5db] rounded-xl p-8 text-center text-[#6b7280]">
+                        <div className="border-2 border-dashed border-[#d1d5db] rounded-xl p-8 text-center text-[#4b5563]">
                             <input type="file" onChange={e => setData('file', e.target.files[0])} className="hidden" id="file-upload" />
                             <label htmlFor="file-upload" className="cursor-pointer">
                                 <div className="text-3xl mb-2">📎</div>
@@ -1476,13 +1460,11 @@ function DocumentsTab({ project, canManage }) {
                     <div className="space-y-4 pb-2">
                         <FG label="Document Name *"><input className={inputCls} value={editForm.data.name} onChange={e => editForm.setData('name', e.target.value)} /></FG>
                         <FG label="Document Type">
-                            <select className={inputCls} value={editForm.data.type} onChange={e => editForm.setData('type', e.target.value)}>
-                                {['contract','brief','report','asset','other'].map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
-                            </select>
+                            <Select value={editForm.data.type} onChange={v => editForm.setData('type', v)} options={['contract','brief','report','asset','other'].map(t => ({ value: t, label: t.charAt(0).toUpperCase()+t.slice(1) }))} />
                         </FG>
                         <FG label="Replace File">
-                            <input type="file" onChange={e => editForm.setData('file', e.target.files[0])} className="text-[13px] text-[#6b7280]" />
-                            {editDoc.file_size && !editForm.data.file && <div className="text-[11px] text-[#9ca3af] mt-1">Current file: {editDoc.file_size}</div>}
+                            <input type="file" onChange={e => editForm.setData('file', e.target.files[0])} className="text-[13px] text-[#4b5563]" />
+                            {editDoc.file_size && !editForm.data.file && <div className="text-[11px] text-[#6b7280] mt-1">Current file: {editDoc.file_size}</div>}
                         </FG>
                     </div>
                 </Modal>
@@ -1513,7 +1495,7 @@ function TimelineTab({ project }) {
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <div className="text-[18px] font-bold text-black">{project.progress}% Complete</div>
-                        <div className="text-[13px] text-[#6b7280]">{isCompleted ? 'Project completed' : isOverdue ? 'Project overdue' : `${daysLeft} days remaining`}</div>
+                        <div className="text-[13px] text-[#4b5563]">{isCompleted ? 'Project completed' : isOverdue ? 'Project overdue' : `${daysLeft} days remaining`}</div>
                     </div>
                     <Badge status={isOverdue ? 'overdue' : project.status} />
                 </div>
@@ -1531,13 +1513,13 @@ function TimelineTab({ project }) {
                                 <div className="flex items-center w-full">
                                     {i > 0 && <div className={`flex-1 h-0.5 ${done || active ? 'bg-emerald-300' : 'bg-[#e5e7eb]'}`} />}
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-bold ${
-                                        done ? 'bg-emerald-500 text-white' : active ? 'bg-[#4f6df5] text-white ring-4 ring-[#4f6df5]/20' : 'bg-[#f0f0f0] text-[#9ca3af]'
+                                        done ? 'bg-emerald-500 text-white' : active ? 'bg-[#4f6df5] text-white ring-4 ring-[#4f6df5]/20' : 'bg-[#f0f0f0] text-[#6b7280]'
                                     }`}>
                                         {done ? <CheckCircle size={14} /> : i + 1}
                                     </div>
                                     {i < PROJECT_PHASES.length - 1 && <div className={`flex-1 h-0.5 ${done ? 'bg-emerald-300' : 'bg-[#e5e7eb]'}`} />}
                                 </div>
-                                <span className={`text-[9px] text-center leading-tight mt-2 px-1 ${active ? 'text-[#4f6df5] font-bold' : done ? 'text-emerald-600' : 'text-[#9ca3af]'}`}>{ph.name}</span>
+                                <span className={`text-[9px] text-center leading-tight mt-2 px-1 ${active ? 'text-[#4f6df5] font-bold' : done ? 'text-emerald-600' : 'text-[#6b7280]'}`}>{ph.name}</span>
                             </div>
                         );
                     })}
@@ -1552,12 +1534,12 @@ function TimelineTab({ project }) {
                         {[
                             { l: 'Start Date', v: fmtDate(project.start_date), icon: <Calendar size={13} className="text-emerald-500" /> },
                             { l: 'End Date', v: fmtDate(project.end_date), icon: <Calendar size={13} className={isOverdue ? 'text-red-500' : 'text-[#4f6df5]'} /> },
-                            { l: 'Days Elapsed', v: `${Math.max(0, daysElapsed)} of ${daysTotal} days`, icon: <Clock size={13} className="text-[#6b7280]" /> },
+                            { l: 'Days Elapsed', v: `${Math.max(0, daysElapsed)} of ${daysTotal} days`, icon: <Clock size={13} className="text-[#4b5563]" /> },
                             { l: 'Current Phase', v: project.phase, icon: <CheckCircle size={13} className="text-[#4f6df5]" /> },
                         ].map(({ l, v, icon }) => (
                             <div key={l} className="flex items-center gap-3 py-3 border-b border-[#f0f0f0] last:border-b-0 text-[13px]">
                                 {icon}
-                                <span className="text-[#6b7280] flex-1">{l}</span>
+                                <span className="text-[#4b5563] flex-1">{l}</span>
                                 <span className="font-medium text-black">{v}</span>
                             </div>
                         ))}
@@ -1574,12 +1556,12 @@ function TimelineTab({ project }) {
                             return (
                                 <div key={ph.name} className={`flex items-center gap-3 py-2.5 border-b border-[#f0f0f0] last:border-b-0 ${active ? 'bg-indigo-50 -mx-5 px-5 rounded-lg' : ''}`}>
                                     <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${
-                                        done ? 'bg-emerald-500 text-white' : active ? 'bg-[#4f6df5] text-white' : 'bg-[#f0f0f0] text-[#d1d5db]'
+                                        done ? 'bg-emerald-500 text-white' : active ? 'bg-[#4f6df5] text-white' : 'bg-[#f0f0f0] text-[#6b7280]'
                                     }`}>
                                         {done ? <Check size={12} /> : active ? <div className="w-2 h-2 rounded-sm bg-white" /> : <span className="text-[10px]">{i + 1}</span>}
                                     </div>
-                                    <span className={`text-[13px] flex-1 ${done ? 'text-emerald-600' : active ? 'text-[#4f6df5] font-semibold' : 'text-[#4b5563]'}`}>{ph.name}</span>
-                                    <span className="text-[11px] text-[#9ca3af]">{ph.progress}%</span>
+                                    <span className={`text-[13px] flex-1 ${done ? 'text-emerald-600' : active ? 'text-[#4f6df5] font-semibold' : 'text-[#374151]'}`}>{ph.name}</span>
+                                    <span className="text-[11px] text-[#6b7280]">{ph.progress}%</span>
                                 </div>
                             );
                         })}
@@ -1592,6 +1574,7 @@ function TimelineTab({ project }) {
 
 // ── TASKS TAB ─────────────────────────────────────────────────────────────────
 function TasksTab({ project, canManage, taskCategories = [] }) {
+    const confirm = useConfirm();
     const [showModal, setShowModal] = useState(false);
     const [editTask, setEditTask] = useState(null);
     const [filter, setFilter] = useState('all');
@@ -1677,8 +1660,8 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
         });
     };
 
-    const deleteTask = (task) => {
-        if (confirm('Delete this task?')) {
+    const deleteTask = async (task) => {
+        if (await confirm({ title: 'Delete this task?', message: 'This task will be permanently removed.', danger: true })) {
             router.delete(route('projects.tasks.destroy', [project.id, task.id]));
         }
     };
@@ -1704,8 +1687,8 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
         });
     };
 
-    const deleteDoc = (doc) => {
-        if (confirm('Delete this document?')) {
+    const deleteDoc = async (doc) => {
+        if (await confirm({ title: 'Delete this document?', message: 'This file will be permanently removed.', danger: true })) {
             router.delete(route('projects.documents.destroy', [project.id, doc.id]));
         }
     };
@@ -1730,19 +1713,16 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                         { key: 'pending-approval', label: 'Pending Approval' },
                         { key: 'completed', label: 'Done' },
                     ].map(s => (
-                        <button key={s.key} onClick={() => setFilter(s.key)} className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all ${filter === s.key ? 'bg-white text-black shadow-sm' : 'text-[#6b7280] hover:text-black'}`}>
+                        <button key={s.key} onClick={() => setFilter(s.key)} className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all ${filter === s.key ? 'bg-white text-black shadow-sm' : 'text-[#4b5563] hover:text-black'}`}>
                             {s.label}
                         </button>
                     ))}
                 </div>
                 {categories.length > 0 && (
-                    <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-[#f3f4f6] text-black border-0 focus:ring-2 focus:ring-indigo-400 cursor-pointer">
-                        <option value="all">All Categories</option>
-                        {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                    <Select value={categoryFilter} onChange={v => setCategoryFilter(v)} options={[{ value: 'all', label: 'All Categories' }, ...categories.map(c => ({ value: c, label: c }))]} />
                 )}
                 {canManage && (
-                    <Link href={route('categories.index')} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#6b7280] border border-[#d1d5db] hover:text-[#4f6df5] hover:border-[#4f6df5] transition-colors">
+                    <Link href={route('categories.index')} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#4b5563] border border-[#d1d5db] hover:text-[#4f6df5] hover:border-[#4f6df5] transition-colors">
                         <Tag size={13} /> Manage Categories
                     </Link>
                 )}
@@ -1751,20 +1731,18 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
             {canManage && selected.length > 0 && (
                 <div className="flex flex-wrap items-center gap-3 mb-5 px-4 py-2.5 bg-[#4f6df5]/5 border border-[#4f6df5]/20 rounded-xl">
                     <span className="text-[12px] font-semibold text-[#4f6df5]">{selected.length} selected</span>
-                    <span className="text-[12px] text-[#6b7280]">Set status to</span>
-                    <select value={bulkStatus} onChange={e => setBulkStatus(e.target.value)} className="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-white text-black border border-[#d1d5db] focus:ring-2 focus:ring-indigo-400 cursor-pointer">
-                        {[['not-started','To Do'],['in-progress','In Progress'],['review','Review'],['pending-approval','Pending Approval'],['completed','Done']].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
-                    </select>
+                    <span className="text-[12px] text-[#4b5563]">Set status to</span>
+                    <Select value={bulkStatus} onChange={v => setBulkStatus(v)} options={[['not-started','To Do'],['in-progress','In Progress'],['review','Review'],['pending-approval','Pending Approval'],['completed','Done']].map(([v,l]) => ({ value: v, label: l }))} />
                     <Btn primary sm onClick={applyBulkStatus}><Check size={13} /> Apply</Btn>
-                    <button onClick={() => setSelected([])} className="text-[12px] text-[#6b7280] hover:text-black transition-colors">Clear</button>
+                    <button onClick={() => setSelected([])} className="text-[12px] text-[#4b5563] hover:text-black transition-colors">Clear</button>
                 </div>
             )}
 
             {filtered.length === 0 && (
-                <div className="text-center py-14 text-[#6b7280]">
+                <div className="text-center py-14 text-[#4b5563]">
                     <div className="mb-4 flex justify-center"><div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center"><ListChecks size={24} className="text-indigo-400" /></div></div>
                     <div className="text-[14px] font-semibold text-black mb-1">No tasks found</div>
-                    <div className="text-[13px] text-[#6b7280] mb-4">Add tasks to track work on this project</div>
+                    <div className="text-[13px] text-[#4b5563] mb-4">Add tasks to track work on this project</div>
                     {canManage && <Btn primary onClick={() => setShowModal(true)}><Plus size={15} /> Add First Task</Btn>}
                 </div>
             )}
@@ -1786,9 +1764,9 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                                 className="w-4 h-4 rounded border-[#d1d5db] text-[#4f6df5] focus:ring-[#4f6df5] cursor-pointer flex-shrink-0"
                             />
                         )}
-                        <button onClick={() => toggleCat(cat)} className="flex-1 flex items-center gap-2 text-[10.5px] tracking-[1.5px] uppercase text-[#6b7280] hover:text-black transition-colors">
+                        <button onClick={() => toggleCat(cat)} className="flex-1 flex items-center gap-2 text-[10.5px] tracking-[1.5px] uppercase text-[#4b5563] hover:text-black transition-colors">
                             {collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
-                            <ListChecks size={13} /> {cat} <span className="text-[#d1d5db]">({catTasks.length})</span>
+                            <ListChecks size={13} /> {cat} <span className="text-[#6b7280]">({catTasks.length})</span>
                         </button>
                     </div>
                     {!collapsed && (
@@ -1820,7 +1798,7 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                                             />
                                         )}
                                         {canManage && (
-                                            <span className="cursor-grab active:cursor-grabbing text-[#d1d5db] hover:text-[#9ca3af] flex-shrink-0" title="Drag to reorder">
+                                            <span className="cursor-grab active:cursor-grabbing text-[#6b7280] hover:text-[#9ca3af] flex-shrink-0" title="Drag to reorder">
                                                 <GripVertical size={15} />
                                             </span>
                                         )}
@@ -1835,7 +1813,7 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                                         </button>
                                         <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setExpandedTask(isExpanded ? null : t.id)}>
                                             <div className={`text-[13px] ${t.status === 'completed' ? 'text-emerald-600' : 'text-black font-medium'}`}>{t.title}</div>
-                                            <div className="text-[11px] text-[#9ca3af] flex items-center gap-1.5">
+                                            <div className="text-[11px] text-[#6b7280] flex items-center gap-1.5">
                                                 {t.assignee && <span>{t.assignee}</span>}
                                                 {t.due_date && <><span>·</span><span className="flex items-center gap-0.5"><Calendar size={10} /> {fmtDate(t.due_date)}</span></>}
                                                 {docs.length > 0 && <><span>·</span><span className="flex items-center gap-0.5"><FileText size={10} /> {docs.length} doc{docs.length !== 1 ? 's' : ''}</span></>}
@@ -1845,7 +1823,7 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                                             {canManage && (
                                                 <button
                                                     onClick={() => { docForm.setData('task_id', t.id); setShowDocModal(t.id); }}
-                                                    className="p-1.5 rounded-md text-[#9ca3af] hover:text-[#4f6df5] hover:bg-indigo-50 transition-colors"
+                                                    className="p-1.5 rounded-md text-[#6b7280] hover:text-[#4f6df5] hover:bg-indigo-50 transition-colors"
                                                     title="Attach document"
                                                 >
                                                     <Upload size={13} />
@@ -1867,14 +1845,14 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                                                 <>
                                                     <button
                                                         onClick={() => openEdit(t)}
-                                                        className="p-1.5 rounded-md text-[#9ca3af] hover:text-[#4f6df5] hover:bg-indigo-50 transition-colors"
+                                                        className="p-1.5 rounded-md text-[#6b7280] hover:text-[#4f6df5] hover:bg-indigo-50 transition-colors"
                                                         title="Edit task"
                                                     >
                                                         <Pencil size={13} />
                                                     </button>
                                                     <button
                                                         onClick={() => deleteTask(t)}
-                                                        className="p-1.5 rounded-md text-[#9ca3af] hover:text-red-500 hover:bg-red-50 transition-colors"
+                                                        className="p-1.5 rounded-md text-[#6b7280] hover:text-red-500 hover:bg-red-50 transition-colors"
                                                         title="Delete task"
                                                     >
                                                         <Trash2 size={13} />
@@ -1886,7 +1864,7 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                                     {isExpanded && docs.length > 0 && (
                                         <div className="px-4 pb-3 pt-0">
                                             <div className="ml-8 bg-[#f9fafb] border border-[#e5e7eb] rounded-lg overflow-hidden">
-                                                <div className="px-3 py-2 border-b border-[#e5e7eb] text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium flex items-center gap-1.5">
+                                                <div className="px-3 py-2 border-b border-[#e5e7eb] text-[10px] tracking-[1.2px] uppercase text-[#4b5563] font-medium flex items-center gap-1.5">
                                                     <FileText size={11} /> Attached Documents
                                                 </div>
                                                 {docs.map(doc => (
@@ -1896,18 +1874,18 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <div className="text-[12px] font-medium text-black truncate">{doc.name}</div>
-                                                            <div className="text-[10px] text-[#9ca3af]">
+                                                            <div className="text-[10px] text-[#6b7280]">
                                                                 {doc.uploader?.name ?? 'Team'} · {fmtDate(doc.created_at)} {doc.file_size ? `· ${doc.file_size}` : ''}
                                                             </div>
                                                         </div>
-                                                        <button onClick={() => setPreviewDoc(doc)} className="inline-flex items-center gap-1 text-[11px] text-[#6b7280] hover:text-black transition-colors px-2 py-1 rounded-md border border-[#e5e7eb] hover:bg-white">
+                                                        <button onClick={() => setPreviewDoc(doc)} className="inline-flex items-center gap-1 text-[11px] text-[#4b5563] hover:text-black transition-colors px-2 py-1 rounded-md border border-[#e5e7eb] hover:bg-white">
                                                             <Eye size={11} /> View
                                                         </button>
-                                                        <a href={`/documents/${doc.id}/download`} className="inline-flex items-center gap-1 text-[11px] text-[#6b7280] hover:text-black transition-colors px-2 py-1 rounded-md border border-[#e5e7eb] hover:bg-white">
+                                                        <a href={`/documents/${doc.id}/download`} className="inline-flex items-center gap-1 text-[11px] text-[#4b5563] hover:text-black transition-colors px-2 py-1 rounded-md border border-[#e5e7eb] hover:bg-white">
                                                             <Download size={11} /> Download
                                                         </a>
                                                         {canManage && (
-                                                            <button onClick={() => deleteDoc(doc)} className="p-1 rounded-md text-[#d1d5db] hover:text-red-400 transition-colors">
+                                                            <button onClick={() => deleteDoc(doc)} className="p-1 rounded-md text-[#6b7280] hover:text-red-400 transition-colors">
                                                                 <Trash2 size={12} />
                                                             </button>
                                                         )}
@@ -1918,7 +1896,7 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                                     )}
                                     {isExpanded && docs.length === 0 && (
                                         <div className="px-4 pb-3 pt-0">
-                                            <div className="ml-8 text-[12px] text-[#9ca3af] flex items-center gap-1.5 py-2">
+                                            <div className="ml-8 text-[12px] text-[#6b7280] flex items-center gap-1.5 py-2">
                                                 <FileText size={11} /> No documents attached
                                                 {canManage && (
                                                     <button
@@ -1946,35 +1924,25 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                         <FG label="Task Title *"><input className={inputCls} value={data.title} onChange={e => setData('title', e.target.value)} placeholder="What needs to be done?" /></FG>
                         <div className="grid grid-cols-2 gap-3">
                             <FG label="Assignee">
-                                <select className={inputCls} value={data.assignee_id} onChange={e => setData('assignee_id', e.target.value)}>
-                                    <option value="">Unassigned</option>
-                                    {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>)}
-                                </select>
+                                <Select value={data.assignee_id} onChange={v => setData('assignee_id', v)} placeholder="Unassigned" clearable options={teamMembers.map(m => ({ value: m.id, label: `${m.name}${m.role ? ` — ${m.role}` : ''}` }))} />
                             </FG>
                             <FG label="Due Date"><input className={inputCls} type="date" value={data.due_date} onChange={e => setData('due_date', e.target.value)} /></FG>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <FG label="Priority">
-                                <select className={inputCls} value={data.priority} onChange={e => setData('priority', e.target.value)}>
-                                    {['high','medium','low'].map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase()+p.slice(1)}</option>)}
-                                </select>
+                                <Select value={data.priority} onChange={v => setData('priority', v)} options={['high','medium','low'].map(p => ({ value: p, label: p.charAt(0).toUpperCase()+p.slice(1) }))} />
                             </FG>
                             <FG label="Status">
-                                <select className={inputCls} value={data.status} onChange={e => setData('status', e.target.value)}>
-                                    {[['not-started','Not Started'],['in-progress','In Progress'],['review','Review'],['pending-approval','Pending Approval'],['completed','Completed']].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
-                                </select>
+                                <Select value={data.status} onChange={v => setData('status', v)} options={[['not-started','Not Started'],['in-progress','In Progress'],['review','Review'],['pending-approval','Pending Approval'],['completed','Completed']].map(([v,l]) => ({ value: v, label: l }))} />
                             </FG>
                         </div>
                         <FG label="Category">
                             {categoryOptions.length > 0 ? (
-                                <select className={inputCls} value={data.category} onChange={e => setData('category', e.target.value)}>
-                                    {!categoryOptions.includes(data.category) && <option value={data.category}>{data.category}</option>}
-                                    {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
+                                <Select value={data.category} onChange={v => setData('category', v)} options={[...(!categoryOptions.includes(data.category) ? [{ value: data.category, label: data.category }] : []), ...categoryOptions.map(c => ({ value: c, label: c }))]} />
                             ) : (
                                 <input className={inputCls} value={data.category} onChange={e => setData('category', e.target.value)} placeholder="e.g. Deliverable, Client Approval, Milestone" />
                             )}
-                            <p className="text-[11px] text-[#9ca3af] mt-1.5">Manage categories in Settings → Task Categories.</p>
+                            <p className="text-[11px] text-[#6b7280] mt-1.5">Manage categories in Settings → Task Categories.</p>
                         </FG>
                     </div>
                 </Modal>
@@ -1986,31 +1954,21 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                         <FG label="Task Title *" error={editForm.errors.title}><input className={inputCls} value={editForm.data.title} onChange={e => editForm.setData('title', e.target.value)} placeholder="What needs to be done?" /></FG>
                         <div className="grid grid-cols-2 gap-3">
                             <FG label="Assignee">
-                                <select className={inputCls} value={editForm.data.assignee_id} onChange={e => editForm.setData('assignee_id', e.target.value)}>
-                                    <option value="">Unassigned</option>
-                                    {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>)}
-                                </select>
+                                <Select value={editForm.data.assignee_id} onChange={v => editForm.setData('assignee_id', v)} placeholder="Unassigned" clearable options={teamMembers.map(m => ({ value: m.id, label: `${m.name}${m.role ? ` — ${m.role}` : ''}` }))} />
                             </FG>
                             <FG label="Due Date"><input className={inputCls} type="date" value={editForm.data.due_date} onChange={e => editForm.setData('due_date', e.target.value)} /></FG>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <FG label="Priority">
-                                <select className={inputCls} value={editForm.data.priority} onChange={e => editForm.setData('priority', e.target.value)}>
-                                    {['high','medium','low'].map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase()+p.slice(1)}</option>)}
-                                </select>
+                                <Select value={editForm.data.priority} onChange={v => editForm.setData('priority', v)} options={['high','medium','low'].map(p => ({ value: p, label: p.charAt(0).toUpperCase()+p.slice(1) }))} />
                             </FG>
                             <FG label="Status">
-                                <select className={inputCls} value={editForm.data.status} onChange={e => editForm.setData('status', e.target.value)}>
-                                    {[['not-started','Not Started'],['in-progress','In Progress'],['review','Review'],['pending-approval','Pending Approval'],['completed','Completed']].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
-                                </select>
+                                <Select value={editForm.data.status} onChange={v => editForm.setData('status', v)} options={[['not-started','Not Started'],['in-progress','In Progress'],['review','Review'],['pending-approval','Pending Approval'],['completed','Completed']].map(([v,l]) => ({ value: v, label: l }))} />
                             </FG>
                         </div>
                         <FG label="Category">
                             {categoryOptions.length > 0 ? (
-                                <select className={inputCls} value={editForm.data.category} onChange={e => editForm.setData('category', e.target.value)}>
-                                    {!categoryOptions.includes(editForm.data.category) && editForm.data.category && <option value={editForm.data.category}>{editForm.data.category}</option>}
-                                    {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
+                                <Select value={editForm.data.category} onChange={v => editForm.setData('category', v)} options={[...((!categoryOptions.includes(editForm.data.category) && editForm.data.category) ? [{ value: editForm.data.category, label: editForm.data.category }] : []), ...categoryOptions.map(c => ({ value: c, label: c }))]} />
                             ) : (
                                 <input className={inputCls} value={editForm.data.category} onChange={e => editForm.setData('category', e.target.value)} placeholder="e.g. Deliverable, Client Approval, Milestone" />
                             )}
@@ -2024,11 +1982,9 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                     <div className="space-y-4 pb-2">
                         <FG label="Document Name *"><input className={inputCls} value={docForm.data.name} onChange={e => docForm.setData('name', e.target.value)} placeholder="e.g. Final Mockup, Brand Guidelines" /></FG>
                         <FG label="Document Type">
-                            <select className={inputCls} value={docForm.data.type} onChange={e => docForm.setData('type', e.target.value)}>
-                                {['contract','brief','report','asset','other'].map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
-                            </select>
+                            <Select value={docForm.data.type} onChange={v => docForm.setData('type', v)} options={['contract','brief','report','asset','other'].map(t => ({ value: t, label: t.charAt(0).toUpperCase()+t.slice(1) }))} />
                         </FG>
-                        <div className="border-2 border-dashed border-[#d1d5db] rounded-xl p-8 text-center text-[#6b7280]">
+                        <div className="border-2 border-dashed border-[#d1d5db] rounded-xl p-8 text-center text-[#4b5563]">
                             <input type="file" onChange={e => docForm.setData('file', e.target.files[0])} className="hidden" id="task-file-upload" />
                             <label htmlFor="task-file-upload" className="cursor-pointer">
                                 <div className="text-3xl mb-2">📎</div>
@@ -2049,7 +2005,7 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
 function Section({ title, children }) {
     return (
         <div>
-            <div className="text-[10px] tracking-[1.5px] uppercase text-[#6b7280] mb-2">{title}</div>
+            <div className="text-[10px] tracking-[1.5px] uppercase text-[#4b5563] mb-2">{title}</div>
             {children}
         </div>
     );
@@ -2057,6 +2013,7 @@ function Section({ title, children }) {
 
 // ── BILLS TAB (Vendor/Contractor Invoices) ───────────────────────────────────
 function BillsTab({ project, canManage, fmt }) {
+    const confirm = useConfirm();
     const [showModal, setShowModal] = useState(false);
     const [editBill, setEditBill] = useState(null);
     const bills = project.bills ?? [];
@@ -2108,8 +2065,8 @@ function BillsTab({ project, canManage, fmt }) {
         router.patch(route('projects.bills.update', [project.id, bill.id]), { status });
     };
 
-    const deleteBill = (bill) => {
-        if (confirm('Delete this bill?')) {
+    const deleteBill = async (bill) => {
+        if (await confirm({ title: 'Delete this bill?', message: 'This vendor bill will be permanently removed.', danger: true })) {
             router.delete(route('projects.bills.destroy', [project.id, bill.id]));
         }
     };
@@ -2128,12 +2085,12 @@ function BillsTab({ project, canManage, fmt }) {
                 {[
                     { l: 'Total Bills', v: fmt(totalBills), icon: <Receipt size={16} />, bg: 'bg-indigo-50 border-indigo-100', iconC: 'text-indigo-500', textC: 'text-indigo-700' },
                     { l: 'Paid', v: fmt(totalPaid), icon: <Check size={16} />, bg: 'bg-emerald-50 border-emerald-100', iconC: 'text-emerald-500', textC: 'text-emerald-700' },
-                    { l: 'Pending', v: fmt(totalPending), icon: <Clock size={16} />, bg: totalPending > 0 ? 'bg-amber-50 border-amber-100' : 'bg-gray-50 border-gray-100', iconC: totalPending > 0 ? 'text-amber-500' : 'text-gray-400', textC: totalPending > 0 ? 'text-amber-700' : 'text-gray-600' },
+                    { l: 'Pending', v: fmt(totalPending), icon: <Clock size={16} />, bg: totalPending > 0 ? 'bg-amber-50 border-amber-100' : 'bg-gray-50 border-gray-100', iconC: totalPending > 0 ? 'text-amber-500' : 'text-gray-600', textC: totalPending > 0 ? 'text-amber-700' : 'text-gray-600' },
                 ].map(({ l, v, icon, bg, iconC, textC }) => (
                     <div key={l} className={`${bg} border rounded-xl p-4 flex items-center gap-3`}>
                         <div className={`w-9 h-9 rounded-lg bg-white flex items-center justify-center ${iconC} shadow-sm`}>{icon}</div>
                         <div>
-                            <div className="text-[10px] tracking-[1.5px] uppercase text-[#6b7280] font-medium">{l}</div>
+                            <div className="text-[10px] tracking-[1.5px] uppercase text-[#4b5563] font-medium">{l}</div>
                             <div className={`text-[20px] font-bold ${textC} leading-tight`}>{v}</div>
                         </div>
                     </div>
@@ -2141,10 +2098,10 @@ function BillsTab({ project, canManage, fmt }) {
             </div>
 
             {bills.length === 0 && !showModal && (
-                <div className="text-center py-14 text-[#6b7280]">
+                <div className="text-center py-14 text-[#4b5563]">
                     <div className="mb-4 flex justify-center"><div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center"><Receipt size={24} className="text-indigo-400" /></div></div>
                     <div className="text-[14px] font-semibold text-black mb-1">No bills yet</div>
-                    <div className="text-[13px] text-[#6b7280] mb-4">Track invoices from vendors and contractors</div>
+                    <div className="text-[13px] text-[#4b5563] mb-4">Track invoices from vendors and contractors</div>
                     {canManage && <Btn primary onClick={() => setShowModal(true)}><Plus size={15} /> Add First Bill</Btn>}
                 </div>
             )}
@@ -2157,31 +2114,31 @@ function BillsTab({ project, canManage, fmt }) {
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2.5 mb-0.5">
                                     {bill.vendor && <span className="text-[13px] font-semibold text-black">{bill.vendor.name}</span>}
-                                    {bill.number && <span className="text-[12px] font-mono text-[#6b7280]">#{bill.number}</span>}
+                                    {bill.number && <span className="text-[12px] font-mono text-[#4b5563]">#{bill.number}</span>}
                                     <Badge status={bill.status} />
                                     {bill.category && <span className="text-[10px] px-2 py-0.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-500 font-medium">{bill.category}</span>}
                                 </div>
-                                <div className="text-[12px] text-[#6b7280]">
+                                <div className="text-[12px] text-[#4b5563]">
                                     {bill.description}
                                     {bill.due_date && <span> · Due {fmtDate(bill.due_date)}</span>}
                                 </div>
                             </div>
                             <div className="text-right flex-shrink-0 ml-4">
                                 <div className="text-[18px] font-bold text-black">{fmt(bill.amount)}</div>
-                                <div className="text-[11px] text-[#9ca3af]">{fmtDate(bill.date)}</div>
+                                <div className="text-[11px] text-[#6b7280]">{fmtDate(bill.date)}</div>
                             </div>
                         </div>
 
                         {/* File */}
                         {bill.file_path && (
                             <div className="flex items-center gap-2 mb-3 bg-[#fafbfc] border border-[#e5e7eb] rounded-lg px-3 py-2">
-                                <FileText size={14} className="text-[#6b7280]" />
-                                <span className="text-[12px] text-[#4b5563] flex-1">{bill.file_name}</span>
+                                <FileText size={14} className="text-[#4b5563]" />
+                                <span className="text-[12px] text-[#374151] flex-1">{bill.file_name}</span>
                                 <a href={`/storage/${bill.file_path}`} target="_blank" className="text-[12px] text-[#4f6df5] font-medium">View</a>
                             </div>
                         )}
 
-                        {bill.notes && <div className="text-[12px] text-[#6b7280] mb-3 italic">{bill.notes}</div>}
+                        {bill.notes && <div className="text-[12px] text-[#4b5563] mb-3 italic">{bill.notes}</div>}
 
                         {/* Actions */}
                         {canManage && (
@@ -2202,8 +2159,8 @@ function BillsTab({ project, canManage, fmt }) {
                                         </a>
                                     </>
                                 )}
-                                <button onClick={() => openEdit(bill)} className="text-[#9ca3af] hover:text-[#4f6df5] transition-colors p-1.5 ml-auto" title="Edit"><Pencil size={14} /></button>
-                                <button onClick={() => deleteBill(bill)} className="text-[#9ca3af] hover:text-red-500 transition-colors p-1.5" title="Delete"><Trash2 size={14} /></button>
+                                <button onClick={() => openEdit(bill)} className="text-[#6b7280] hover:text-[#4f6df5] transition-colors p-1.5 ml-auto" title="Edit"><Pencil size={14} /></button>
+                                <button onClick={() => deleteBill(bill)} className="text-[#6b7280] hover:text-red-500 transition-colors p-1.5" title="Delete"><Trash2 size={14} /></button>
                             </div>
                         )}
                     </div>
@@ -2219,19 +2176,14 @@ function BillsTab({ project, canManage, fmt }) {
                     <div className="space-y-4 pb-2">
                         <div className="grid grid-cols-2 gap-3">
                             <FG label="Vendor / Contractor" error={errors.client_id}>
-                                <select className={inputCls} value={data.client_id} onChange={e => setData('client_id', e.target.value)}>
-                                    <option value="">Select...</option>
-                                    {vendors.map(v => <option key={v.id} value={v.id}>{v.name} ({v.type})</option>)}
-                                </select>
+                                <Select value={data.client_id} onChange={v => setData('client_id', v)} placeholder="Select..." clearable options={vendors.map(v => ({ value: v.id, label: `${v.name} (${v.type})` }))} />
                             </FG>
                             <FG label="Their Invoice #"><input className={inputCls} value={data.number} onChange={e => setData('number', e.target.value)} placeholder="e.g. VND-001" /></FG>
                         </div>
                         <div className="grid grid-cols-3 gap-3">
                             <FG label="Amount *" error={errors.amount}><input className={inputCls} type="number" step="0.01" value={data.amount} onChange={e => setData('amount', e.target.value)} placeholder="0.00" /></FG>
                             <FG label="Currency">
-                                <select className={inputCls} value={data.currency} onChange={e => setData('currency', e.target.value)}>
-                                    {['USD','PHP','JPY','EUR','GBP','SGD','AUD','THB','VND','IDR','MYR'].map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
+                                <Select value={data.currency} onChange={v => setData('currency', v)} options={['USD','PHP','JPY','EUR','GBP','SGD','AUD','THB','VND','IDR','MYR'].map(c => ({ value: c, label: c }))} />
                             </FG>
                             <FG label="Category"><input className={inputCls} value={data.category} onChange={e => setData('category', e.target.value)} placeholder="e.g. Design, Dev" /></FG>
                         </div>
@@ -2242,7 +2194,7 @@ function BillsTab({ project, canManage, fmt }) {
                         <FG label="Description"><input className={inputCls} value={data.description} onChange={e => setData('description', e.target.value)} placeholder="What is this bill for?" /></FG>
                         <FG label="Notes"><textarea className={`${inputCls} resize-y`} rows={2} value={data.notes} onChange={e => setData('notes', e.target.value)} placeholder="Payment terms, bank details, etc." /></FG>
                         <FG label="Attach Invoice File">
-                            <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setData('file', e.target.files[0])} className="text-[13px] text-[#6b7280]" />
+                            <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setData('file', e.target.files[0])} className="text-[13px] text-[#4b5563]" />
                         </FG>
                     </div>
                 </Modal>
@@ -2257,19 +2209,14 @@ function BillsTab({ project, canManage, fmt }) {
                     <div className="space-y-4 pb-2">
                         <div className="grid grid-cols-2 gap-3">
                             <FG label="Vendor / Contractor" error={editForm.errors.client_id}>
-                                <select className={inputCls} value={editForm.data.client_id} onChange={e => editForm.setData('client_id', e.target.value)}>
-                                    <option value="">Select...</option>
-                                    {vendors.map(v => <option key={v.id} value={v.id}>{v.name} ({v.type})</option>)}
-                                </select>
+                                <Select value={editForm.data.client_id} onChange={v => editForm.setData('client_id', v)} placeholder="Select..." clearable options={vendors.map(v => ({ value: v.id, label: `${v.name} (${v.type})` }))} />
                             </FG>
                             <FG label="Their Invoice #"><input className={inputCls} value={editForm.data.number} onChange={e => editForm.setData('number', e.target.value)} placeholder="e.g. VND-001" /></FG>
                         </div>
                         <div className="grid grid-cols-3 gap-3">
                             <FG label="Amount *" error={editForm.errors.amount}><input className={inputCls} type="number" step="0.01" value={editForm.data.amount} onChange={e => editForm.setData('amount', e.target.value)} placeholder="0.00" /></FG>
                             <FG label="Currency">
-                                <select className={inputCls} value={editForm.data.currency} onChange={e => editForm.setData('currency', e.target.value)}>
-                                    {['USD','PHP','JPY','EUR','GBP','SGD','AUD','THB','VND','IDR','MYR'].map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
+                                <Select value={editForm.data.currency} onChange={v => editForm.setData('currency', v)} options={['USD','PHP','JPY','EUR','GBP','SGD','AUD','THB','VND','IDR','MYR'].map(c => ({ value: c, label: c }))} />
                             </FG>
                             <FG label="Category"><input className={inputCls} value={editForm.data.category} onChange={e => editForm.setData('category', e.target.value)} placeholder="e.g. Design, Dev" /></FG>
                         </div>
@@ -2280,8 +2227,8 @@ function BillsTab({ project, canManage, fmt }) {
                         <FG label="Description"><input className={inputCls} value={editForm.data.description} onChange={e => editForm.setData('description', e.target.value)} placeholder="What is this bill for?" /></FG>
                         <FG label="Notes"><textarea className={`${inputCls} resize-y`} rows={2} value={editForm.data.notes} onChange={e => editForm.setData('notes', e.target.value)} placeholder="Payment terms, bank details, etc." /></FG>
                         <FG label="Replace Invoice File">
-                            <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => editForm.setData('file', e.target.files[0])} className="text-[13px] text-[#6b7280]" />
-                            {editBill.file_name && !editForm.data.file && <div className="text-[11px] text-[#9ca3af] mt-1">Current: {editBill.file_name}</div>}
+                            <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => editForm.setData('file', e.target.files[0])} className="text-[13px] text-[#4b5563]" />
+                            {editBill.file_name && !editForm.data.file && <div className="text-[11px] text-[#6b7280] mt-1">Current: {editBill.file_name}</div>}
                         </FG>
                     </div>
                 </Modal>
@@ -2292,6 +2239,7 @@ function BillsTab({ project, canManage, fmt }) {
 
 // ── PAYROLL TAB ──────────────────────────────────────────────────────────────
 function PayrollTab({ project, canManage, fmt }) {
+    const confirm = useConfirm();
     const [showModal, setShowModal] = useState(false);
     const [editEntry, setEditEntry] = useState(null);
     const entries = project.payroll ?? [];
@@ -2346,7 +2294,7 @@ function PayrollTab({ project, canManage, fmt }) {
     };
 
     const markPaid = (entry) => router.patch(route('projects.payroll.update', [project.id, entry.id]), { status: 'paid' });
-    const deleteEntry = (entry) => { if (confirm('Delete this payroll entry?')) router.delete(route('projects.payroll.destroy', [project.id, entry.id])); };
+    const deleteEntry = async (entry) => { if (await confirm({ title: 'Delete this payroll entry?', message: 'This entry will be permanently removed.', danger: true })) router.delete(route('projects.payroll.destroy', [project.id, entry.id])); };
 
     return (
         <>
@@ -2364,7 +2312,7 @@ function PayrollTab({ project, canManage, fmt }) {
                     <div key={l} className={`${bg} border rounded-xl p-4 flex items-center gap-3`}>
                         <div className={`w-9 h-9 rounded-lg bg-white flex items-center justify-center ${iconC} shadow-sm`}>{icon}</div>
                         <div>
-                            <div className="text-[10px] tracking-[1.5px] uppercase text-[#6b7280] font-medium">{l}</div>
+                            <div className="text-[10px] tracking-[1.5px] uppercase text-[#4b5563] font-medium">{l}</div>
                             <div className={`text-[20px] font-bold ${textC} leading-tight`}>{v}</div>
                         </div>
                     </div>
@@ -2372,10 +2320,10 @@ function PayrollTab({ project, canManage, fmt }) {
             </div>
 
             {entries.length === 0 && !showModal && (
-                <div className="text-center py-14 text-[#6b7280]">
+                <div className="text-center py-14 text-[#4b5563]">
                     <div className="mb-4 flex justify-center"><div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center"><Users size={24} className="text-indigo-400" /></div></div>
                     <div className="text-[14px] font-semibold text-black mb-1">No payroll entries</div>
-                    <div className="text-[13px] text-[#6b7280] mb-4">Track team member costs for this project</div>
+                    <div className="text-[13px] text-[#4b5563] mb-4">Track team member costs for this project</div>
                     {canManage && <Btn primary onClick={() => setShowModal(true)}><Plus size={15} /> Add First Entry</Btn>}
                 </div>
             )}
@@ -2391,8 +2339,8 @@ function PayrollTab({ project, canManage, fmt }) {
                                     <Badge status={entry.status} />
                                     <span className="text-[11px] px-2 py-0.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-500 font-medium">{entry.pay_type}</span>
                                 </div>
-                                <div className="text-[12px] text-[#6b7280] mt-0.5">{entry.period}{entry.hours ? ` · ${entry.hours} hrs @ ${fmt(entry.rate)}/hr` : ''}</div>
-                                {entry.notes && <div className="text-[12px] text-[#9ca3af] italic mt-1">{entry.notes}</div>}
+                                <div className="text-[12px] text-[#4b5563] mt-0.5">{entry.period}{entry.hours ? ` · ${entry.hours} hrs @ ${fmt(entry.rate)}/hr` : ''}</div>
+                                {entry.notes && <div className="text-[12px] text-[#6b7280] italic mt-1">{entry.notes}</div>}
                             </div>
                             <div className="text-right flex-shrink-0 ml-4">
                                 <div className="text-[18px] font-bold text-black">{fmt(entry.amount)}</div>
@@ -2408,8 +2356,8 @@ function PayrollTab({ project, canManage, fmt }) {
                                     </span>
                                 )}
                                 <div className="flex-1" />
-                                <button onClick={() => openEdit(entry)} className="text-[#9ca3af] hover:text-[#4f6df5] transition-colors p-1.5" title="Edit"><Pencil size={14} /></button>
-                                <button onClick={() => deleteEntry(entry)} className="text-[#9ca3af] hover:text-red-500 transition-colors p-1.5" title="Delete"><Trash2 size={14} /></button>
+                                <button onClick={() => openEdit(entry)} className="text-[#6b7280] hover:text-[#4f6df5] transition-colors p-1.5" title="Edit"><Pencil size={14} /></button>
+                                <button onClick={() => deleteEntry(entry)} className="text-[#6b7280] hover:text-red-500 transition-colors p-1.5" title="Delete"><Trash2 size={14} /></button>
                             </div>
                         )}
                     </div>
@@ -2425,20 +2373,17 @@ function PayrollTab({ project, canManage, fmt }) {
                     <div className="space-y-4 pb-2">
                         <div className="grid grid-cols-2 gap-3">
                             <FG label="Team Member *">
-                                <select className={inputCls} value={data.team_member_id} onChange={e => handleMemberSelect(e.target.value)}>
-                                    <option value="">Select...</option>
-                                    {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>)}
-                                </select>
+                                <Select value={data.team_member_id} onChange={v => handleMemberSelect(v)} placeholder="Select..." clearable options={teamMembers.map(m => ({ value: m.id, label: `${m.name}${m.role ? ` — ${m.role}` : ''}` }))} />
                             </FG>
                             <FG label="Period *"><input className={inputCls} value={data.period} onChange={e => setData('period', e.target.value)} placeholder="e.g. Apr 2026, Sprint 3" /></FG>
                         </div>
                         <div className="grid grid-cols-3 gap-3">
                             <FG label="Pay Type">
-                                <select className={inputCls} value={data.pay_type} onChange={e => { setData('pay_type', e.target.value); setData('amount', computeAmount(e.target.value, data.rate, data.hours)); }}>
-                                    <option value="monthly">Monthly</option>
-                                    <option value="hourly">Hourly</option>
-                                    <option value="fixed">Fixed</option>
-                                </select>
+                                <Select value={data.pay_type} onChange={v => { setData('pay_type', v); setData('amount', computeAmount(v, data.rate, data.hours)); }} options={[
+                                    { value: 'monthly', label: 'Monthly' },
+                                    { value: 'hourly', label: 'Hourly' },
+                                    { value: 'fixed', label: 'Fixed' },
+                                ]} />
                             </FG>
                             <FG label="Rate"><input className={inputCls} type="number" step="0.01" value={data.rate} onChange={e => { setData('rate', e.target.value); setData('amount', computeAmount(data.pay_type, e.target.value, data.hours)); }} placeholder="0.00" /></FG>
                             {data.pay_type === 'hourly' && (
@@ -2446,9 +2391,7 @@ function PayrollTab({ project, canManage, fmt }) {
                             )}
                             {data.pay_type !== 'hourly' && (
                                 <FG label="Currency">
-                                    <select className={inputCls} value={data.currency} onChange={e => setData('currency', e.target.value)}>
-                                        {['PHP','USD','JPY','EUR','GBP','SGD','AUD'].map(c => <option key={c} value={c}>{c}</option>)}
-                                    </select>
+                                    <Select value={data.currency} onChange={v => setData('currency', v)} options={['PHP','USD','JPY','EUR','GBP','SGD','AUD'].map(c => ({ value: c, label: c }))} />
                                 </FG>
                             )}
                         </div>
@@ -2469,29 +2412,24 @@ function PayrollTab({ project, canManage, fmt }) {
                     <div className="space-y-4 pb-2">
                         <div className="grid grid-cols-2 gap-3">
                             <FG label="Team Member *">
-                                <select className={inputCls} value={editForm.data.team_member_id} onChange={e => editForm.setData('team_member_id', e.target.value)}>
-                                    <option value="">Select...</option>
-                                    {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>)}
-                                </select>
+                                <Select value={editForm.data.team_member_id} onChange={v => editForm.setData('team_member_id', v)} placeholder="Select..." clearable options={teamMembers.map(m => ({ value: m.id, label: `${m.name}${m.role ? ` — ${m.role}` : ''}` }))} />
                             </FG>
                             <FG label="Period *"><input className={inputCls} value={editForm.data.period} onChange={e => editForm.setData('period', e.target.value)} placeholder="e.g. Apr 2026, Sprint 3" /></FG>
                         </div>
                         <div className="grid grid-cols-3 gap-3">
                             <FG label="Pay Type">
-                                <select className={inputCls} value={editForm.data.pay_type} onChange={e => { editForm.setData('pay_type', e.target.value); editForm.setData('amount', computeAmount(e.target.value, editForm.data.rate, editForm.data.hours)); }}>
-                                    <option value="monthly">Monthly</option>
-                                    <option value="hourly">Hourly</option>
-                                    <option value="fixed">Fixed</option>
-                                </select>
+                                <Select value={editForm.data.pay_type} onChange={v => { editForm.setData('pay_type', v); editForm.setData('amount', computeAmount(v, editForm.data.rate, editForm.data.hours)); }} options={[
+                                    { value: 'monthly', label: 'Monthly' },
+                                    { value: 'hourly', label: 'Hourly' },
+                                    { value: 'fixed', label: 'Fixed' },
+                                ]} />
                             </FG>
                             <FG label="Rate"><input className={inputCls} type="number" step="0.01" value={editForm.data.rate} onChange={e => { editForm.setData('rate', e.target.value); editForm.setData('amount', computeAmount(editForm.data.pay_type, e.target.value, editForm.data.hours)); }} placeholder="0.00" /></FG>
                             {editForm.data.pay_type === 'hourly' ? (
                                 <FG label="Hours"><input className={inputCls} type="number" step="0.5" value={editForm.data.hours} onChange={e => { editForm.setData('hours', e.target.value); editForm.setData('amount', computeAmount(editForm.data.pay_type, editForm.data.rate, e.target.value)); }} placeholder="0" /></FG>
                             ) : (
                                 <FG label="Currency">
-                                    <select className={inputCls} value={editForm.data.currency} onChange={e => editForm.setData('currency', e.target.value)}>
-                                        {['PHP','USD','JPY','EUR','GBP','SGD','AUD'].map(c => <option key={c} value={c}>{c}</option>)}
-                                    </select>
+                                    <Select value={editForm.data.currency} onChange={v => editForm.setData('currency', v)} options={['PHP','USD','JPY','EUR','GBP','SGD','AUD'].map(c => ({ value: c, label: c }))} />
                                 </FG>
                             )}
                         </div>
@@ -2506,8 +2444,173 @@ function PayrollTab({ project, canManage, fmt }) {
     );
 }
 
+// ── TIME TRACKING TAB ─────────────────────────────────────────────────────────
+function TimeTab({ project, canManage }) {
+    const confirm = useConfirm();
+    const { props } = usePage();
+    const teamMembers = props.teamMembers ?? [];
+    const tasks = project.tasks ?? [];
+    const entries = project.timeEntries ?? [];
+
+    const [showModal, setShowModal] = useState(false);
+
+    const totalHours = entries.reduce((s, e) => s + parseFloat(e.hours ?? 0), 0);
+    const billableHours = entries.filter(e => e.billable).reduce((s, e) => s + parseFloat(e.hours ?? 0), 0);
+    const fmtHrs = (h) => `${(+h).toLocaleString(undefined, { maximumFractionDigits: 2 })}h`;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const { data, setData, post, processing, reset, errors } = useForm({
+        date: today, hours: '', team_member_id: '', task_id: '', description: '', billable: true,
+    });
+
+    const submit = () => {
+        post(route('projects.time.store', project.id), { onSuccess: () => { setShowModal(false); reset(); setData('date', today); } });
+    };
+
+    const deleteEntry = async (entry) => {
+        if (await confirm({ title: 'Delete this time entry?', message: `${fmtHrs(entry.hours)} logged will be removed.`, danger: true }))
+            router.delete(route('projects.time.destroy', [project.id, entry.id]));
+    };
+
+    // Group entries by date for a clean timeline.
+    const byDate = entries.reduce((acc, e) => { (acc[e.date] ??= []).push(e); return acc; }, {});
+    const dates = Object.keys(byDate).sort((a, b) => new Date(b) - new Date(a));
+
+    return (
+        <>
+            <div className="flex justify-between items-center mb-5">
+                <h3 className="text-[17px] font-bold">Time Tracking</h3>
+                {canManage && <Btn primary sm onClick={() => setShowModal(true)}><Plus size={13} /> Log Time</Btn>}
+            </div>
+
+            {/* Summary */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+                {[
+                    { l: 'Total Hours', v: fmtHrs(totalHours), icon: <Clock size={16} />, bg: 'bg-indigo-50 border-indigo-100', iconC: 'text-indigo-500', textC: 'text-indigo-700' },
+                    { l: 'Billable Hours', v: fmtHrs(billableHours), icon: <CircleDollarSign size={16} />, bg: 'bg-emerald-50 border-emerald-100', iconC: 'text-emerald-500', textC: 'text-emerald-700' },
+                ].map(({ l, v, icon, bg, iconC, textC }) => (
+                    <div key={l} className={`${bg} border rounded-xl p-4 flex items-center gap-3`}>
+                        <div className={`w-9 h-9 rounded-lg bg-white flex items-center justify-center ${iconC} shadow-sm`}>{icon}</div>
+                        <div>
+                            <div className="text-[10px] tracking-[1.5px] uppercase text-[#4b5563] font-medium">{l}</div>
+                            <div className={`text-[20px] font-bold ${textC} leading-tight`}>{v}</div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {entries.length === 0 && !showModal && (
+                <div className="text-center py-14 text-[#4b5563]">
+                    <div className="mb-4 flex justify-center"><div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center"><Clock size={24} className="text-indigo-400" /></div></div>
+                    <div className="text-[14px] font-semibold text-black mb-1">No time logged yet</div>
+                    <div className="text-[13px] text-[#4b5563] mb-4">Track hours worked on this project</div>
+                    {canManage && <Btn primary onClick={() => setShowModal(true)}><Plus size={15} /> Log First Entry</Btn>}
+                </div>
+            )}
+
+            {/* Entries grouped by date */}
+            <div className="space-y-5">
+                {dates.map(date => {
+                    const dayHours = byDate[date].reduce((s, e) => s + parseFloat(e.hours ?? 0), 0);
+                    return (
+                        <div key={date}>
+                            <div className="flex items-center justify-between mb-2 px-1">
+                                <span className="text-[11px] tracking-[1px] uppercase text-[#4b5563] font-semibold">{fmtDate(date)}</span>
+                                <span className="text-[11px] text-[#6b7280] font-medium">{fmtHrs(dayHours)}</span>
+                            </div>
+                            <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
+                                {byDate[date].map(entry => (
+                                    <div key={entry.id} className="group flex items-center gap-3 px-4 py-3 border-b border-[#f0f0f0] last:border-b-0 hover:bg-[#fafbfc] transition-colors">
+                                        <div className="w-9 h-9 rounded-lg bg-indigo-50 text-[#4f6df5] flex items-center justify-center text-[12px] font-bold flex-shrink-0">
+                                            {fmtHrs(entry.hours)}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-[13px] font-medium text-black truncate">
+                                                {entry.description || entry.task?.title || 'Time entry'}
+                                            </div>
+                                            <div className="text-[11px] text-[#6b7280] flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                                {entry.team_member?.name && <span>{entry.team_member.name}</span>}
+                                                {entry.task?.title && <><span>·</span><span className="truncate">{entry.task.title}</span></>}
+                                            </div>
+                                        </div>
+                                        {entry.billable
+                                            ? <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex-shrink-0">Billable</span>
+                                            : <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-50 text-gray-700 border border-gray-200 flex-shrink-0">Non-billable</span>}
+                                        {canManage && (
+                                            <button onClick={() => deleteEntry(entry)} className="text-[#6b7280] hover:text-red-500 transition-colors p-1 opacity-0 group-hover:opacity-100 flex-shrink-0" title="Delete"><Trash2 size={14} /></button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Log Time Modal */}
+            {showModal && (
+                <Modal title="Log Time" subtitle={`For ${project.name}`} onClose={() => setShowModal(false)} footer={
+                    <><Btn ghost onClick={() => setShowModal(false)}><X size={13} /> Cancel</Btn>
+                    <Btn primary onClick={submit} disabled={processing || !data.hours}><Save size={13} /> Log Time</Btn></>
+                }>
+                    <div className="space-y-4 pb-2">
+                        <div className="grid grid-cols-2 gap-3">
+                            <FG label="Date *" error={errors.date}>
+                                <input type="date" className={inputCls} value={data.date} onChange={e => setData('date', e.target.value)} />
+                            </FG>
+                            <FG label="Hours *" error={errors.hours}>
+                                <input type="number" step="0.25" min="0" max="24" className={inputCls} value={data.hours} onChange={e => setData('hours', e.target.value)} placeholder="e.g. 2.5" />
+                            </FG>
+                        </div>
+                        <FG label="Team Member" error={errors.team_member_id}>
+                            <Select
+                                value={data.team_member_id}
+                                onChange={v => setData('team_member_id', v)}
+                                options={teamMembers.map(m => ({ value: m.id, label: m.name }))}
+                                placeholder="Select team member…"
+                                clearable
+                            />
+                        </FG>
+                        <FG label="Task (optional)" error={errors.task_id}>
+                            <Select
+                                value={data.task_id}
+                                onChange={v => setData('task_id', v)}
+                                options={tasks.map(t => ({ value: t.id, label: t.title }))}
+                                placeholder="No specific task"
+                                clearable
+                            />
+                        </FG>
+                        <FG label="Description" error={errors.description}>
+                            <input className={inputCls} value={data.description} onChange={e => setData('description', e.target.value)} placeholder="What did you work on?" />
+                        </FG>
+                        <button
+                            type="button"
+                            onClick={() => setData('billable', !data.billable)}
+                            className={`w-full flex items-center justify-between gap-3 rounded-xl border px-3.5 py-3 text-left transition-all ${data.billable ? 'border-[#4f6df5]/30 bg-indigo-50/40' : 'border-[#e5e7eb] bg-white hover:border-[#d1d5db]'}`}
+                        >
+                            <span className="flex items-center gap-2.5 min-w-0">
+                                <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${data.billable ? 'bg-[#4f6df5] text-white' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>
+                                    <CircleDollarSign size={15} />
+                                </span>
+                                <span className="min-w-0">
+                                    <span className="block text-[13px] font-medium text-black">Billable hours</span>
+                                    <span className="block text-[11px] text-[#6b7280]">{data.billable ? 'Counted toward client billing' : "Won't be billed to the client"}</span>
+                                </span>
+                            </span>
+                            <span className={`relative w-10 h-5 rounded-full flex-shrink-0 transition-all ${data.billable ? 'bg-[#4f6df5]' : 'bg-[#d1d5db]'}`}>
+                                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${data.billable ? 'left-[22px]' : 'left-0.5'}`} />
+                            </span>
+                        </button>
+                    </div>
+                </Modal>
+            )}
+        </>
+    );
+}
+
 // ── PAGES TAB ────────────────────────────────────────────────────────────────
 function PagesTab({ project, canManage }) {
+    const confirm = useConfirm();
     const [showEditor, setShowEditor] = useState(false);
     const [editingPage, setEditingPage] = useState(null);
     const [copied, setCopied] = useState(null);
@@ -2524,8 +2627,8 @@ function PagesTab({ project, canManage }) {
             onSuccess: () => { setDocModal(null); docForm.reset(); },
         });
     };
-    const deletePageDoc = (doc) => {
-        if (confirm('Delete this document?')) {
+    const deletePageDoc = async (doc) => {
+        if (await confirm({ title: 'Delete this document?', message: 'This file will be permanently removed.', danger: true })) {
             router.delete(route('projects.documents.destroy', [project.id, doc.id]));
         }
     };
@@ -2565,8 +2668,8 @@ function PagesTab({ project, canManage }) {
         }
     };
 
-    const deletePage = (page) => {
-        if (confirm(`Delete "${page.title}"?`)) {
+    const deletePage = async (page) => {
+        if (await confirm({ title: `Delete "${page.title}"?`, message: 'This page will be permanently removed.', danger: true })) {
             router.delete(route('projects.pages.destroy', [project.id, page.id]));
         }
     };
@@ -2587,7 +2690,7 @@ function PagesTab({ project, canManage }) {
                 <h3 className="text-[17px] font-bold">Pages</h3>
                 {canManage && (
                     <div className="flex gap-2">
-                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#4b5563] border border-[#d1d5db] hover:bg-gray-100 cursor-pointer transition-all">
+                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#374151] border border-[#d1d5db] hover:bg-gray-100 cursor-pointer transition-all">
                             <Upload size={13} /> Import HTML
                             <input type="file" accept=".html,.htm" className="hidden" onChange={importHtmlFile} />
                         </label>
@@ -2597,10 +2700,10 @@ function PagesTab({ project, canManage }) {
             </div>
 
             {pages.length === 0 && !showEditor && (
-                <div className="text-center py-14 text-[#6b7280]">
+                <div className="text-center py-14 text-[#4b5563]">
                     <div className="mb-4 flex justify-center"><div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center"><FileText size={24} className="text-indigo-400" /></div></div>
                     <div className="text-[14px] font-semibold text-black mb-1">No pages yet</div>
-                    <div className="text-[13px] text-[#6b7280] mb-4">Create pages to share meeting notes, specs, or updates</div>
+                    <div className="text-[13px] text-[#4b5563] mb-4">Create pages to share meeting notes, specs, or updates</div>
                     {canManage && <Btn primary onClick={openNew}><Plus size={15} /> Create First Page</Btn>}
                 </div>
             )}
@@ -2622,7 +2725,7 @@ function PagesTab({ project, canManage }) {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="text-[14px] font-bold text-black group-hover:text-[#4f6df5] transition-colors truncate">{page.title}</div>
-                                            <div className="text-[11px] text-[#9ca3af] mt-0.5 flex items-center gap-1.5">
+                                            <div className="text-[11px] text-[#6b7280] mt-0.5 flex items-center gap-1.5">
                                                 {page.creator?.name && <span>{page.creator.name}</span>}
                                                 {page.updated_at && <span>· {new Date(page.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
                                                 {isHtml && <span className="text-[9px] px-1.5 py-0.5 bg-violet-50 text-violet-500 rounded font-medium">HTML</span>}
@@ -2632,10 +2735,10 @@ function PagesTab({ project, canManage }) {
 
                                     {/* Content preview */}
                                     {page.content && !isHtml && (
-                                        <div className="text-[12px] text-[#6b7280] line-clamp-2 leading-relaxed mb-3" dangerouslySetInnerHTML={{ __html: page.content.replace(/<[^>]*>/g, ' ').slice(0, 150) }} />
+                                        <div className="text-[12px] text-[#4b5563] line-clamp-2 leading-relaxed mb-3" dangerouslySetInnerHTML={{ __html: page.content.replace(/<[^>]*>/g, ' ').slice(0, 150) }} />
                                     )}
                                     {isHtml && (
-                                        <div className="text-[12px] text-[#6b7280] mb-3 bg-[#fafbfc] rounded-lg px-3 py-2 border border-[#f0f0f0] font-mono line-clamp-2">Full HTML document with styles</div>
+                                        <div className="text-[12px] text-[#4b5563] mb-3 bg-[#fafbfc] rounded-lg px-3 py-2 border border-[#f0f0f0] font-mono line-clamp-2">Full HTML document with styles</div>
                                     )}
 
                                     {/* Share link */}
@@ -2651,18 +2754,18 @@ function PagesTab({ project, canManage }) {
                                     {/* Page Documents */}
                                     {(page.documents ?? []).length > 0 && (
                                         <div className="mb-3">
-                                            <div className="text-[10px] tracking-[1.2px] uppercase text-[#9ca3af] font-medium mb-1.5">Attached Documents</div>
+                                            <div className="text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-1.5">Attached Documents</div>
                                             <div className="space-y-1">
                                                 {page.documents.map(doc => (
                                                     <div key={doc.id} className="flex items-center gap-2 bg-[#f9fafb] border border-[#e5e7eb] rounded-lg px-2.5 py-1.5">
                                                         <span className="text-[13px]">{DOC_ICONS[doc.type] ?? '📁'}</span>
                                                         <div className="flex-1 min-w-0">
                                                             <div className="text-[11px] font-medium text-black truncate">{doc.name}</div>
-                                                            <div className="text-[9px] text-[#9ca3af]">{doc.uploader?.name ?? 'Team'} · {doc.file_size ?? ''}</div>
+                                                            <div className="text-[9px] text-[#6b7280]">{doc.uploader?.name ?? 'Team'} · {doc.file_size ?? ''}</div>
                                                         </div>
-                                                        <button onClick={() => setPreviewDoc(doc)} className="text-[#6b7280] hover:text-[#4f6df5] transition-colors"><Eye size={12} /></button>
-                                                        <a href={`/documents/${doc.id}/download`} className="text-[#6b7280] hover:text-black transition-colors"><Download size={12} /></a>
-                                                        {canManage && <button onClick={() => deletePageDoc(doc)} className="text-[#d1d5db] hover:text-red-400 transition-colors"><Trash2 size={12} /></button>}
+                                                        <button onClick={() => setPreviewDoc(doc)} className="text-[#4b5563] hover:text-[#4f6df5] transition-colors"><Eye size={12} /></button>
+                                                        <a href={`/documents/${doc.id}/download`} className="text-[#4b5563] hover:text-black transition-colors"><Download size={12} /></a>
+                                                        {canManage && <button onClick={() => deletePageDoc(doc)} className="text-[#6b7280] hover:text-red-400 transition-colors"><Trash2 size={12} /></button>}
                                                     </div>
                                                 ))}
                                             </div>
@@ -2686,7 +2789,7 @@ function PagesTab({ project, canManage }) {
                                                     {page.is_shared ? <><Lock size={12} /> Shared</> : 'Share'}
                                                 </Btn>
                                                 {!isHtml && <Btn ghost sm onClick={() => openEdit(page)}><Pencil size={13} /></Btn>}
-                                                <button onClick={() => deletePage(page)} className="text-[#9ca3af] hover:text-red-500 transition-colors p-1.5"><Trash2 size={14} /></button>
+                                                <button onClick={() => deletePage(page)} className="text-[#6b7280] hover:text-red-500 transition-colors p-1.5"><Trash2 size={14} /></button>
                                             </>
                                         )}
                                     </div>
@@ -2705,7 +2808,7 @@ function PagesTab({ project, canManage }) {
                             <input className={inputCls} value={data.title} onChange={e => setData('title', e.target.value)} placeholder="e.g. Meeting Notes — March 31" autoFocus />
                         </FG>
                     </div>
-                    <Suspense fallback={<div className="text-[13px] text-[#6b7280] p-4">Loading editor…</div>}>
+                    <Suspense fallback={<div className="text-[13px] text-[#4b5563] p-4">Loading editor…</div>}>
                         <RichEditor content={data.content} onChange={val => setData('content', val)} placeholder="Write your page content…" projectId={project.id} />
                     </Suspense>
                     <div className="flex justify-end gap-2 mt-4">
@@ -2723,11 +2826,9 @@ function PagesTab({ project, canManage }) {
                     <div className="space-y-4 pb-2">
                         <FG label="Document Name *"><input className={inputCls} value={docForm.data.name} onChange={e => docForm.setData('name', e.target.value)} placeholder="e.g. Meeting Notes PDF, Design Specs" /></FG>
                         <FG label="Document Type">
-                            <select className={inputCls} value={docForm.data.type} onChange={e => docForm.setData('type', e.target.value)}>
-                                {['contract','brief','report','asset','other'].map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
-                            </select>
+                            <Select value={docForm.data.type} onChange={v => docForm.setData('type', v)} options={['contract','brief','report','asset','other'].map(t => ({ value: t, label: t.charAt(0).toUpperCase()+t.slice(1) }))} />
                         </FG>
-                        <div className="border-2 border-dashed border-[#d1d5db] rounded-xl p-8 text-center text-[#6b7280]">
+                        <div className="border-2 border-dashed border-[#d1d5db] rounded-xl p-8 text-center text-[#4b5563]">
                             <input type="file" onChange={e => docForm.setData('file', e.target.files[0])} className="hidden" id="page-file-upload" />
                             <label htmlFor="page-file-upload" className="cursor-pointer">
                                 <div className="text-3xl mb-2">📎</div>
@@ -2761,10 +2862,10 @@ function ActivityTab({ activities = [] }) {
         <>
             <h3 className="text-[17px] font-bold mb-5">Activity</h3>
             {activities.length === 0 ? (
-                <div className="text-center py-14 text-[#6b7280]">
+                <div className="text-center py-14 text-[#4b5563]">
                     <div className="mb-4 flex justify-center"><div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center"><Clock size={24} className="text-indigo-400" /></div></div>
                     <div className="text-[14px] font-semibold text-black mb-1">No activity yet</div>
-                    <div className="text-[13px] text-[#6b7280]">Changes to tasks, invoices, proposals and more will show up here.</div>
+                    <div className="text-[13px] text-[#4b5563]">Changes to tasks, invoices, proposals and more will show up here.</div>
                 </div>
             ) : (
                 <div className="bg-white border border-[#e5e7eb] rounded-xl p-5">
@@ -2773,7 +2874,7 @@ function ActivityTab({ activities = [] }) {
                             <span className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${dotColor[a.event] ?? 'bg-gray-300'}`} />
                             <div className="flex-1 min-w-0 border-b border-[#f0f0f0] pb-3 last:border-b-0">
                                 <div className="text-[13px] text-black">{a.description}</div>
-                                <div className="text-[11px] text-[#9ca3af] mt-0.5">{a.user?.name ?? a.causer_name ?? 'System'} · {rel(a.created_at)}</div>
+                                <div className="text-[11px] text-[#6b7280] mt-0.5">{a.user?.name ?? a.causer_name ?? 'System'} · {rel(a.created_at)}</div>
                             </div>
                         </div>
                     ))}
@@ -2788,7 +2889,7 @@ export default function Show({ project, canManage, taskCategories = [], activiti
     // Keep the active tab in the URL (?tab=…) so a refresh, bookmark, or shared
     // link lands on the same tab. We read it from Inertia's page URL, which is
     // identical on the server and client (unlike window.location.hash).
-    const validTabs = ['overview','proposal','invoices','meetings','documents','timeline','tasks','bills','payroll','pages','activity'];
+    const validTabs = ['overview','proposal','invoices','meetings','documents','timeline','tasks','bills','payroll','time','pages','activity'];
     const { url } = usePage();
     const urlTab = new URLSearchParams(url.split('?')[1] ?? '').get('tab');
     const [tab, setTabState] = useState(validTabs.includes(urlTab) ? urlTab : 'overview');
@@ -2811,6 +2912,7 @@ export default function Show({ project, canManage, taskCategories = [], activiti
         { id: 'tasks',      label: 'Tasks',     icon: <ListChecks size={15} />,   count: project.tasks?.length ?? 0 },
         { id: 'bills',      label: 'Bills',     icon: <Receipt size={15} />,      count: project.bills?.length ?? 0 },
         { id: 'payroll',    label: 'Payroll',   icon: <Users size={15} />,        count: project.payroll?.length ?? 0 },
+        { id: 'time',       label: 'Time',      icon: <Clock size={15} />,        count: project.timeEntries?.length ?? 0 },
         { id: 'pages',      label: 'Pages',     icon: <FileText size={15} />,      count: project.pages?.length ?? 0 },
         { id: 'activity',   label: 'Activity',  icon: <Clock size={15} /> },
     ];
@@ -2837,14 +2939,14 @@ export default function Show({ project, canManage, taskCategories = [], activiti
                                 className={`flex items-center gap-1.5 px-3 md:px-3.5 py-2 rounded-lg text-[12px] md:text-[13px] font-semibold whitespace-nowrap transition-all
                                     ${active
                                         ? 'bg-white text-[#4f6df5] shadow-[0_1px_3px_rgba(17,24,39,0.08)]'
-                                        : 'text-[#374151] hover:text-black hover:bg-white/60'
+                                        : 'text-[#1f2937] hover:text-black hover:bg-white/60'
                                     }`}
                             >
-                                <span className={active ? 'text-[#4f6df5]' : 'text-[#4b5563]'}>{t.icon}</span>
+                                <span className={active ? 'text-[#4f6df5]' : 'text-[#374151]'}>{t.icon}</span>
                                 {t.label}
                                 {t.count !== undefined && (
                                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none min-w-[18px] text-center
-                                        ${active ? 'bg-[#4f6df5]/12 text-[#4f6df5]' : 'bg-[#e5e7eb] text-[#4b5563]'}`}>
+                                        ${active ? 'bg-[#4f6df5]/12 text-[#4f6df5]' : 'bg-[#e5e7eb] text-[#374151]'}`}>
                                         {t.count}
                                     </span>
                                 )}
@@ -2864,6 +2966,7 @@ export default function Show({ project, canManage, taskCategories = [], activiti
             {tab === 'tasks'     && <TasksTab     project={project} canManage={canManage} taskCategories={taskCategories} />}
             {tab === 'bills'     && <BillsTab     project={project} canManage={canManage} fmt={fmt} />}
             {tab === 'payroll'   && <PayrollTab   project={project} canManage={canManage} fmt={fmt} />}
+            {tab === 'time'      && <TimeTab      project={project} canManage={canManage} />}
             {tab === 'pages'     && <PagesTab     project={project} canManage={canManage} />}
             {tab === 'activity'  && <ActivityTab  activities={activities} />}
         </AppLayout>

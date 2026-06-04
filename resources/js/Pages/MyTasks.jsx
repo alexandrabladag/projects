@@ -1,6 +1,10 @@
 import { Head, Link, router } from '@inertiajs/react';
 import AppLayout, { Badge } from '@/Layouts/AppLayout';
-import { ListTodo, Calendar, AlertTriangle, FolderKanban } from 'lucide-react';
+import EmptyState from '@/Components/ui/EmptyState';
+import Select from '@/Components/ui/Select';
+import { ListTodo, Calendar, AlertTriangle, FolderKanban, Clock, CalendarClock } from 'lucide-react';
+
+const PRIORITY_DOT = { high: '#ef4444', medium: '#f59e0b', low: '#16a34a' };
 
 const statusLabel = (s) => ({
     'not-started': 'To Do',
@@ -25,8 +29,8 @@ function bucketOf(due) {
 const GROUPS = [
     { key: 'overdue', label: 'Overdue', tone: 'text-red-600' },
     { key: 'week', label: 'Due this week', tone: 'text-amber-600' },
-    { key: 'later', label: 'Later', tone: 'text-[#6b7280]' },
-    { key: 'none', label: 'No due date', tone: 'text-[#9ca3af]' },
+    { key: 'later', label: 'Later', tone: 'text-[#4b5563]' },
+    { key: 'none', label: 'No due date', tone: 'text-[#6b7280]' },
 ];
 
 export default function MyTasks({ tasks = [], filter, linkedId, canManage, members = [] }) {
@@ -40,16 +44,20 @@ export default function MyTasks({ tasks = [], filter, linkedId, canManage, membe
             <Head title="My Tasks" />
 
             <div className="max-w-4xl">
-                <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+                <div className="flex items-center justify-between mb-5 gap-4 flex-wrap">
                     <div>
-                        <h2 className="text-[18px] font-bold text-black flex items-center gap-2"><ListTodo size={20} className="text-[#4f6df5]" /> My Tasks</h2>
-                        <p className="text-[13px] text-[#6b7280] mt-0.5">Open tasks across all your projects, by due date.</p>
+                        <h2 className="font-serif text-[22px] md:text-[26px] font-semibold text-black leading-tight">My Tasks</h2>
+                        <p className="text-[13px] text-[#4b5563] mt-1">Open tasks across all your projects, by due date.</p>
                     </div>
                     {canManage && (
-                        <select value={filter} onChange={e => changeMember(e.target.value)} className="px-3 py-2 rounded-lg text-[13px] font-medium bg-[#f3f4f6] text-black border border-[#d1d5db] cursor-pointer">
-                            <option value="all">All team members</option>
-                            {members.map(m => <option key={m.id} value={m.id}>{m.name}{String(m.id) === String(linkedId) ? ' (me)' : ''}</option>)}
-                        </select>
+                        <Select
+                            value={filter}
+                            onChange={v => changeMember(v)}
+                            options={[
+                                { value: 'all', label: 'All team members' },
+                                ...members.map(m => ({ value: m.id, label: `${m.name}${String(m.id) === String(linkedId) ? ' (me)' : ''}` })),
+                            ]}
+                        />
                     )}
                 </div>
 
@@ -59,28 +67,47 @@ export default function MyTasks({ tasks = [], filter, linkedId, canManage, membe
                     </div>
                 )}
 
-                {tasks.length === 0 ? (
-                    <div className="text-center py-16 text-[#6b7280]">
-                        <div className="mb-4 flex justify-center"><div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center"><ListTodo size={24} className="text-emerald-400" /></div></div>
-                        <div className="text-[14px] font-semibold text-black mb-1">All clear</div>
-                        <div className="text-[13px] text-[#6b7280]">No open tasks to show.</div>
+                {/* Summary */}
+                {tasks.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
+                        {[
+                            { label: 'Open tasks', value: tasks.length, icon: <ListTodo size={17} />, accent: '#4f6df5' },
+                            { label: 'Overdue', value: grouped.overdue.length, icon: <AlertTriangle size={17} />, accent: grouped.overdue.length ? '#ef4444' : '#9ca3af' },
+                            { label: 'Due this week', value: grouped.week.length, icon: <CalendarClock size={17} />, accent: grouped.week.length ? '#f59e0b' : '#9ca3af' },
+                        ].map((s, i) => (
+                            <div key={i} className="bg-white border border-[#e5e7eb] rounded-xl p-4 md:p-5 hover:shadow-[0_2px_14px_rgba(17,24,39,0.05)] hover:border-[#d6dae0] transition-all">
+                                <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-3.5" style={{ background: `${s.accent}14`, color: s.accent }}>{s.icon}</div>
+                                <div className="text-[22px] md:text-[24px] font-bold text-black leading-none tracking-tight">{s.value}</div>
+                                <div className="text-[12px] text-[#4b5563] mt-1.5">{s.label}</div>
+                            </div>
+                        ))}
                     </div>
+                )}
+
+                {tasks.length === 0 ? (
+                    <EmptyState
+                        icon={<ListTodo size={24} />}
+                        accent="#16a34a"
+                        title="All clear"
+                        subtitle="You have no open tasks to show."
+                    />
                 ) : (
                     GROUPS.map(g => grouped[g.key].length > 0 && (
                         <div key={g.key} className="mb-6">
                             <div className={`flex items-center gap-2 text-[11px] tracking-[1.5px] uppercase font-semibold mb-2 ${g.tone}`}>
-                                {g.key === 'overdue' && <AlertTriangle size={13} />} {g.label} <span className="text-[#d1d5db]">({grouped[g.key].length})</span>
+                                {g.key === 'overdue' && <AlertTriangle size={13} />} {g.label} <span className="text-[#6b7280]">({grouped[g.key].length})</span>
                             </div>
                             <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                                 {grouped[g.key].map(t => (
                                     <Link
                                         key={t.id}
                                         href={`${route('projects.show', t.project?.id)}?tab=tasks`}
-                                        className="flex items-center gap-3 px-4 py-3 border-b border-[#f0f0f0] last:border-b-0 hover:bg-[#fafbfc] transition-colors"
+                                        className="group flex items-center gap-3 px-4 py-3 border-b border-[#f0f0f0] last:border-b-0 hover:bg-[#fafbfc] transition-colors"
                                     >
+                                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: PRIORITY_DOT[t.priority] ?? '#9ca3af' }} title={`${t.priority ?? 'no'} priority`} />
                                         <div className="flex-1 min-w-0">
-                                            <div className="text-[13px] font-medium text-black truncate">{t.title}</div>
-                                            <div className="text-[11px] text-[#9ca3af] flex items-center gap-1.5 mt-0.5">
+                                            <div className="text-[13px] font-medium text-black truncate group-hover:text-[#4f6df5] transition-colors">{t.title}</div>
+                                            <div className="text-[11px] text-[#6b7280] flex items-center gap-1.5 mt-0.5">
                                                 {t.project && <span className="flex items-center gap-0.5"><FolderKanban size={10} /> {t.project.name}</span>}
                                                 {t.category && <><span>·</span><span>{t.category}</span></>}
                                                 {t.due_date && <><span>·</span><span className={`flex items-center gap-0.5 ${g.key === 'overdue' ? 'text-red-500' : ''}`}><Calendar size={10} /> {fmtDate(t.due_date)}</span></>}

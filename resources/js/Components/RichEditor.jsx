@@ -28,7 +28,7 @@ function ToolbarBtn({ onClick, active, disabled, children, title }) {
             className={`p-1.5 rounded transition-all ${
                 active
                     ? 'bg-[#4f6df5]/15 text-[#4f6df5]'
-                    : 'text-[#6b7280] hover:text-black hover:bg-gray-100'
+                    : 'text-[#4b5563] hover:text-black hover:bg-gray-100'
             } disabled:opacity-30`}
         >
             {children}
@@ -152,8 +152,8 @@ export default function RichEditor({ content, onChange, placeholder = 'Start wri
 
                 {editor.isActive('table') && (
                     <>
-                        <button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()} className="px-1.5 py-1 text-[10px] text-[#6b7280] hover:text-black hover:bg-gray-100 rounded transition-all" title="Add Column">+Col</button>
-                        <button type="button" onClick={() => editor.chain().focus().addRowAfter().run()} className="px-1.5 py-1 text-[10px] text-[#6b7280] hover:text-black hover:bg-gray-100 rounded transition-all" title="Add Row">+Row</button>
+                        <button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()} className="px-1.5 py-1 text-[10px] text-[#4b5563] hover:text-black hover:bg-gray-100 rounded transition-all" title="Add Column">+Col</button>
+                        <button type="button" onClick={() => editor.chain().focus().addRowAfter().run()} className="px-1.5 py-1 text-[10px] text-[#4b5563] hover:text-black hover:bg-gray-100 rounded transition-all" title="Add Row">+Row</button>
                         <button type="button" onClick={() => editor.chain().focus().deleteColumn().run()} className="px-1.5 py-1 text-[10px] text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-all" title="Delete Column">-Col</button>
                         <button type="button" onClick={() => editor.chain().focus().deleteRow().run()} className="px-1.5 py-1 text-[10px] text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-all" title="Delete Row">-Row</button>
                         <button type="button" onClick={() => editor.chain().focus().deleteTable().run()} className="px-1.5 py-1 text-[10px] text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-all" title="Delete Table">Del Table</button>
@@ -205,7 +205,7 @@ export default function RichEditor({ content, onChange, placeholder = 'Start wri
                         </ToolbarBtn>
                         <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={e => { uploadFile(e.target.files[0], 'image'); e.target.value = ''; }} />
                         <input ref={fileInputRef} type="file" className="hidden" onChange={e => { uploadFile(e.target.files[0], 'file'); e.target.value = ''; }} />
-                        {uploading && <span className="text-[10px] text-[#9ca3af] ml-1">Uploading...</span>}
+                        {uploading && <span className="text-[10px] text-[#6b7280] ml-1">Uploading...</span>}
                     </>
                 )}
 

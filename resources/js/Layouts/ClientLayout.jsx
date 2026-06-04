@@ -18,12 +18,12 @@ export default function ClientLayout({ children, title }) {
                         </nav>
                     </div>
                     <div className="flex items-center gap-3">
-                        <span className="text-[12px] text-[#6b7280]">{auth.user.name}</span>
+                        <span className="text-[12px] text-[#4b5563]">{auth.user.name}</span>
                         <Link
                             href={route('logout')}
                             method="post"
                             as="button"
-                            className="text-[#9ca3af] hover:text-black transition-colors"
+                            className="text-[#6b7280] hover:text-black transition-colors"
                         >
                             <LogOut size={16} />
                         </Link>
@@ -47,7 +47,7 @@ function NavLink({ href, icon, children }) {
         <Link
             href={href}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
-                active ? 'bg-[#4f6df5]/10 text-[#4f6df5]' : 'text-[#6b7280] hover:text-black hover:bg-gray-50'
+                active ? 'bg-[#4f6df5]/10 text-[#4f6df5]' : 'text-[#4b5563] hover:text-black hover:bg-gray-50'
             }`}
         >
             {icon}{children}
