@@ -119,6 +119,37 @@ class ProjectController extends Controller
             ->with('success', $message);
     }
 
+    // Lightweight project creation for the "＋ Create new project" shortcut in the
+    // Billing proposal/invoice modals. Returns JSON so the caller can keep its form
+    // open and select the new project without a full page navigation.
+    public function quickStore(Request $request)
+    {
+        $this->authorize('create', Project::class);
+
+        $validated = $request->validate([
+            'name'     => 'required|string|max:255',
+            'currency' => 'nullable|string|max:10',
+        ]);
+
+        $project = Project::create([
+            'name'       => $validated['name'],
+            'currency'   => $validated['currency'] ?? null,
+            'status'     => 'active',
+            'client'     => '',
+            'manager_id' => $request->user()->id,
+            'budget'     => 0,
+            'progress'   => 0,
+            'spent'      => 0,
+        ]);
+
+        return response()->json(['project' => [
+            'id'       => $project->id,
+            'name'     => $project->name,
+            'client'   => $project->client,
+            'currency' => $project->currency,
+        ]]);
+    }
+
     public function show(Request $request, Project $project): Response
     {
         $this->authorize('view', $project);

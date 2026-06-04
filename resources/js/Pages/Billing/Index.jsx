@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { FileText, ReceiptText, ChevronRight, Search, ExternalLink, Inbox, Plus, Save, X, Trash2 } from 'lucide-react';
-import { formatMoney } from '@/Utils/currencies';
+import currencies, { formatMoney } from '@/Utils/currencies';
 import { fmtDate } from '@/Utils/format';
 import Button from '@/Components/ui/Button';
 import Select from '@/Components/ui/Select';
@@ -59,6 +59,10 @@ export default function Index({ proposals = [], invoices = [], pipeline = {}, ba
     const [propFilter, setPropFilter] = useState('all');
     const [invFilter, setInvFilter] = useState('all');
     const [modal, setModal] = useState(null); // 'proposal' | 'invoice' | null
+    // Local project list so a project created via the "+ New project" shortcut
+    // is immediately selectable without a page reload.
+    const [projects, setProjects] = useState(projectOptions);
+    const addProject = (p) => setProjects(prev => [...prev, p].sort((a, b) => a.name.localeCompare(b.name)));
 
     const filteredProposals = useMemo(() => proposals
         .filter(p => propFilter === 'all' || p.status === propFilter)
@@ -174,10 +178,10 @@ export default function Index({ proposals = [], invoices = [], pipeline = {}, ba
             </div>
 
             {modal === 'proposal' && (
-                <NewProposalModal projectOptions={projectOptions} onClose={() => setModal(null)} />
+                <NewProposalModal projectOptions={projects} addProject={addProject} baseCurrency={baseCurrency} onClose={() => setModal(null)} />
             )}
             {modal === 'invoice' && (
-                <NewInvoiceModal projectOptions={projectOptions} nextInvoiceNumber={nextInvoiceNumber} onClose={() => setModal(null)} />
+                <NewInvoiceModal projectOptions={projects} nextInvoiceNumber={nextInvoiceNumber} onClose={() => setModal(null)} />
             )}
         </AppLayout>
     );
@@ -204,9 +208,72 @@ function Modal({ title, subtitle, onClose, children, footer }) {
 
 const projOpts = (projectOptions) => projectOptions.map(p => ({ value: p.id, label: p.name, sublabel: p.client || undefined }));
 const curOf = (projectOptions, id) => projectOptions.find(p => String(p.id) === String(id))?.currency;
+const CURRENCY_OPTS = currencies.map(c => ({ value: c.code, label: `${c.code} — ${c.country}`, sublabel: c.symbol }));
+
+// Project selector with an inline "＋ Create new project" shortcut. Creating a
+// project posts to a lightweight JSON endpoint and selects it in place — the
+// surrounding form (title/amount already typed) is preserved.
+function ProjectPicker({ value, onChange, projects, addProject, baseCurrency, error }) {
+    const [mode, setMode] = useState('select'); // 'select' | 'new'
+    const [name, setName] = useState('');
+    const [currency, setCurrency] = useState(baseCurrency || 'USD');
+    const [creating, setCreating] = useState(false);
+    const [err, setErr] = useState('');
+
+    const options = [
+        ...projOpts(projects),
+        { value: '__new__', label: '＋ Create new project' },
+    ];
+
+    const handleSelect = (v) => {
+        if (v === '__new__') { setMode('new'); setErr(''); }
+        else onChange(v);
+    };
+
+    const create = async () => {
+        if (!name.trim()) { setErr('Project name is required.'); return; }
+        setCreating(true); setErr('');
+        try {
+            const { data } = await window.axios.post(route('projects.quick-store'), { name: name.trim(), currency });
+            addProject(data.project);
+            onChange(data.project.id);
+            setMode('select'); setName('');
+        } catch (e) {
+            setErr(e.response?.data?.message || 'Could not create the project.');
+        } finally {
+            setCreating(false);
+        }
+    };
+
+    if (mode === 'new') {
+        return (
+            <div className="rounded-xl border border-[#4f6df5]/30 bg-indigo-50/40 p-3 space-y-2.5">
+                <div className="flex items-center justify-between">
+                    <span className="text-[12px] font-semibold text-[#4f6df5]">New project</span>
+                    <button type="button" onClick={() => { setMode('select'); setErr(''); }} className="text-[#6b7280] hover:text-black" title="Back to list"><X size={14} /></button>
+                </div>
+                <input
+                    autoFocus
+                    className={inputCls}
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); create(); } }}
+                    placeholder="Project name"
+                />
+                <div className="flex items-stretch gap-2">
+                    <div className="flex-1 min-w-0"><Select value={currency} onChange={setCurrency} options={CURRENCY_OPTS} placeholder="Currency" /></div>
+                    <Button sm onClick={create} disabled={creating}><Plus size={13} /> {creating ? 'Creating…' : 'Create'}</Button>
+                </div>
+                {err && <p className="text-red-500 text-[11px] font-medium">{err}</p>}
+            </div>
+        );
+    }
+
+    return <Select value={value} onChange={handleSelect} options={options} placeholder="Select a project…" />;
+}
 
 // ── new proposal ──────────────────────────────────────────────────────────────
-function NewProposalModal({ projectOptions, onClose }) {
+function NewProposalModal({ projectOptions, addProject, baseCurrency, onClose }) {
     const { data, setData, post, processing, errors } = useForm({
         project_id: '', title: '', amount: '', date: today(), valid_until: '',
     });
@@ -229,7 +296,7 @@ function NewProposalModal({ projectOptions, onClose }) {
         >
             <div className="space-y-4 pb-2">
                 <FormField label="Project *" error={errors.project_id}>
-                    <Select value={data.project_id} onChange={v => setData('project_id', v)} options={projOpts(projectOptions)} placeholder="Select a project…" />
+                    <ProjectPicker value={data.project_id} onChange={v => setData('project_id', v)} projects={projectOptions} addProject={addProject} baseCurrency={baseCurrency} />
                 </FormField>
                 <FormField label="Title *" error={errors.title}>
                     <input className={inputCls} value={data.title} onChange={e => setData('title', e.target.value)} placeholder="e.g. Website Redesign Proposal" />

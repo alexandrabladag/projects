@@ -43,6 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/billing', [\App\Http\Controllers\BillingController::class, 'index'])->name('billing.index');
 
+    Route::post('projects/quick', [ProjectController::class, 'quickStore'])->name('projects.quick-store');
     Route::resource('projects', ProjectController::class);
     Route::resource('directory', ClientController::class)->parameters(['directory' => 'client'])->names('clients');
     Route::post('directory/{client}/contacts', [ContactController::class, 'store'])->name('clients.contacts.store');
