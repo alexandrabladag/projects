@@ -83,14 +83,11 @@ export default function Index({ proposals = [], invoices = [], pipeline = {}, ba
     ];
 
     return (
-        <AppLayout title="Billing" breadcrumbs={[{ label: 'Billing' }]}>
+        <AppLayout title="Billing">
             <Head title="Billing" />
 
             <div className="flex items-start justify-between gap-3 mb-6 flex-wrap">
-                <div>
-                    <h2 className="font-serif text-[22px] md:text-[26px] font-semibold text-black leading-tight">Billing</h2>
-                    <p className="text-[13px] text-[#4b5563] mt-1">Your proposal-to-payment pipeline across every project.</p>
-                </div>
+                <p className="text-[13px] text-[#4b5563]">Your proposal-to-payment pipeline across every project.</p>
                 {canManage && (
                     <div className="flex items-center gap-2">
                         <Button variant="ghost" sm onClick={() => setModal('proposal')}><FileText size={14} /> New Proposal</Button>

@@ -22,7 +22,7 @@ export default function Index({ projects, canManage }) {
     };
 
     return (
-        <AppLayout title="Projects" breadcrumbs={[{ label: 'Projects' }]}>
+        <AppLayout title="Projects">
             <Head title="Projects" />
 
             {/* Toolbar */}

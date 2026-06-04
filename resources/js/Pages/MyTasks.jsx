@@ -40,15 +40,12 @@ export default function MyTasks({ tasks = [], filter, linkedId, canManage, membe
     const changeMember = (val) => router.get(route('my-tasks'), val === 'all' ? {} : { member: val }, { preserveState: false, preserveScroll: true });
 
     return (
-        <AppLayout title="My Tasks" breadcrumbs={[{ label: 'My Tasks' }]}>
+        <AppLayout title="My Tasks">
             <Head title="My Tasks" />
 
             <div className="max-w-4xl">
                 <div className="flex items-center justify-between mb-5 gap-4 flex-wrap">
-                    <div>
-                        <h2 className="font-serif text-[22px] md:text-[26px] font-semibold text-black leading-tight">My Tasks</h2>
-                        <p className="text-[13px] text-[#4b5563] mt-1">Open tasks across all your projects, by due date.</p>
-                    </div>
+                    <p className="text-[13px] text-[#4b5563]">Open tasks across all your projects, by due date.</p>
                     {canManage && (
                         <Select
                             value={filter}

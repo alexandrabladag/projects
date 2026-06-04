@@ -8,10 +8,7 @@ export default function Index({ clients }) {
     const filtered = filter === 'all' ? clients : clients.filter(c => c.type === filter);
 
     return (
-        <AppLayout
-            title="Clients & Vendors"
-            breadcrumbs={[{ label: 'Clients' }]}
-        >
+        <AppLayout title="Clients & Vendors">
             <Head title="Clients & Vendors" />
 
             <div className="flex items-center justify-between mb-6">
