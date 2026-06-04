@@ -1546,6 +1546,10 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
     useEffect(() => { setTasks(project.tasks ?? []); }, [project.tasks]);
     const [dragTask, setDragTask] = useState(null); // { id, category }
     const [dragOverId, setDragOverId] = useState(null);
+    // Bulk-selection state for changing the status of many tasks at once.
+    const [selected, setSelected] = useState([]);
+    const [bulkStatus, setBulkStatus] = useState('completed');
+    const toggleSelect = (id) => setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
     // Managed catalog names, plus any legacy category still on a task, so the dropdowns never lose a value.
     const catalogNames = taskCategories.map(c => c.name);
     const categoryOptions = [...new Set([...catalogNames, ...tasks.map(t => t.category).filter(Boolean)])].sort();
@@ -1554,6 +1558,11 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
         (filter === 'all' || t.status === filter) &&
         (categoryFilter === 'all' || t.category === categoryFilter)
     );
+    // Keep the bulk selection limited to tasks currently visible under the filters.
+    useEffect(() => {
+        const visibleIds = new Set(filtered.map(t => t.id));
+        setSelected(prev => prev.filter(id => visibleIds.has(id)));
+    }, [filter, categoryFilter, tasks]);
 
     const onDragStart = (t) => setDragTask({ id: t.id, category: t.category || 'General' });
     const onDragEnter = (t) => { if (dragTask && (t.category || 'General') === dragTask.category) setDragOverId(t.id); };
@@ -1627,6 +1636,14 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
         router.patch(route('tasks.status', task.id), { status: next[task.status] ?? 'not-started' });
     };
 
+    const applyBulkStatus = () => {
+        if (selected.length === 0) return;
+        router.patch(route('projects.tasks.bulk-status', project.id), { ids: selected, status: bulkStatus }, {
+            preserveScroll: true,
+            onSuccess: () => setSelected([]),
+        });
+    };
+
     const deleteDoc = (doc) => {
         if (confirm('Delete this document?')) {
             router.delete(route('projects.documents.destroy', [project.id, doc.id]));
@@ -1666,6 +1683,18 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                 )}
             </div>
 
+            {canManage && selected.length > 0 && (
+                <div className="flex flex-wrap items-center gap-3 mb-5 px-4 py-2.5 bg-[#4f6df5]/5 border border-[#4f6df5]/20 rounded-xl">
+                    <span className="text-[12px] font-semibold text-[#4f6df5]">{selected.length} selected</span>
+                    <span className="text-[12px] text-[#6b7280]">Set status to</span>
+                    <select value={bulkStatus} onChange={e => setBulkStatus(e.target.value)} className="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-white text-black border border-[#d1d5db] focus:ring-2 focus:ring-indigo-400 cursor-pointer">
+                        {[['not-started','To Do'],['in-progress','In Progress'],['review','Review'],['pending-approval','Pending Approval'],['completed','Done']].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+                    </select>
+                    <Btn primary sm onClick={applyBulkStatus}><Check size={13} /> Apply</Btn>
+                    <button onClick={() => setSelected([])} className="text-[12px] text-[#6b7280] hover:text-black transition-colors">Clear</button>
+                </div>
+            )}
+
             {filtered.length === 0 && (
                 <div className="text-center py-14 text-[#6b7280]">
                     <div className="mb-4 flex justify-center"><div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center"><ListChecks size={24} className="text-indigo-400" /></div></div>
@@ -1677,12 +1706,26 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
 
             {Object.entries(byCategory).map(([cat, catTasks]) => {
                 const collapsed = collapsedCats[cat];
+                const catIds = catTasks.map(t => t.id);
+                const allCatSelected = catIds.length > 0 && catIds.every(id => selected.includes(id));
+                const toggleCatSelect = () => setSelected(prev => allCatSelected ? prev.filter(id => !catIds.includes(id)) : [...new Set([...prev, ...catIds])]);
                 return (
                 <div key={cat} className="mb-5">
-                    <button onClick={() => toggleCat(cat)} className="w-full flex items-center gap-2 text-[10.5px] tracking-[1.5px] uppercase text-[#6b7280] mb-2 pb-2 border-b border-[#e5e7eb] hover:text-black transition-colors">
-                        {collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
-                        <ListChecks size={13} /> {cat} <span className="text-[#d1d5db]">({catTasks.length})</span>
-                    </button>
+                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-[#e5e7eb]">
+                        {canManage && (
+                            <input
+                                type="checkbox"
+                                checked={allCatSelected}
+                                onChange={toggleCatSelect}
+                                title="Select all in category"
+                                className="w-4 h-4 rounded border-[#d1d5db] text-[#4f6df5] focus:ring-[#4f6df5] cursor-pointer flex-shrink-0"
+                            />
+                        )}
+                        <button onClick={() => toggleCat(cat)} className="flex-1 flex items-center gap-2 text-[10.5px] tracking-[1.5px] uppercase text-[#6b7280] hover:text-black transition-colors">
+                            {collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
+                            <ListChecks size={13} /> {cat} <span className="text-[#d1d5db]">({catTasks.length})</span>
+                        </button>
+                    </div>
                     {!collapsed && (
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
                         {catTasks.map(t => {
@@ -1701,7 +1744,16 @@ function TasksTab({ project, canManage, taskCategories = [] }) {
                                         ${dragTask?.id === t.id ? 'opacity-40' : ''}
                                         ${dragOverId === t.id && dragTask?.id !== t.id ? 'border-t-2 border-t-[#4f6df5]' : ''}`}
                                 >
-                                    <div className="flex items-center gap-2 px-4 py-3 hover:bg-[#fafbfc] transition-colors">
+                                    <div className={`flex items-center gap-2 px-4 py-3 transition-colors ${selected.includes(t.id) ? 'bg-[#4f6df5]/5' : 'hover:bg-[#fafbfc]'}`}>
+                                        {canManage && (
+                                            <input
+                                                type="checkbox"
+                                                checked={selected.includes(t.id)}
+                                                onChange={() => toggleSelect(t.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="w-4 h-4 rounded border-[#d1d5db] text-[#4f6df5] focus:ring-[#4f6df5] cursor-pointer flex-shrink-0"
+                                            />
+                                        )}
                                         {canManage && (
                                             <span className="cursor-grab active:cursor-grabbing text-[#d1d5db] hover:text-[#9ca3af] flex-shrink-0" title="Drag to reorder">
                                                 <GripVertical size={15} />

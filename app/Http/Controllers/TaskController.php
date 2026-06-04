@@ -71,6 +71,26 @@ class TaskController extends Controller
         return back()->with('success', 'Task updated.');
     }
 
+    public function bulkStatus(Request $request, Project $project)
+    {
+        $this->authorize('update', $project);
+
+        $validated = $request->validate([
+            'ids'    => 'required|array',
+            'ids.*'  => 'integer',
+            'status' => 'required|in:not-started,in-progress,review,pending-approval,completed',
+        ]);
+
+        // Update each model individually so per-task activity is recorded.
+        $tasks = $project->tasks()->whereIn('id', $validated['ids'])->get();
+        foreach ($tasks as $task) {
+            $task->update(['status' => $validated['status']]);
+        }
+        $project->recalculateProgress();
+
+        return back()->with('success', $tasks->count() . ' task' . ($tasks->count() === 1 ? '' : 's') . ' updated.');
+    }
+
     public function updateStatus(Request $request, Task $task)
     {
         $request->validate([
