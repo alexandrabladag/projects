@@ -57,6 +57,46 @@ class DashboardController extends Controller
             ->whereNotIn('status', ['completed'])
             ->count();
 
+        // ── Needs Attention — things a PM must act on ─────────────────────────
+        $today = now()->startOfDay();
+
+        $overdueInvoiceCount = $allInvoices->filter(fn ($i) =>
+            ! in_array($i->status, ['paid', 'draft']) && $i->due_date && $i->due_date->lt($today)
+        )->count();
+
+        $pastDeadlineCount = $activeProjects->filter(fn ($p) =>
+            $p->end_date && $p->end_date->lt($today) && $p->progress < 100
+        )->count();
+
+        $overdueTaskCount = Task::whereIn('project_id', $projects->pluck('id'))
+            ->whereNotIn('status', ['completed'])
+            ->whereNotNull('due_date')
+            ->whereDate('due_date', '<', $today)
+            ->count();
+
+        // ── My tasks (current user's linked team member) ──────────────────────
+        $linkedId = $user->teamMember?->id;
+        $myTasks  = collect();
+        if ($linkedId) {
+            $myTasks = Task::whereIn('project_id', $projects->pluck('id'))
+                ->where('assignee_id', $linkedId)
+                ->where('status', '!=', 'completed')
+                ->with('project:id,name')
+                ->orderByRaw('due_date is null')
+                ->orderBy('due_date')
+                ->orderBy('priority')
+                ->limit(6)
+                ->get(['id', 'title', 'status', 'priority', 'due_date', 'project_id'])
+                ->map(fn ($t) => [
+                    'id'       => $t->id,
+                    'title'    => $t->title,
+                    'status'   => $t->status,
+                    'priority' => $t->priority,
+                    'due_date' => optional($t->due_date)->toDateString(),
+                    'project'  => $t->project ? ['id' => $t->project->id, 'name' => $t->project->name] : null,
+                ]);
+        }
+
         return Inertia::render('Dashboard', [
             'stats' => [
                 'total_projects'      => $projects->count(),
@@ -68,6 +108,18 @@ class DashboardController extends Controller
                 'pending_invoices'    => $pendingInvoices->count(),
                 'open_tasks'          => $openTasks,
             ],
+            'attention' => [
+                'overdue_invoices' => $overdueInvoiceCount,
+                'past_deadline'    => $pastDeadlineCount,
+                'overdue_tasks'    => $overdueTaskCount,
+            ],
+            'collection' => [
+                'currency' => $baseCurrency,
+                'billed'   => $billedByCurrency[$baseCurrency] ?? 0,
+                'received' => $receivedByCurrency[$baseCurrency] ?? 0,
+            ],
+            'myTasks'          => $myTasks->values(),
+            'hasLinkedMember'  => (bool) $linkedId,
             'activeProjects'   => $activeProjects->take(5)->values(),
             'upcomingMeetings' => $upcomingMeetings,
             'recentInvoices'   => $allInvoices->take(6)->values()->map(fn ($inv) => array_merge($inv->toArray(), ['total' => $inv->total])),

@@ -5,6 +5,7 @@ import currencies from '@/Utils/currencies';
 import {
     Pencil, Eye, Plus, Save, X, Check, Send, ChevronUp, ChevronDown, ChevronRight, GripVertical,
     FileText, Receipt, CalendarDays, Calendar, FolderOpen, Clock, ListChecks,
+    TrendingUp, Wallet, CircleDollarSign, Flag, Activity,
     Trash2, Download, Upload, CheckCircle, XCircle, AlertCircle, Lock, Code, Users, Maximize2, Minimize2, Tag,
 } from 'lucide-react';
 
@@ -103,21 +104,64 @@ function OverviewTab({ project, canManage, fmt }) {
     const budgetPct = project.budget > 0 ? Math.min(100, Math.round((project.spent / project.budget) * 100)) : 0;
     const budgetColor = budgetPct > 90 ? '#f56060' : budgetPct > 70 ? '#f0924c' : '';
 
+    // ── Derived metrics a PM scans first ──────────────────────────────────────
+    const today = new Date();
+    const toDate = (s) => (s ? new Date(s) : null);
+    const startD = toDate(project.start_date), endD = toDate(project.end_date), launchD = toDate(project.launch_date);
+    const deadline = launchD || endD;
+    const daysLeft = deadline ? Math.ceil((deadline - today) / 86400000) : null;
+    const isOverdue = daysLeft !== null && daysLeft < 0 && project.progress < 100;
+    const timelinePct = (startD && endD && endD > startD)
+        ? Math.min(100, Math.max(0, Math.round(((today - startD) / (endD - startD)) * 100))) : null;
+
+    const billed = project.total_billed ?? 0;
+    const vendorBills = project.total_bills ?? 0;
+    const net = billed - vendorBills;
+
+    const phaseIdx = PROJECT_PHASES.findIndex(p => p.name === project.phase);
+
+    const health = project.status === 'completed' ? { label: 'Completed', color: '#4f6df5' }
+        : budgetPct > 90 ? { label: 'Over Budget', color: '#f56060' }
+        : isOverdue ? { label: 'Overdue', color: '#f56060' }
+        : budgetPct > project.progress + 15 ? { label: 'At Risk', color: '#f0924c' }
+        : { label: 'On Track', color: '#16a34a' };
+
+    const Kpi = ({ icon, label, value, sub, accent = '#4f6df5', bar, barColor }) => (
+        <div className="bg-white border border-[#e5e7eb] rounded-xl p-4 md:p-5 hover:shadow-[0_2px_14px_rgba(17,24,39,0.05)] hover:border-[#d6dae0] transition-all">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-3.5" style={{ background: `${accent}14`, color: accent }}>{icon}</div>
+            <div className="text-[24px] md:text-[27px] font-bold text-black leading-none tracking-tight">{value}</div>
+            <div className="text-[12px] text-[#6b7280] mt-1.5">{label}</div>
+            {bar !== undefined && bar !== null && (
+                <div className="h-1.5 bg-[#eef0f2] rounded-full overflow-hidden mt-3">
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${bar}%`, background: barColor || accent }} />
+                </div>
+            )}
+            {sub && <div className="text-[11px] text-[#9ca3af] mt-2 truncate">{sub}</div>}
+        </div>
+    );
+
     return (
         <div>
             {/* Hero */}
-            <div className="bg-white border border-[#e5e7eb] rounded-xl p-5 md:p-6 mb-5">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+            <div className="relative bg-white border border-[#e5e7eb] rounded-xl overflow-hidden mb-5">
+                <div className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${health.color}, ${health.color}40)` }} />
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 p-5 md:p-6">
                     <div className="min-w-0">
-                        <h2 className="font-serif text-[22px] md:text-[28px] font-semibold text-black leading-snug break-words">{project.name}</h2>
-                        <p className="text-[13px] md:text-[14px] text-[#6b7280] mt-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-2">
+                            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ background: `${health.color}14`, color: health.color }}>
+                                <span className="w-1.5 h-1.5 rounded-full" style={{ background: health.color }} />
+                                {health.label}
+                            </span>
+                            <Badge status={project.status} />
+                        </div>
+                        <h2 className="font-serif text-[24px] md:text-[30px] font-semibold text-black leading-tight break-words">{project.name}</h2>
+                        <p className="text-[13px] md:text-[14px] text-[#6b7280] mt-1.5">
                             {project.client} · {project.contact_name}
                             {project.lead && <span> · Lead: <span className="text-[#4f6df5] font-medium">{project.lead.name}</span></span>}
                         </p>
-                        <div className="flex gap-2 flex-wrap mt-2.5">
-                            <Badge status={project.status} />
-                            <span className="text-[11px] px-2 py-0.5 bg-indigo-50 border border-indigo-200 rounded-full text-indigo-600 font-medium">{project.phase}</span>
-                            {(project.tags ?? []).map(t => <span key={t} className="text-[11px] px-2 py-0.5 bg-indigo-50 border border-indigo-200 rounded-full text-indigo-600 font-medium">{t}</span>)}
+                        <div className="flex gap-2 flex-wrap mt-3">
+                            <span className="text-[11px] px-2.5 py-0.5 bg-indigo-50 border border-indigo-200 rounded-full text-indigo-600 font-medium">{project.phase}</span>
+                            {(project.tags ?? []).map(t => <span key={t} className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 bg-[#f3f4f6] border border-[#e5e7eb] rounded-full text-[#6b7280] font-medium"><Tag size={9} />{t}</span>)}
                         </div>
                     </div>
                     {canManage && (
@@ -127,28 +171,44 @@ function OverviewTab({ project, canManage, fmt }) {
                         </div>
                     )}
                 </div>
+            </div>
 
-                {/* Quick Stats */}
-                <div className={`grid grid-cols-2 ${project.launch_date ? 'md:grid-cols-5' : 'md:grid-cols-4'} border-t border-[#e5e7eb] pt-4 gap-y-4 md:gap-y-0`}>
-                    {[
-                        { label: 'Progress', value: `${project.progress}%` },
-                        { label: 'Budget', value: `${fmt(project.spent)} / ${fmt(project.budget)}` },
-                        { label: 'Timeline', value: `${fmtDate(project.start_date)} – ${fmtDate(project.end_date)}` },
-                        { label: 'Phase', value: project.phase },
-                        ...(project.launch_date ? [{ label: '🚀 Launch', value: fmtDate(project.launch_date), highlight: true }] : []),
-                    ].map((s, i, arr) => (
-                        <div key={i} className={`text-center py-1 px-1 min-w-0 ${i < arr.length - 1 ? 'md:border-r md:border-[#e5e7eb]' : ''}`}>
-                            <div className={`text-[14px] md:text-[16px] font-medium break-words ${s.highlight ? 'text-[#4f6df5] font-bold' : 'text-black'}`}>{s.value}</div>
-                            <div className="text-[11px] text-[#6b7280] mt-1">{s.label}</div>
-                        </div>
-                    ))}
+            {/* KPI Strip — the four numbers a PM scans first */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-5">
+                <Kpi icon={<Activity size={17} />} accent="#4f6df5" value={`${project.progress}%`}
+                    label="Overall Progress" bar={project.progress} sub={project.phase} />
+                <Kpi icon={<Clock size={17} />} accent={isOverdue ? '#f56060' : '#4f6df5'}
+                    value={daysLeft === null ? '—' : isOverdue ? `${Math.abs(daysLeft)}d over` : `${daysLeft} days`}
+                    label={isOverdue ? 'Past Deadline' : 'Time Remaining'}
+                    bar={timelinePct} barColor={isOverdue ? '#f56060' : '#4f6df5'}
+                    sub={deadline ? `Due ${fmtDate(deadline)}` : 'No deadline set'} />
+                <Kpi icon={<Wallet size={17} />} accent={budgetColor || '#4f6df5'} value={`${budgetPct}%`}
+                    label="Budget Used" bar={budgetPct} barColor={budgetColor || '#4f6df5'}
+                    sub={`${fmt(project.spent)} of ${fmt(project.budget)}`} />
+                <Kpi icon={<CircleDollarSign size={17} />} accent={net >= 0 ? '#16a34a' : '#f56060'}
+                    value={fmt(net)} label="Net (Billed − Bills)"
+                    sub={`${fmt(billed)} billed · ${fmt(vendorBills)} bills`} />
+            </div>
+
+            {/* Project Lifecycle */}
+            <div className="bg-white border border-[#e5e7eb] rounded-xl p-5 mb-5">
+                <div className="flex items-center justify-between mb-4">
+                    <span className="text-[14px] font-bold text-black flex items-center gap-2"><Flag size={14} className="text-[#4f6df5]" /> Project Lifecycle</span>
+                    <span className="text-[12px] text-[#6b7280]">{phaseIdx >= 0 ? `Stage ${phaseIdx + 1} of ${PROJECT_PHASES.length}` : project.phase}</span>
                 </div>
-
-                <div className="mt-4">
-                    <div className="flex justify-between text-[12px] text-[#6b7280] mb-2"><span>Overall Progress</span><span>{project.progress}%</span></div>
-                    <div className="h-2 bg-[#d1d5db] rounded-full overflow-hidden">
-                        <div className="h-full rounded-full bg-gradient-to-r from-[#4f6df5] to-[#6380f7] progress-fill" style={{ width: `${project.progress}%` }} />
-                    </div>
+                <div className="flex items-start overflow-x-auto pb-1 -mx-1 px-1">
+                    {PROJECT_PHASES.map((p, i) => {
+                        const done = phaseIdx > i, current = phaseIdx === i;
+                        return (
+                            <div key={p.name} className="flex flex-col items-center flex-1 min-w-[62px] relative">
+                                {i > 0 && <div className="absolute top-[11px] right-1/2 w-full h-0.5" style={{ background: (done || current) ? '#4f6df5' : '#e5e7eb' }} />}
+                                <div className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${done ? 'bg-[#4f6df5] text-white' : current ? 'bg-white text-[#4f6df5] ring-2 ring-[#4f6df5]' : 'bg-[#f3f4f6] text-[#9ca3af] ring-1 ring-[#e5e7eb]'}`}>
+                                    {done ? <Check size={12} /> : i + 1}
+                                </div>
+                                <div className={`text-[10px] mt-2 text-center leading-tight px-0.5 ${current ? 'text-[#4f6df5] font-semibold' : done ? 'text-[#4b5563]' : 'text-[#9ca3af]'}`}>{p.name}</div>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -159,16 +219,16 @@ function OverviewTab({ project, canManage, fmt }) {
             <ClientAccessSection project={project} canManage={canManage} />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-4">
+                <div className="space-y-5">
                     {/* Description */}
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
-                        <div className="px-5 py-3.5 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Project Description</span></div>
-                        <div className="px-5 py-4 text-[13.5px] text-[#4b5563] leading-relaxed">{project.description ?? '—'}</div>
+                        <div className="px-5 py-3.5 border-b border-[#e5e7eb] flex items-center gap-2"><FileText size={14} className="text-[#4f6df5]" /><span className="text-[14px] font-bold">Project Description</span></div>
+                        <div className="px-5 py-4 text-[13.5px] text-[#4b5563] leading-relaxed">{project.description || '—'}</div>
                     </div>
 
                     {/* Client Info */}
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
-                        <div className="px-5 py-3.5 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Client Information</span></div>
+                        <div className="px-5 py-3.5 border-b border-[#e5e7eb] flex items-center gap-2"><Users size={14} className="text-[#4f6df5]" /><span className="text-[14px] font-bold">Client Information</span></div>
                         <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {[
                                 { l: 'Contact', v: project.contact_name },
@@ -188,7 +248,7 @@ function OverviewTab({ project, canManage, fmt }) {
                 <div className="space-y-4">
                     {/* Financial */}
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
-                        <div className="px-5 py-3.5 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Financial Overview</span></div>
+                        <div className="px-5 py-3.5 border-b border-[#e5e7eb] flex items-center gap-2"><CircleDollarSign size={14} className="text-[#4f6df5]" /><span className="text-[14px] font-bold">Financial Overview</span></div>
                         <div className="px-5 py-4">
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                                 {[
@@ -214,7 +274,7 @@ function OverviewTab({ project, canManage, fmt }) {
 
                     {/* Quick Summary */}
                     <div className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
-                        <div className="px-5 py-3.5 border-b border-[#e5e7eb]"><span className="text-[15px] font-bold">Quick Summary</span></div>
+                        <div className="px-5 py-3.5 border-b border-[#e5e7eb] flex items-center gap-2"><ListChecks size={14} className="text-[#4f6df5]" /><span className="text-[14px] font-bold">Quick Summary</span></div>
                         <div className="px-5 py-2">
                             {[
                                 { l: 'Proposals', v: `${project.proposals?.length ?? 0} total` },
@@ -2742,17 +2802,17 @@ export default function Show({ project, canManage, taskCategories = [], activiti
     const fmt = (n) => formatMoney(n, projectCur.code);
 
     const tabs = [
-        { id: 'overview',   label: 'Overview',    icon: <Eye size={15} /> },
-        { id: 'proposal',   label: `Proposal (${project.proposals?.length ?? 0})`, icon: <FileText size={15} /> },
-        { id: 'invoices',   label: `Invoices (${project.invoices?.length ?? 0})`,  icon: <Receipt size={15} /> },
-        { id: 'meetings',   label: `Meetings (${project.meetings?.length ?? 0})`,  icon: <CalendarDays size={15} /> },
-        { id: 'documents',  label: `Documents (${project.documents?.length ?? 0})`, icon: <FolderOpen size={15} /> },
-        { id: 'timeline',   label: 'Timeline',    icon: <Clock size={15} /> },
-        { id: 'tasks',      label: `Tasks (${project.tasks?.length ?? 0})`,        icon: <ListChecks size={15} /> },
-        { id: 'bills',      label: `Bills (${project.bills?.length ?? 0})`,        icon: <Receipt size={15} /> },
-        { id: 'payroll',    label: `Payroll (${project.payroll?.length ?? 0})`,    icon: <Users size={15} /> },
-        { id: 'pages',      label: `Pages (${project.pages?.length ?? 0})`,        icon: <FileText size={15} /> },
-        { id: 'activity',   label: 'Activity',    icon: <Clock size={15} /> },
+        { id: 'overview',   label: 'Overview',  icon: <Eye size={15} /> },
+        { id: 'proposal',   label: 'Proposal',  icon: <FileText size={15} />,     count: project.proposals?.length ?? 0 },
+        { id: 'invoices',   label: 'Invoices',  icon: <Receipt size={15} />,      count: project.invoices?.length ?? 0 },
+        { id: 'meetings',   label: 'Meetings',  icon: <CalendarDays size={15} />, count: project.meetings?.length ?? 0 },
+        { id: 'documents',  label: 'Documents', icon: <FolderOpen size={15} />,   count: project.documents?.length ?? 0 },
+        { id: 'timeline',   label: 'Timeline',  icon: <Clock size={15} /> },
+        { id: 'tasks',      label: 'Tasks',     icon: <ListChecks size={15} />,   count: project.tasks?.length ?? 0 },
+        { id: 'bills',      label: 'Bills',     icon: <Receipt size={15} />,      count: project.bills?.length ?? 0 },
+        { id: 'payroll',    label: 'Payroll',   icon: <Users size={15} />,        count: project.payroll?.length ?? 0 },
+        { id: 'pages',      label: 'Pages',     icon: <FileText size={15} />,      count: project.pages?.length ?? 0 },
+        { id: 'activity',   label: 'Activity',  icon: <Clock size={15} /> },
     ];
 
     return (
@@ -2766,21 +2826,32 @@ export default function Show({ project, canManage, taskCategories = [], activiti
             <Head title={project.name} />
 
             {/* Tab Bar */}
-            <div className="-mx-4 md:-mx-8 px-4 md:px-8 border-b border-[#e5e7eb] mb-7 flex gap-0 overflow-x-auto">
-                {tabs.map(t => (
-                    <button
-                        key={t.id}
-                        onClick={() => setTab(t.id)}
-                        className={`flex items-center gap-1.5 px-2.5 md:px-4 py-3 md:py-3.5 text-[12px] md:text-[13px] font-medium border-b-2 whitespace-nowrap transition-all
-                            ${tab === t.id
-                                ? 'border-[#4f6df5] text-[#4f6df5]'
-                                : 'border-transparent text-[#6b7280] hover:text-black'
-                            }`}
-                    >
-                        {t.icon}
-                        {t.label}
-                    </button>
-                ))}
+            <div className="-mx-4 md:-mx-8 px-4 md:px-8 mb-7 overflow-x-auto no-scrollbar">
+                <div className="inline-flex items-center gap-1 p-1 bg-[#f3f4f6] border border-[#e5e7eb] rounded-xl min-w-max">
+                    {tabs.map(t => {
+                        const active = tab === t.id;
+                        return (
+                            <button
+                                key={t.id}
+                                onClick={() => setTab(t.id)}
+                                className={`flex items-center gap-1.5 px-3 md:px-3.5 py-2 rounded-lg text-[12px] md:text-[13px] font-semibold whitespace-nowrap transition-all
+                                    ${active
+                                        ? 'bg-white text-[#4f6df5] shadow-[0_1px_3px_rgba(17,24,39,0.08)]'
+                                        : 'text-[#374151] hover:text-black hover:bg-white/60'
+                                    }`}
+                            >
+                                <span className={active ? 'text-[#4f6df5]' : 'text-[#4b5563]'}>{t.icon}</span>
+                                {t.label}
+                                {t.count !== undefined && (
+                                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none min-w-[18px] text-center
+                                        ${active ? 'bg-[#4f6df5]/12 text-[#4f6df5]' : 'bg-[#e5e7eb] text-[#4b5563]'}`}>
+                                        {t.count}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Tab Content */}
