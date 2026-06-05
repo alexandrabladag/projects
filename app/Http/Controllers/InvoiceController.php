@@ -49,6 +49,7 @@ class InvoiceController extends Controller
             'description'   => $validated['description'] ?? null,
             'payment_stage' => $validated['payment_stage'] ?? null,
             'payment_notes' => $validated['payment_notes'] ?? null,
+            'currency'      => $project->currency ?? 'USD',
             'status'        => 'draft',
         ]);
 
