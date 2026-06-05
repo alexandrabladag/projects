@@ -2672,9 +2672,19 @@ function PagesTab({ project, canManage }) {
     const [copied, setCopied] = useState(null);
     const [docModal, setDocModal] = useState(null); // page id
     const [previewDoc, setPreviewDoc] = useState(null);
+    const [renaming, setRenaming] = useState(null); // page being renamed (HTML pages)
     const pages = project.pages ?? [];
 
     const { data, setData, post, put, processing, reset, errors } = useForm({ title: '', content: '' });
+
+    // Title-only edit for full-HTML pages — leaves the imported markup untouched.
+    const renameForm = useForm({ title: '' });
+    const openRename = (page) => { renameForm.setData('title', page.title); setRenaming(page); };
+    const submitRename = () => {
+        renameForm.put(route('projects.pages.update', [project.id, renaming.id]), {
+            onSuccess: () => setRenaming(null),
+        });
+    };
 
     const docForm = useForm({ name: '', type: 'other', file: null, page_id: null });
     const submitDoc = () => {
@@ -2855,7 +2865,7 @@ function PagesTab({ project, canManage }) {
                                                 <Btn ghost sm onClick={() => toggleShare(page)}>
                                                     {page.is_shared ? <><Lock size={12} /> Shared</> : 'Share'}
                                                 </Btn>
-                                                {!isHtml && <Btn ghost sm onClick={() => openEdit(page)}><Pencil size={13} /></Btn>}
+                                                <Btn ghost sm onClick={() => isHtml ? openRename(page) : openEdit(page)}><Pencil size={13} /></Btn>
                                                 <button onClick={() => deletePage(page)} className="text-[#6b7280] hover:text-red-500 transition-colors p-1.5"><Trash2 size={14} /></button>
                                             </>
                                         )}
@@ -2903,6 +2913,17 @@ function PagesTab({ project, canManage }) {
                                 <div className="text-[11px] mt-1">PDF, DOCX, PNG, ZIP — up to 100MB</div>
                             </label>
                         </div>
+                    </div>
+                </Modal>
+            )}
+
+            {/* Rename Page Modal (HTML pages — title only, content preserved) */}
+            {renaming && (
+                <Modal title="Rename Page" subtitle="The imported HTML content stays unchanged." onClose={() => setRenaming(null)} footer={<><Btn ghost onClick={() => setRenaming(null)}>Cancel</Btn><Btn primary onClick={submitRename} disabled={renameForm.processing || !renameForm.data.title}>{renameForm.processing ? 'Saving…' : 'Save Title'}</Btn></>}>
+                    <div className="pb-2">
+                        <FG label="Page Title" error={renameForm.errors.title}>
+                            <input className={inputCls} value={renameForm.data.title} onChange={e => renameForm.setData('title', e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && renameForm.data.title) submitRename(); }} autoFocus />
+                        </FG>
                     </div>
                 </Modal>
             )}
