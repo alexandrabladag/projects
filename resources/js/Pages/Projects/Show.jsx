@@ -499,11 +499,14 @@ function TeamSection({ project, canManage }) {
 
     const { data, setData, post, processing, reset } = useForm({ client_id: '', team_member_id: '', role: '', notes: '' });
 
-    // Combined picker: internal team members + directory contractors/vendors.
-    // Value is namespaced ("team:5" / "client:5") so we can route it to the right field.
+    // Combined picker: internal team members + directory contractors/vendors,
+    // excluding anyone already on the team. Value is namespaced ("team:5" /
+    // "client:5") so we can route it to the right field.
+    const addedClientIds = new Set(members.map(m => m.client_id).filter(Boolean));
+    const addedTeamIds   = new Set(members.map(m => m.team_member_id).filter(Boolean));
     const pickerOptions = [
-        ...teamMembers.map(t => ({ value: `team:${t.id}`, label: `${t.name}${t.role ? ` (${t.role})` : ' · Team'}` })),
-        ...contractors.map(c => ({ value: `client:${c.id}`, label: `${c.name} (${c.type})` })),
+        ...teamMembers.filter(t => !addedTeamIds.has(t.id)).map(t => ({ value: `team:${t.id}`, label: `${t.name}${t.role ? ` (${t.role})` : ' · Team'}` })),
+        ...contractors.filter(c => !addedClientIds.has(c.id)).map(c => ({ value: `client:${c.id}`, label: `${c.name} (${c.type})` })),
     ];
     const pickerValue = data.team_member_id ? `team:${data.team_member_id}` : data.client_id ? `client:${data.client_id}` : '';
     const onPick = (v) => {

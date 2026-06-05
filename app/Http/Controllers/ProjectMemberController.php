@@ -19,6 +19,15 @@ class ProjectMemberController extends Controller
             'notes'          => 'nullable|string',
         ]);
 
+        $alreadyOnTeam = $project->members()
+            ->when($validated['client_id'] ?? null, fn ($q, $id) => $q->where('client_id', $id))
+            ->when($validated['team_member_id'] ?? null, fn ($q, $id) => $q->where('team_member_id', $id))
+            ->exists();
+
+        if ($alreadyOnTeam) {
+            return back()->with('error', 'That person is already on this project team.');
+        }
+
         $project->members()->create($validated);
 
         return back()->with('success', 'Team member added.');
