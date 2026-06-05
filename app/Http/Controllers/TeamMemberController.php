@@ -45,7 +45,7 @@ class TeamMemberController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate($this->rules());
+        $validated = $this->withPayDefaults($request->validate($this->rules()));
 
         TeamMember::create($validated);
 
@@ -54,13 +54,23 @@ class TeamMemberController extends Controller
 
     public function update(Request $request, TeamMember $teamMember)
     {
-        $validated = $request->validate($this->rules($teamMember->id) + [
+        $validated = $this->withPayDefaults($request->validate($this->rules($teamMember->id) + [
             'is_active' => 'boolean',
-        ]);
+        ]));
 
         $teamMember->update($validated);
 
         return back()->with('success', 'Team member updated.');
+    }
+
+    /** Pay columns are NOT NULL; fall back to their defaults when left blank. */
+    private function withPayDefaults(array $validated): array
+    {
+        $validated['rate']          = $validated['rate'] ?? 0;
+        $validated['pay_type']      = $validated['pay_type'] ?? 'monthly';
+        $validated['rate_currency'] = $validated['rate_currency'] ?? 'PHP';
+
+        return $validated;
     }
 
     public function destroy(TeamMember $teamMember)
