@@ -71,8 +71,8 @@ class ProjectPageController extends Controller
     {
         $page = ProjectPage::where('share_code', $code)->where('is_shared', true)->firstOrFail();
 
-        // Full HTML document — serve directly as raw HTML
-        $isFullHtml = str_contains($page->content ?? '', '<!DOCTYPE') || str_contains($page->content ?? '', '<html');
+        // Full HTML document — serve directly as raw HTML (case-insensitive match)
+        $isFullHtml = (bool) preg_match('/<!doctype\s+html|<html[\s>]/i', $page->content ?? '');
 
         if ($isFullHtml) {
             $html = str_replace('<head>', '<head><meta name="robots" content="noindex, nofollow">', $page->content);

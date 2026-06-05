@@ -2700,15 +2700,26 @@ function PagesTab({ project, canManage }) {
             const html = ev.target.result;
             const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
             const title = titleMatch ? titleMatch[1] : file.name.replace(/\.html?$/i, '');
-            const isFullDoc = html.includes('<!DOCTYPE') || html.includes('<html');
-            // Keep full HTML (with styles) for full documents, extract body for fragments
-            const content = isFullDoc ? html : (html.match(/<body[^>]*>([\s\S]*)<\/body>/i)?.[1]?.trim() ?? html);
+            // Case-insensitive: catches <!doctype html>, <html lang="…">, etc.
+            const isFullDoc = /<!doctype\s+html|<html[\s>]/i.test(html);
+            // A styled fragment (has its own CSS / inline styles) is a design, not rich text —
+            // preserve it verbatim instead of letting the editor strip tags & styles.
+            const isStyled = /<style[\s>]|style\s*=/i.test(html);
             setEditingPage(null);
-            setData({ title, content });
-            // Skip editor for full HTML docs — save directly
             if (isFullDoc) {
+                // Full document — save raw, skip the editor.
+                setData({ title, content: html });
+                router.post(route('projects.pages.store', project.id), { title, content: html });
+            } else if (isStyled) {
+                // Styled fragment — wrap in a minimal standalone shell so it renders on its own.
+                const body = html.match(/<body[^>]*>([\s\S]*)<\/body>/i)?.[1]?.trim() ?? html;
+                const content = `<!DOCTYPE html>\n<html>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${title}</title>\n</head>\n<body>\n${body}\n</body>\n</html>`;
+                setData({ title, content });
                 router.post(route('projects.pages.store', project.id), { title, content });
             } else {
+                // Plain fragment — edit as rich text.
+                const content = html.match(/<body[^>]*>([\s\S]*)<\/body>/i)?.[1]?.trim() ?? html;
+                setData({ title, content });
                 setShowEditor(true);
             }
         };
@@ -2768,7 +2779,7 @@ function PagesTab({ project, canManage }) {
             {!showEditor && pages.length > 0 && (
                 <div className="grid grid-cols-2 gap-4">
                     {pages.map(page => {
-                        const isHtml = (page.content ?? '').includes('<!DOCTYPE') || (page.content ?? '').includes('<html');
+                        const isHtml = /<!doctype\s+html|<html[\s>]/i.test(page.content ?? '');
                         return (
                             <div key={page.id} className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden hover:shadow-md hover:border-[#4f6df5]/30 transition-all group">
                                 {/* Preview bar */}
