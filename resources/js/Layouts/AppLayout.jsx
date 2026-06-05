@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users, Tag, ListTodo, ReceiptText, Menu, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users, Tag, ListTodo, ReceiptText, TrendingUp, Menu, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 // ── Reusable Badge ─────────────────────────────────────────────────────────────
 export function Badge({ status, label }) {
@@ -37,12 +37,14 @@ export function Badge({ status, label }) {
 // ── Sidebar ────────────────────────────────────────────────────────────────────
 function Sidebar({ projects, workspace, user, open, onClose, collapsed, onToggleCollapse }) {
     const { url } = usePage();
+    const canManage = (user?.roles ?? []).some(r => r === 'admin' || r === 'manager');
 
     const icons = {
         dashboard: <LayoutDashboard size={18} strokeWidth={1.75} />,
         mytasks:   <ListTodo size={18} strokeWidth={1.75} />,
         projects:  <FolderKanban size={18} strokeWidth={1.75} />,
         billing:   <ReceiptText size={18} strokeWidth={1.75} />,
+        reports:   <TrendingUp size={18} strokeWidth={1.75} />,
         clients:   <Building2 size={18} strokeWidth={1.75} />,
         profile:   <UserCircle size={18} strokeWidth={1.75} />,
         team:      <Users size={18} strokeWidth={1.75} />,
@@ -113,6 +115,7 @@ function Sidebar({ projects, workspace, user, open, onClose, collapsed, onToggle
                 {navItem(route('my-tasks'), 'mytasks', 'My Tasks')}
                 {navItem(route('projects.index'), 'projects', 'All Projects')}
                 {navItem(route('billing.index'), 'billing', 'Billing')}
+                {canManage && navItem(route('reports.profitability'), 'reports', 'Profitability')}
                 {navItem(route('clients.index'), 'clients', 'Directory')}
 
                 <div className={`text-[9px] tracking-[2px] text-[#94a3b8] uppercase px-3 py-2 mt-2 ${hideOnCollapse}`}>
