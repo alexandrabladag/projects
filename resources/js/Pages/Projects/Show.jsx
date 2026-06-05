@@ -211,7 +211,7 @@ function OverviewTab({ project, canManage, fmt }) {
                     <span className="text-[14px] font-bold text-black flex items-center gap-2"><Flag size={14} className="text-[#4f6df5]" /> Project Lifecycle</span>
                     <span className="text-[12px] text-[#4b5563]">{phaseIdx >= 0 ? `Stage ${phaseIdx + 1} of ${PROJECT_PHASES.length}` : project.phase}</span>
                 </div>
-                <div className="flex items-start overflow-x-auto pb-1 -mx-1 px-1">
+                <div className="flex items-start overflow-x-auto py-1 -mx-1 px-1">
                     {PROJECT_PHASES.map((p, i) => {
                         const done = phaseIdx > i, current = phaseIdx === i;
                         return (
