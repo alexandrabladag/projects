@@ -818,6 +818,7 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
     const [showModal, setShowModal] = useState(false);
     const [expanded, setExpanded] = useState(null);
     const [paymentModal, setPaymentModal] = useState(null); // invoice object or null
+    const [editModal, setEditModal] = useState(null); // invoice object or null
     const invoices = project.invoices ?? [];
 
     const totalBilled   = invoices.reduce((s, i) => s + (i.total ?? 0), 0);
@@ -892,6 +893,11 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                                     <Link href={route('invoices.view', inv.id)} onClick={e => e.stopPropagation()}>
                                         <Btn ghost sm><Eye size={13} /></Btn>
                                     </Link>
+                                    {canManage && inv.status === 'draft' && (
+                                        <Btn ghost sm onClick={e => { e.stopPropagation(); setEditModal(inv); }}>
+                                            <Pencil size={13} />
+                                        </Btn>
+                                    )}
                                     {canManage && inv.status === 'draft' && (
                                         <Btn ghost sm onClick={e => { e.stopPropagation(); updateStatus(inv, 'sent'); }}>
                                             <Send size={13} />
@@ -996,9 +1002,59 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                 </Modal>
             )}
 
+            {/* Edit Invoice Modal */}
+            {editModal && <EditInvoiceModal invoice={editModal} project={project} fmt={fmt} onClose={() => setEditModal(null)} />}
+
             {/* Record Payment Modal */}
             {paymentModal && <PaymentModal invoice={paymentModal} onClose={() => setPaymentModal(null)} />}
         </>
+    );
+}
+
+function EditInvoiceModal({ invoice, project, fmt, onClose }) {
+    const { data, setData, put, processing, errors } = useForm({
+        due_date: invoice.due_date ? invoice.due_date.slice(0, 10) : '',
+        description: invoice.description ?? '',
+        items: (invoice.items?.length ? invoice.items : [{ description: '', quantity: 1, rate: '' }])
+            .map(i => ({ description: i.description, quantity: i.quantity, rate: i.rate })),
+    });
+
+    const addItem    = () => setData('items', [...data.items, { description: '', quantity: 1, rate: '' }]);
+    const removeItem = (i) => setData('items', data.items.filter((_, j) => j !== i));
+    const updateItem = (i, k, v) => { const it = [...data.items]; it[i] = { ...it[i], [k]: v }; setData('items', it); };
+    const total      = data.items.reduce((s, i) => s + (parseFloat(i.rate) || 0) * (parseInt(i.quantity) || 1), 0);
+    const submit     = () => put(route('projects.invoices.update', [project.id, invoice.id]), { onSuccess: onClose });
+
+    return (
+        <Modal title="Edit Invoice" subtitle={invoice.number} large onClose={onClose} footer={<><Btn ghost onClick={onClose}>Cancel</Btn><Btn primary onClick={submit} disabled={processing}>{processing ? 'Saving…' : 'Save Changes'}</Btn></>}>
+            <div className="space-y-4 pb-2">
+                <div className="grid grid-cols-2 gap-3">
+                    <FG label="Invoice #"><input className={`${inputCls} font-mono font-semibold bg-gray-50 text-[#6b7280]`} value={invoice.number} disabled /></FG>
+                    <FG label="Description" error={errors.description}><input className={inputCls} value={data.description} onChange={e => setData('description', e.target.value)} placeholder="e.g. Initial retainer — 40%" /></FG>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                    <FG label="Due Date" error={errors.due_date}><input className={inputCls} type="date" value={data.due_date} onChange={e => setData('due_date', e.target.value)} /></FG>
+                </div>
+                <div className="pt-2">
+                    <div className="text-[10px] tracking-[2px] uppercase text-[#4b5563] mb-3 flex items-center gap-3">Line Items<span className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                    <div className="grid grid-cols-[1fr_70px_90px_28px] gap-2 text-[10px] uppercase tracking-wide text-[#4b5563] mb-2 px-0.5">
+                        <span>Description</span><span>Qty</span><span>Rate</span><span />
+                    </div>
+                    {data.items.map((item, i) => (
+                        <div key={i} className="grid grid-cols-[1fr_70px_90px_28px] gap-2 mb-2">
+                            <input className={inputCls} style={{fontSize:12}} value={item.description} onChange={e => updateItem(i,'description',e.target.value)} placeholder="Item description" />
+                            <input className={inputCls} style={{fontSize:12}} type="number" value={item.quantity} onChange={e => updateItem(i,'quantity',e.target.value)} min="1" />
+                            <input className={inputCls} style={{fontSize:12}} type="number" value={item.rate} onChange={e => updateItem(i,'rate',e.target.value)} placeholder="0" />
+                            <button onClick={() => removeItem(i)} className="text-[#4b5563] hover:text-red-400 text-[18px] pb-0.5">×</button>
+                        </div>
+                    ))}
+                    <div className="flex justify-between items-center mt-3">
+                        <Btn ghost sm onClick={addItem}>+ Add Line Item</Btn>
+                        <div className="flex gap-8 text-[13.5px]"><span className="text-[#4b5563]">Total</span><span className="font-semibold text-black">{fmt(total)}</span></div>
+                    </div>
+                </div>
+            </div>
+        </Modal>
     );
 }
 
