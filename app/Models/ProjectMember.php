@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProjectMember extends Model
 {
-    protected $fillable = ['project_id', 'client_id', 'role', 'notes'];
+    protected $fillable = ['project_id', 'client_id', 'team_member_id', 'role', 'notes'];
 
     public function project(): BelongsTo
     {
@@ -17,5 +17,10 @@ class ProjectMember extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function teamMember(): BelongsTo
+    {
+        return $this->belongsTo(TeamMember::class);
     }
 }

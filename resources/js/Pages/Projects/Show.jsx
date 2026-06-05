@@ -494,16 +494,33 @@ function TeamSection({ project, canManage }) {
     const { props } = usePage();
     const allClients = props.clients ?? [];
     const contractors = allClients.filter(c => c.type === 'contractor' || c.type === 'vendor');
+    const teamMembers = props.teamMembers ?? [];
     const members = project.members ?? [];
 
-    const { data, setData, post, processing, reset } = useForm({ client_id: '', role: '', notes: '' });
+    const { data, setData, post, processing, reset } = useForm({ client_id: '', team_member_id: '', role: '', notes: '' });
+
+    // Combined picker: internal team members + directory contractors/vendors.
+    // Value is namespaced ("team:5" / "client:5") so we can route it to the right field.
+    const pickerOptions = [
+        ...teamMembers.map(t => ({ value: `team:${t.id}`, label: `${t.name}${t.role ? ` (${t.role})` : ' · Team'}` })),
+        ...contractors.map(c => ({ value: `client:${c.id}`, label: `${c.name} (${c.type})` })),
+    ];
+    const pickerValue = data.team_member_id ? `team:${data.team_member_id}` : data.client_id ? `client:${data.client_id}` : '';
+    const onPick = (v) => {
+        const [kind, id] = v ? v.split(':') : ['', ''];
+        setData('client_id', kind === 'client' ? id : '');
+        setData('team_member_id', kind === 'team' ? id : '');
+    };
 
     const submit = () => {
         post(route('projects.members.store', project.id), { onSuccess: () => { setShowAdd(false); reset(); } });
     };
 
+    const memberName = (m) => m.client?.name ?? m.team_member?.name ?? '?';
+    const memberType = (m) => m.client?.type ?? (m.team_member ? 'team' : null);
+
     const removeMember = async (member) => {
-        if (await confirm({ title: `Remove ${member.client?.name}?`, message: 'They will be removed from this project team.', danger: true, confirmLabel: 'Remove' })) {
+        if (await confirm({ title: `Remove ${memberName(member)}?`, message: 'They will be removed from this project team.', danger: true, confirmLabel: 'Remove' })) {
             router.delete(route('projects.members.destroy', [project.id, member.id]));
         }
     };
@@ -521,14 +538,14 @@ function TeamSection({ project, canManage }) {
             {showAdd && (
                 <div className="px-5 py-4 bg-[#fafbfc] border-b border-[#e5e7eb]">
                     <div className="grid grid-cols-3 gap-3">
-                        <FG label="Contractor / Vendor">
-                            <Select value={data.client_id} onChange={v => setData('client_id', v)} placeholder="Select..." clearable options={contractors.map(c => ({ value: c.id, label: `${c.name} (${c.type})` }))} />
+                        <FG label="Team Member / Contractor">
+                            <Select value={pickerValue} onChange={onPick} placeholder="Select..." clearable options={pickerOptions} />
                         </FG>
                         <FG label="Role in Project">
                             <input className={inputCls} value={data.role} onChange={e => setData('role', e.target.value)} placeholder="e.g. Designer, Developer" />
                         </FG>
                         <div className="flex items-end">
-                            <Btn primary sm onClick={submit} disabled={processing || !data.client_id}><Plus size={13} /> Add to Team</Btn>
+                            <Btn primary sm onClick={submit} disabled={processing || (!data.client_id && !data.team_member_id)}><Plus size={13} /> Add to Team</Btn>
                         </div>
                     </div>
                 </div>
@@ -543,12 +560,12 @@ function TeamSection({ project, canManage }) {
                     {members.map(m => (
                         <div key={m.id} className="flex items-center gap-3 px-5 py-3 border-b border-[#f0f0f0] last:border-b-0 hover:bg-[#fafbfc] transition-colors">
                             <div className="w-8 h-8 rounded-full bg-[#4f6df5]/10 flex items-center justify-center text-[11px] font-bold text-[#4f6df5] flex-shrink-0">
-                                {(m.client?.name ?? '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                                {memberName(m).split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <div className="text-[13px] font-semibold text-black truncate">{m.client?.name}</div>
+                                <div className="text-[13px] font-semibold text-black truncate">{memberName(m)}</div>
                                 <div className="text-[11px] text-[#4b5563]">
-                                    {[m.role, m.client?.type].filter(Boolean).join(' · ')}
+                                    {[m.role, memberType(m)].filter(Boolean).join(' · ')}
                                 </div>
                             </div>
                             {canManage && (

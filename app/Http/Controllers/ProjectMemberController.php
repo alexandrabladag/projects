@@ -13,9 +13,10 @@ class ProjectMemberController extends Controller
         $this->authorize('update', $project);
 
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
-            'role'      => 'nullable|string|max:255',
-            'notes'     => 'nullable|string',
+            'client_id'      => 'nullable|required_without:team_member_id|exists:clients,id',
+            'team_member_id' => 'nullable|required_without:client_id|exists:team_members,id',
+            'role'           => 'nullable|string|max:255',
+            'notes'          => 'nullable|string',
         ]);
 
         $project->members()->create($validated);

@@ -166,7 +166,7 @@ class ProjectController extends Controller
             'bills.vendor',
             'payroll.teamMember',
             'timeEntries.teamMember:id,name', 'timeEntries.task:id,title',
-            'members.client',
+            'members.client', 'members.teamMember:id,name,role',
             'pages.creator', 'pages.documents.uploader',
         ]);
 
