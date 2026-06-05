@@ -826,8 +826,15 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
     const outstanding   = invoices.filter(i => ['sent','overdue'].includes(i.status)).reduce((s, i) => s + (i.total ?? 0), 0);
 
     const statusCycle = { draft: 'sent', sent: 'paid' };
+    const confirm = useConfirm();
 
     const updateStatus = (inv, status) => router.patch(route('invoices.status', inv.id), { status });
+
+    const deleteInvoice = async (inv) => {
+        if (await confirm({ title: `Delete ${inv.number}?`, message: 'This invoice and its line items will be permanently removed.', danger: true, confirmLabel: 'Delete' })) {
+            router.delete(route('projects.invoices.destroy', [project.id, inv.id]));
+        }
+    };
 
     const { data, setData, post, processing, reset, errors } = useForm({
         number: nextNumber ?? '', date: new Date().toISOString().slice(0, 10), due_date: '', description: '',
@@ -922,6 +929,11 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                                                 router.post(route('invoices.signed-file', inv.id), fd);
                                             }} />
                                         </label>
+                                    )}
+                                    {canManage && (
+                                        <button onClick={e => { e.stopPropagation(); deleteInvoice(inv); }} className="text-[#6b7280] hover:text-red-500 transition-colors p-1.5" title="Delete">
+                                            <Trash2 size={14} />
+                                        </button>
                                     )}
                                     <span className="text-[#6b7280]">{expanded === inv.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</span>
                                 </div>
