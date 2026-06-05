@@ -247,7 +247,16 @@ class ProjectController extends Controller
             'phase'         => 'nullable|string|max:100',
         ]);
 
+        // Invoices have no currency of their own — they always follow the
+        // project. Bills and payroll keep their own currency (they have explicit
+        // pickers and exchange rates), so they're intentionally left untouched.
+        $currencyChanged = isset($validated['currency']) && $validated['currency'] !== $project->currency;
+
         $project->update($validated);
+
+        if ($currencyChanged) {
+            $project->invoices()->update(['currency' => $validated['currency']]);
+        }
 
         return back()->with('success', 'Project updated.');
     }
