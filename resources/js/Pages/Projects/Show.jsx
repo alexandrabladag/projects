@@ -2099,8 +2099,26 @@ function Section({ title, children }) {
     );
 }
 
+// Exchange-rate input shown only when an entry's currency differs from the
+// project's. Converts the entry into the project currency for project-level totals.
+function FxRateRow({ amount, currency, rate, projectCurrency, onChange }) {
+    if (!currency || currency === projectCurrency) return null;
+    const converted = (parseFloat(amount) || 0) * (parseFloat(rate) || 0);
+    return (
+        <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3 grid grid-cols-2 gap-3 items-end">
+            <FG label={`Exchange rate (1 ${currency} → ${projectCurrency})`}>
+                <input className={inputCls} type="number" step="0.000001" value={rate} onChange={e => onChange(e.target.value)} placeholder="0.00" />
+            </FG>
+            <div className="text-[12px] text-amber-700 pb-2">
+                ≈ {formatMoney(converted, projectCurrency)} <span className="text-amber-500">in project currency</span>
+            </div>
+        </div>
+    );
+}
+
 // ── BILLS TAB (Vendor/Contractor Invoices) ───────────────────────────────────
 function BillsTab({ project, canManage, fmt }) {
+    const projectCurrency = project.currency ?? 'USD';
     const confirm = useConfirm();
     const [showModal, setShowModal] = useState(false);
     const [editBill, setEditBill] = useState(null);
@@ -2123,7 +2141,7 @@ function BillsTab({ project, canManage, fmt }) {
     const hasPending = Object.values(totalPending).some(v => v > 0);
 
     const { data, setData, post, processing, reset, errors } = useForm({
-        client_id: '', number: '', amount: '', currency: project.currency ?? 'USD',
+        client_id: '', number: '', amount: '', currency: projectCurrency, exchange_rate: 1,
         date: new Date().toISOString().slice(0, 10), due_date: '',
         description: '', category: '', notes: '', file: null,
     });
@@ -2136,14 +2154,15 @@ function BillsTab({ project, canManage, fmt }) {
     };
 
     const editForm = useForm({
-        client_id: '', number: '', amount: '', currency: project.currency ?? 'USD',
+        client_id: '', number: '', amount: '', currency: projectCurrency, exchange_rate: 1,
         date: '', due_date: '', description: '', category: '', notes: '', file: null,
     });
 
     const openEdit = (bill) => {
         editForm.setData({
             client_id: bill.client_id ?? '', number: bill.number ?? '', amount: bill.amount ?? '',
-            currency: bill.currency ?? project.currency ?? 'USD', date: bill.date?.slice(0, 10) ?? '',
+            currency: bill.currency ?? projectCurrency, exchange_rate: bill.exchange_rate ?? 1,
+            date: bill.date?.slice(0, 10) ?? '',
             due_date: bill.due_date?.slice(0, 10) ?? '', description: bill.description ?? '',
             category: bill.category ?? '', notes: bill.notes ?? '', file: null,
         });
@@ -2280,10 +2299,11 @@ function BillsTab({ project, canManage, fmt }) {
                         <div className="grid grid-cols-3 gap-3">
                             <FG label="Amount *" error={errors.amount}><input className={inputCls} type="number" step="0.01" value={data.amount} onChange={e => setData('amount', e.target.value)} placeholder="0.00" /></FG>
                             <FG label="Currency">
-                                <Select value={data.currency} onChange={v => setData('currency', v)} options={['USD','PHP','JPY','EUR','GBP','SGD','AUD','THB','VND','IDR','MYR'].map(c => ({ value: c, label: c }))} />
+                                <Select value={data.currency} onChange={v => { setData('currency', v); if (v === projectCurrency) setData('exchange_rate', 1); }} options={['USD','PHP','JPY','EUR','GBP','SGD','AUD','THB','VND','IDR','MYR'].map(c => ({ value: c, label: c }))} />
                             </FG>
                             <FG label="Category"><input className={inputCls} value={data.category} onChange={e => setData('category', e.target.value)} placeholder="e.g. Design, Dev" /></FG>
                         </div>
+                        <FxRateRow amount={data.amount} currency={data.currency} rate={data.exchange_rate} projectCurrency={projectCurrency} onChange={v => setData('exchange_rate', v)} />
                         <div className="grid grid-cols-2 gap-3">
                             <FG label="Bill Date *" error={errors.date}><input className={inputCls} type="date" value={data.date} onChange={e => setData('date', e.target.value)} /></FG>
                             <FG label="Due Date"><input className={inputCls} type="date" value={data.due_date} onChange={e => setData('due_date', e.target.value)} /></FG>
@@ -2313,10 +2333,11 @@ function BillsTab({ project, canManage, fmt }) {
                         <div className="grid grid-cols-3 gap-3">
                             <FG label="Amount *" error={editForm.errors.amount}><input className={inputCls} type="number" step="0.01" value={editForm.data.amount} onChange={e => editForm.setData('amount', e.target.value)} placeholder="0.00" /></FG>
                             <FG label="Currency">
-                                <Select value={editForm.data.currency} onChange={v => editForm.setData('currency', v)} options={['USD','PHP','JPY','EUR','GBP','SGD','AUD','THB','VND','IDR','MYR'].map(c => ({ value: c, label: c }))} />
+                                <Select value={editForm.data.currency} onChange={v => { editForm.setData('currency', v); if (v === projectCurrency) editForm.setData('exchange_rate', 1); }} options={['USD','PHP','JPY','EUR','GBP','SGD','AUD','THB','VND','IDR','MYR'].map(c => ({ value: c, label: c }))} />
                             </FG>
                             <FG label="Category"><input className={inputCls} value={editForm.data.category} onChange={e => editForm.setData('category', e.target.value)} placeholder="e.g. Design, Dev" /></FG>
                         </div>
+                        <FxRateRow amount={editForm.data.amount} currency={editForm.data.currency} rate={editForm.data.exchange_rate} projectCurrency={projectCurrency} onChange={v => editForm.setData('exchange_rate', v)} />
                         <div className="grid grid-cols-2 gap-3">
                             <FG label="Bill Date *" error={editForm.errors.date}><input className={inputCls} type="date" value={editForm.data.date} onChange={e => editForm.setData('date', e.target.value)} /></FG>
                             <FG label="Due Date"><input className={inputCls} type="date" value={editForm.data.due_date} onChange={e => editForm.setData('due_date', e.target.value)} /></FG>
@@ -2342,12 +2363,17 @@ function PayrollTab({ project, canManage, fmt }) {
     const entries = project.payroll ?? [];
     const { props } = usePage();
     const teamMembers = props.teamMembers ?? [];
+    const projectCurrency = project.currency ?? 'USD';
 
-    const totalPayroll = entries.reduce((s, e) => s + parseFloat(e.amount ?? 0), 0);
-    const totalPaid = entries.filter(e => e.status === 'paid').reduce((s, e) => s + parseFloat(e.amount ?? 0), 0);
+    // Entries can be in different currencies — total per currency, format each in its own.
+    const entryCur = (e) => e.currency ?? projectCurrency;
+    const sumByCurrency = (list) => list.reduce((m, e) => { const c = entryCur(e); m[c] = (m[c] ?? 0) + parseFloat(e.amount ?? 0); return m; }, {});
+    const fmtByCurrency = (map) => { const ent = Object.entries(map); return ent.length ? ent.map(([c, v]) => formatMoney(v, c)).join(' + ') : fmt(0); };
+    const totalPayroll = sumByCurrency(entries);
+    const totalPaid = sumByCurrency(entries.filter(e => e.status === 'paid'));
 
     const { data, setData, post, processing, reset } = useForm({
-        team_member_id: '', period: '', pay_type: 'monthly', rate: '', hours: '', amount: '', currency: project.currency ?? 'PHP', notes: '',
+        team_member_id: '', period: '', pay_type: 'monthly', rate: '', hours: '', amount: '', currency: projectCurrency, exchange_rate: 1, notes: '',
     });
 
     // Auto-compute amount when rate/hours change
@@ -2371,14 +2397,14 @@ function PayrollTab({ project, canManage, fmt }) {
     };
 
     const editForm = useForm({
-        team_member_id: '', period: '', pay_type: 'monthly', rate: '', hours: '', amount: '', currency: project.currency ?? 'PHP', notes: '',
+        team_member_id: '', period: '', pay_type: 'monthly', rate: '', hours: '', amount: '', currency: projectCurrency, exchange_rate: 1, notes: '',
     });
 
     const openEdit = (entry) => {
         editForm.setData({
             team_member_id: entry.team_member_id ?? '', period: entry.period ?? '', pay_type: entry.pay_type ?? 'monthly',
             rate: entry.rate ?? '', hours: entry.hours ?? '', amount: entry.amount ?? '',
-            currency: entry.currency ?? project.currency ?? 'PHP', notes: entry.notes ?? '',
+            currency: entry.currency ?? projectCurrency, exchange_rate: entry.exchange_rate ?? 1, notes: entry.notes ?? '',
         });
         setEditEntry(entry);
     };
@@ -2403,8 +2429,8 @@ function PayrollTab({ project, canManage, fmt }) {
             {/* Summary */}
             <div className="grid grid-cols-2 gap-3 mb-6">
                 {[
-                    { l: 'Total Payroll', v: fmt(totalPayroll), icon: <Users size={16} />, bg: 'bg-indigo-50 border-indigo-100', iconC: 'text-indigo-500', textC: 'text-indigo-700' },
-                    { l: 'Paid Out', v: fmt(totalPaid), icon: <Check size={16} />, bg: 'bg-emerald-50 border-emerald-100', iconC: 'text-emerald-500', textC: 'text-emerald-700' },
+                    { l: 'Total Payroll', v: fmtByCurrency(totalPayroll), icon: <Users size={16} />, bg: 'bg-indigo-50 border-indigo-100', iconC: 'text-indigo-500', textC: 'text-indigo-700' },
+                    { l: 'Paid Out', v: fmtByCurrency(totalPaid), icon: <Check size={16} />, bg: 'bg-emerald-50 border-emerald-100', iconC: 'text-emerald-500', textC: 'text-emerald-700' },
                 ].map(({ l, v, icon, bg, iconC, textC }) => (
                     <div key={l} className={`${bg} border rounded-xl p-4 flex items-center gap-3`}>
                         <div className={`w-9 h-9 rounded-lg bg-white flex items-center justify-center ${iconC} shadow-sm`}>{icon}</div>
@@ -2436,11 +2462,11 @@ function PayrollTab({ project, canManage, fmt }) {
                                     <Badge status={entry.status} />
                                     <span className="text-[11px] px-2 py-0.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-500 font-medium">{entry.pay_type}</span>
                                 </div>
-                                <div className="text-[12px] text-[#4b5563] mt-0.5">{entry.period}{entry.hours ? ` · ${entry.hours} hrs @ ${fmt(entry.rate)}/hr` : ''}</div>
+                                <div className="text-[12px] text-[#4b5563] mt-0.5">{entry.period}{entry.hours ? ` · ${entry.hours} hrs @ ${formatMoney(entry.rate, entryCur(entry))}/hr` : ''}</div>
                                 {entry.notes && <div className="text-[12px] text-[#6b7280] italic mt-1">{entry.notes}</div>}
                             </div>
                             <div className="text-right flex-shrink-0 ml-4">
-                                <div className="text-[18px] font-bold text-black">{fmt(entry.amount)}</div>
+                                <div className="text-[18px] font-bold text-black">{formatMoney(entry.amount, entryCur(entry))}</div>
                                 {entry.paid_date && <div className="text-[11px] text-emerald-600">Paid {fmtDate(entry.paid_date)}</div>}
                             </div>
                         </div>
@@ -2488,13 +2514,14 @@ function PayrollTab({ project, canManage, fmt }) {
                             )}
                             {data.pay_type !== 'hourly' && (
                                 <FG label="Currency">
-                                    <Select value={data.currency} onChange={v => setData('currency', v)} options={['PHP','USD','JPY','EUR','GBP','SGD','AUD'].map(c => ({ value: c, label: c }))} />
+                                    <Select value={data.currency} onChange={v => { setData('currency', v); if (v === projectCurrency) setData('exchange_rate', 1); }} options={['PHP','USD','JPY','EUR','GBP','SGD','AUD'].map(c => ({ value: c, label: c }))} />
                                 </FG>
                             )}
                         </div>
                         <FG label="Total Amount *">
                             <input className={`${inputCls} text-[16px] font-bold`} type="number" step="0.01" value={data.amount} onChange={e => setData('amount', e.target.value)} placeholder="0.00" />
                         </FG>
+                        <FxRateRow amount={data.amount} currency={data.currency} rate={data.exchange_rate} projectCurrency={projectCurrency} onChange={v => setData('exchange_rate', v)} />
                         <FG label="Notes"><input className={inputCls} value={data.notes} onChange={e => setData('notes', e.target.value)} placeholder="e.g. April salary, overtime, bonus" /></FG>
                     </div>
                 </Modal>
@@ -2526,13 +2553,14 @@ function PayrollTab({ project, canManage, fmt }) {
                                 <FG label="Hours"><input className={inputCls} type="number" step="0.5" value={editForm.data.hours} onChange={e => { editForm.setData('hours', e.target.value); editForm.setData('amount', computeAmount(editForm.data.pay_type, editForm.data.rate, e.target.value)); }} placeholder="0" /></FG>
                             ) : (
                                 <FG label="Currency">
-                                    <Select value={editForm.data.currency} onChange={v => editForm.setData('currency', v)} options={['PHP','USD','JPY','EUR','GBP','SGD','AUD'].map(c => ({ value: c, label: c }))} />
+                                    <Select value={editForm.data.currency} onChange={v => { editForm.setData('currency', v); if (v === projectCurrency) editForm.setData('exchange_rate', 1); }} options={['PHP','USD','JPY','EUR','GBP','SGD','AUD'].map(c => ({ value: c, label: c }))} />
                                 </FG>
                             )}
                         </div>
                         <FG label="Total Amount *">
                             <input className={`${inputCls} text-[16px] font-bold`} type="number" step="0.01" value={editForm.data.amount} onChange={e => editForm.setData('amount', e.target.value)} placeholder="0.00" />
                         </FG>
+                        <FxRateRow amount={editForm.data.amount} currency={editForm.data.currency} rate={editForm.data.exchange_rate} projectCurrency={projectCurrency} onChange={v => editForm.setData('exchange_rate', v)} />
                         <FG label="Notes"><input className={inputCls} value={editForm.data.notes} onChange={e => editForm.setData('notes', e.target.value)} placeholder="e.g. April salary, overtime, bonus" /></FG>
                     </div>
                 </Modal>

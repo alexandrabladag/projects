@@ -20,6 +20,7 @@ class ProjectPayrollController extends Controller
             'hours'          => 'nullable|numeric|min:0',
             'amount'         => 'required|numeric|min:0',
             'currency'       => 'nullable|string|max:10',
+            'exchange_rate'  => 'nullable|numeric|min:0',
             'notes'          => 'nullable|string',
         ]);
 
@@ -41,12 +42,12 @@ class ProjectPayrollController extends Controller
 
             if ($validated['status'] === 'paid' && $payroll->status !== 'paid') {
                 $validated['paid_date'] = now();
-                $project->increment('spent', $payroll->amount);
+                $project->increment('spent', $payroll->converted_amount);
             }
 
             if ($payroll->status === 'paid' && $validated['status'] !== 'paid') {
                 $validated['paid_date'] = null;
-                $project->decrement('spent', $payroll->amount);
+                $project->decrement('spent', $payroll->converted_amount);
             }
 
             $payroll->update($validated);
@@ -62,13 +63,19 @@ class ProjectPayrollController extends Controller
             'hours'          => 'nullable|numeric|min:0',
             'amount'         => 'required|numeric|min:0',
             'currency'       => 'nullable|string|max:10',
+            'exchange_rate'  => 'nullable|numeric|min:0',
             'notes'          => 'nullable|string',
         ]);
 
-        // Adjust project spent if paid and amount changed
-        if ($payroll->status === 'paid' && (float) $validated['amount'] !== (float) $payroll->amount) {
-            $project->decrement('spent', $payroll->amount);
-            $project->increment('spent', $validated['amount']);
+        // Adjust project spent if paid and the converted amount changed.
+        if ($payroll->status === 'paid') {
+            $oldConverted = $payroll->converted_amount;
+            $newRate = $validated['exchange_rate'] ?? $payroll->exchange_rate ?? 1;
+            $newConverted = (float) $validated['amount'] * (float) $newRate;
+            if ($oldConverted !== $newConverted) {
+                $project->decrement('spent', $oldConverted);
+                $project->increment('spent', $newConverted);
+            }
         }
 
         $payroll->update($validated);
@@ -81,7 +88,7 @@ class ProjectPayrollController extends Controller
         $this->authorize('update', $project);
 
         if ($payroll->status === 'paid') {
-            $project->decrement('spent', $payroll->amount);
+            $project->decrement('spent', $payroll->converted_amount);
         }
 
         $payroll->delete();

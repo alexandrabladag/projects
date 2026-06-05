@@ -17,8 +17,9 @@ class BillController extends Controller
         $validated = $request->validate([
             'client_id'   => 'nullable|exists:clients,id',
             'number'      => 'nullable|string|max:100',
-            'amount'      => 'required|numeric|min:0',
-            'currency'    => 'nullable|string|max:10',
+            'amount'        => 'required|numeric|min:0',
+            'currency'      => 'nullable|string|max:10',
+            'exchange_rate' => 'nullable|numeric|min:0',
             'date'        => 'required|date',
             'due_date'    => 'nullable|date',
             'description' => 'nullable|string|max:500',
@@ -55,11 +56,11 @@ class BillController extends Controller
                 $updateData['paid_date'] = now();
                 $updateData['paid_amount'] = $bill->amount;
                 $updateData['paid_currency'] = $bill->currency;
-                $project->increment('spent', $bill->amount);
+                $project->increment('spent', $bill->converted_amount);
             }
 
             if ($bill->status === 'paid' && $validated['status'] !== 'paid') {
-                $project->decrement('spent', $bill->amount);
+                $project->decrement('spent', $bill->converted_amount);
                 $updateData['paid_date'] = null;
                 $updateData['paid_amount'] = null;
             }
@@ -72,8 +73,9 @@ class BillController extends Controller
         $validated = $request->validate([
             'client_id'   => 'nullable|exists:clients,id',
             'number'      => 'nullable|string|max:100',
-            'amount'      => 'required|numeric|min:0',
-            'currency'    => 'nullable|string|max:10',
+            'amount'        => 'required|numeric|min:0',
+            'currency'      => 'nullable|string|max:10',
+            'exchange_rate' => 'nullable|numeric|min:0',
             'date'        => 'required|date',
             'due_date'    => 'nullable|date',
             'description' => 'nullable|string|max:500',
@@ -82,11 +84,17 @@ class BillController extends Controller
             'file'        => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
-        // If bill was paid and amount changed, adjust project spent
-        if ($bill->status === 'paid' && (float) $validated['amount'] !== (float) $bill->amount) {
-            $project->decrement('spent', $bill->amount);
-            $project->increment('spent', $validated['amount']);
-            $validated['paid_amount'] = $validated['amount'];
+        // If bill was paid and its converted amount changed (amount or rate),
+        // adjust project spent by the difference (in project currency).
+        if ($bill->status === 'paid') {
+            $oldConverted = $bill->converted_amount;
+            $newRate = $validated['exchange_rate'] ?? $bill->exchange_rate ?? 1;
+            $newConverted = (float) $validated['amount'] * (float) $newRate;
+            if ($oldConverted !== $newConverted) {
+                $project->decrement('spent', $oldConverted);
+                $project->increment('spent', $newConverted);
+                $validated['paid_amount'] = $validated['amount'];
+            }
         }
 
         if ($request->hasFile('file')) {
@@ -118,7 +126,7 @@ class BillController extends Controller
 
         // If bill was paid, reverse the spent amount
         if ($bill->status === 'paid') {
-            $project->decrement('spent', $bill->amount);
+            $project->decrement('spent', $bill->converted_amount);
         }
 
         $bill->delete();

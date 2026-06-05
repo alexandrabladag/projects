@@ -11,15 +11,22 @@ class ProjectPayroll extends Model
 
     protected $fillable = [
         'project_id', 'team_member_id', 'period', 'pay_type',
-        'rate', 'hours', 'amount', 'currency', 'status', 'paid_date', 'notes',
+        'rate', 'hours', 'amount', 'currency', 'exchange_rate', 'status', 'paid_date', 'notes',
     ];
 
     protected $casts = [
-        'rate'      => 'decimal:2',
-        'hours'     => 'decimal:2',
-        'amount'    => 'decimal:2',
-        'paid_date' => 'date',
+        'rate'          => 'decimal:2',
+        'hours'         => 'decimal:2',
+        'amount'        => 'decimal:2',
+        'exchange_rate' => 'decimal:6',
+        'paid_date'     => 'date',
     ];
+
+    /** Amount converted into the project's currency. */
+    public function getConvertedAmountAttribute(): float
+    {
+        return (float) $this->amount * (float) ($this->exchange_rate ?? 1);
+    }
 
     public function project(): BelongsTo
     {

@@ -111,12 +111,12 @@ class Project extends Model
 
     public function getTotalPayrollAttribute(): float
     {
-        return $this->payroll->sum('amount');
+        return $this->payroll->sum('converted_amount');
     }
 
     public function getTotalPayrollPaidAttribute(): float
     {
-        return $this->payroll->where('status', 'paid')->sum('amount');
+        return $this->payroll->where('status', 'paid')->sum('converted_amount');
     }
 
     public function timeEntries(): HasMany
@@ -204,11 +204,11 @@ class Project extends Model
 
     public function getTotalBillsAttribute(): float
     {
-        return $this->bills->sum('amount');
+        return $this->bills->sum('converted_amount');
     }
 
     public function getTotalBillsPaidAttribute(): float
     {
-        return $this->bills->where('status', 'paid')->sum('amount');
+        return $this->bills->where('status', 'paid')->sum('converted_amount');
     }
 }
