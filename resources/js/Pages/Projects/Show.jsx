@@ -2109,9 +2109,18 @@ function BillsTab({ project, canManage, fmt }) {
     const allClients = props.clients ?? [];
     const vendors = allClients.filter(c => c.type === 'vendor' || c.type === 'contractor');
 
-    const totalBills = bills.reduce((s, b) => s + parseFloat(b.amount ?? 0), 0);
-    const totalPaid = bills.filter(b => b.status === 'paid').reduce((s, b) => s + parseFloat(b.amount ?? 0), 0);
-    const totalPending = bills.filter(b => b.status !== 'paid').reduce((s, b) => s + parseFloat(b.amount ?? 0), 0);
+    // Bills can be in different currencies than the project, so total per
+    // currency and format each in its own currency rather than the project's.
+    const billCur = (b) => b.currency ?? project.currency ?? 'USD';
+    const sumByCurrency = (list) => list.reduce((m, b) => { const c = billCur(b); m[c] = (m[c] ?? 0) + parseFloat(b.amount ?? 0); return m; }, {});
+    const fmtByCurrency = (map) => {
+        const entries = Object.entries(map);
+        return entries.length ? entries.map(([c, v]) => formatMoney(v, c)).join(' + ') : fmt(0);
+    };
+    const totalBills = sumByCurrency(bills);
+    const totalPaid = sumByCurrency(bills.filter(b => b.status === 'paid'));
+    const totalPending = sumByCurrency(bills.filter(b => b.status !== 'paid'));
+    const hasPending = Object.values(totalPending).some(v => v > 0);
 
     const { data, setData, post, processing, reset, errors } = useForm({
         client_id: '', number: '', amount: '', currency: project.currency ?? 'USD',
@@ -2171,9 +2180,9 @@ function BillsTab({ project, canManage, fmt }) {
             {/* Summary */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
                 {[
-                    { l: 'Total Bills', v: fmt(totalBills), icon: <Receipt size={16} />, bg: 'bg-indigo-50 border-indigo-100', iconC: 'text-indigo-500', textC: 'text-indigo-700' },
-                    { l: 'Paid', v: fmt(totalPaid), icon: <Check size={16} />, bg: 'bg-emerald-50 border-emerald-100', iconC: 'text-emerald-500', textC: 'text-emerald-700' },
-                    { l: 'Pending', v: fmt(totalPending), icon: <Clock size={16} />, bg: totalPending > 0 ? 'bg-amber-50 border-amber-100' : 'bg-gray-50 border-gray-100', iconC: totalPending > 0 ? 'text-amber-500' : 'text-gray-600', textC: totalPending > 0 ? 'text-amber-700' : 'text-gray-600' },
+                    { l: 'Total Bills', v: fmtByCurrency(totalBills), icon: <Receipt size={16} />, bg: 'bg-indigo-50 border-indigo-100', iconC: 'text-indigo-500', textC: 'text-indigo-700' },
+                    { l: 'Paid', v: fmtByCurrency(totalPaid), icon: <Check size={16} />, bg: 'bg-emerald-50 border-emerald-100', iconC: 'text-emerald-500', textC: 'text-emerald-700' },
+                    { l: 'Pending', v: fmtByCurrency(totalPending), icon: <Clock size={16} />, bg: hasPending ? 'bg-amber-50 border-amber-100' : 'bg-gray-50 border-gray-100', iconC: hasPending ? 'text-amber-500' : 'text-gray-600', textC: hasPending ? 'text-amber-700' : 'text-gray-600' },
                 ].map(({ l, v, icon, bg, iconC, textC }) => (
                     <div key={l} className={`${bg} border rounded-xl p-4 flex items-center gap-3`}>
                         <div className={`w-9 h-9 rounded-lg bg-white flex items-center justify-center ${iconC} shadow-sm`}>{icon}</div>
@@ -2212,7 +2221,7 @@ function BillsTab({ project, canManage, fmt }) {
                                 </div>
                             </div>
                             <div className="text-right flex-shrink-0 ml-4">
-                                <div className="text-[18px] font-bold text-black">{fmt(bill.amount)}</div>
+                                <div className="text-[18px] font-bold text-black">{formatMoney(bill.amount, billCur(bill))}</div>
                                 <div className="text-[11px] text-[#6b7280]">{fmtDate(bill.date)}</div>
                             </div>
                         </div>
