@@ -1006,7 +1006,7 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
             {editModal && <EditInvoiceModal invoice={editModal} project={project} fmt={fmt} onClose={() => setEditModal(null)} />}
 
             {/* Record Payment Modal */}
-            {paymentModal && <PaymentModal invoice={paymentModal} onClose={() => setPaymentModal(null)} />}
+            {paymentModal && <PaymentModal invoice={paymentModal} fmt={fmt} onClose={() => setPaymentModal(null)} />}
         </>
     );
 }
@@ -1058,7 +1058,7 @@ function EditInvoiceModal({ invoice, project, fmt, onClose }) {
     );
 }
 
-function PaymentModal({ invoice, onClose }) {
+function PaymentModal({ invoice, fmt, onClose }) {
     const invoiceCur = invoice.currency ?? 'USD';
     const currencyOptions = [
         { code: 'USD', symbol: '$',  label: 'US Dollar' },
