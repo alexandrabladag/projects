@@ -11,7 +11,7 @@ class TimeEntry extends Model
     use BelongsToWorkspace;
 
     protected $fillable = [
-        'project_id', 'task_id', 'team_member_id',
+        'project_id', 'task_id', 'team_member_id', 'invoice_id',
         'date', 'hours', 'description', 'billable',
     ];
 
@@ -34,5 +34,16 @@ class TimeEntry extends Model
     public function teamMember(): BelongsTo
     {
         return $this->belongsTo(TeamMember::class);
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
+    }
+
+    // Billable hours not yet attached to an invoice.
+    public function scopeUnbilled($query)
+    {
+        return $query->where('billable', true)->whereNull('invoice_id');
     }
 }

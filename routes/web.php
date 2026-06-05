@@ -116,6 +116,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('bills/{bill}',         [\App\Http\Controllers\BillController::class, 'update'])->name('bills.update');
         Route::delete('bills/{bill}',        [\App\Http\Controllers\BillController::class, 'destroy'])->name('bills.destroy');
 
+        Route::post('time/bill',             [\App\Http\Controllers\TimeEntryController::class, 'bill'])->name('time.bill');
         Route::post('time',                  [\App\Http\Controllers\TimeEntryController::class, 'store'])->name('time.store');
         Route::put('time/{entry}',           [\App\Http\Controllers\TimeEntryController::class, 'update'])->name('time.update');
         Route::delete('time/{entry}',        [\App\Http\Controllers\TimeEntryController::class, 'destroy'])->name('time.destroy');

@@ -2445,7 +2445,7 @@ function PayrollTab({ project, canManage, fmt }) {
 }
 
 // ── TIME TRACKING TAB ─────────────────────────────────────────────────────────
-function TimeTab({ project, canManage }) {
+function TimeTab({ project, canManage, fmt }) {
     const confirm = useConfirm();
     const { props } = usePage();
     const teamMembers = props.teamMembers ?? [];
@@ -2453,9 +2453,11 @@ function TimeTab({ project, canManage }) {
     const entries = project.timeEntries ?? [];
 
     const [showModal, setShowModal] = useState(false);
+    const [showBill, setShowBill] = useState(false);
 
     const totalHours = entries.reduce((s, e) => s + parseFloat(e.hours ?? 0), 0);
     const billableHours = entries.filter(e => e.billable).reduce((s, e) => s + parseFloat(e.hours ?? 0), 0);
+    const unbilledHours = entries.filter(e => e.billable && !e.invoice_id).reduce((s, e) => s + parseFloat(e.hours ?? 0), 0);
     const fmtHrs = (h) => `${(+h).toLocaleString(undefined, { maximumFractionDigits: 2 })}h`;
 
     const today = new Date().toISOString().slice(0, 10);
@@ -2465,6 +2467,15 @@ function TimeTab({ project, canManage }) {
 
     const submit = () => {
         post(route('projects.time.store', project.id), { onSuccess: () => { setShowModal(false); reset(); setData('date', today); } });
+    };
+
+    // ── Bill unbilled hours → draft invoice ──
+    const billForm = useForm({ rate: '', date: today, due_date: '' });
+    const billAmount = billForm.data.rate ? unbilledHours * parseFloat(billForm.data.rate) : 0;
+    const submitBill = () => {
+        billForm.post(route('projects.time.bill', project.id), {
+            onSuccess: () => { setShowBill(false); billForm.reset(); billForm.setData('date', today); },
+        });
     };
 
     const deleteEntry = async (entry) => {
@@ -2480,7 +2491,12 @@ function TimeTab({ project, canManage }) {
         <>
             <div className="flex justify-between items-center mb-5">
                 <h3 className="text-[17px] font-bold">Time Tracking</h3>
-                {canManage && <Btn primary sm onClick={() => setShowModal(true)}><Plus size={13} /> Log Time</Btn>}
+                {canManage && (
+                    <div className="flex items-center gap-2">
+                        {unbilledHours > 0 && <Btn ghost sm onClick={() => setShowBill(true)}><Receipt size={13} /> Bill {fmtHrs(unbilledHours)}</Btn>}
+                        <Btn primary sm onClick={() => setShowModal(true)}><Plus size={13} /> Log Time</Btn>
+                    </div>
+                )}
             </div>
 
             {/* Summary */}
@@ -2533,9 +2549,11 @@ function TimeTab({ project, canManage }) {
                                                 {entry.task?.title && <><span>·</span><span className="truncate">{entry.task.title}</span></>}
                                             </div>
                                         </div>
-                                        {entry.billable
-                                            ? <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex-shrink-0">Billable</span>
-                                            : <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-50 text-gray-700 border border-gray-200 flex-shrink-0">Non-billable</span>}
+                                        {entry.invoice_id
+                                            ? <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 flex-shrink-0">Billed</span>
+                                            : entry.billable
+                                                ? <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex-shrink-0">Billable</span>
+                                                : <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-50 text-gray-700 border border-gray-200 flex-shrink-0">Non-billable</span>}
                                         {canManage && (
                                             <button onClick={() => deleteEntry(entry)} className="text-[#6b7280] hover:text-red-500 transition-colors p-1 opacity-0 group-hover:opacity-100 flex-shrink-0" title="Delete"><Trash2 size={14} /></button>
                                         )}
@@ -2601,6 +2619,44 @@ function TimeTab({ project, canManage }) {
                                 <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${data.billable ? 'left-[22px]' : 'left-0.5'}`} />
                             </span>
                         </button>
+                    </div>
+                </Modal>
+            )}
+
+            {/* Bill Hours Modal */}
+            {showBill && (
+                <Modal title="Bill Hours" subtitle={`Create a draft invoice from ${fmtHrs(unbilledHours)} unbilled`} onClose={() => setShowBill(false)} footer={
+                    <><Btn ghost onClick={() => setShowBill(false)}><X size={13} /> Cancel</Btn>
+                    <Btn primary onClick={submitBill} disabled={billForm.processing || !billForm.data.rate}><Receipt size={13} /> Create Invoice</Btn></>
+                }>
+                    <div className="space-y-4 pb-2">
+                        <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 flex items-center justify-between">
+                            <div>
+                                <div className="text-[11px] uppercase tracking-[1px] text-[#4b5563] font-medium">Unbilled hours</div>
+                                <div className="text-[22px] font-bold text-indigo-700 leading-tight">{fmtHrs(unbilledHours)}</div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-[11px] uppercase tracking-[1px] text-[#4b5563] font-medium">Invoice total</div>
+                                <div className="text-[22px] font-bold text-black leading-tight">{fmt(billAmount)}</div>
+                            </div>
+                        </div>
+                        <FG label="Hourly rate *" error={billForm.errors.rate}>
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280] text-[13px]">{getCurrency(project.currency ?? 'USD').symbol}</span>
+                                <input type="number" step="0.01" min="0" className={`${inputCls} pl-8`} value={billForm.data.rate} onChange={e => billForm.setData('rate', e.target.value)} placeholder="e.g. 80" autoFocus />
+                            </div>
+                        </FG>
+                        <div className="grid grid-cols-2 gap-3">
+                            <FG label="Invoice date *" error={billForm.errors.date}>
+                                <input type="date" className={inputCls} value={billForm.data.date} onChange={e => billForm.setData('date', e.target.value)} />
+                            </FG>
+                            <FG label="Due date" error={billForm.errors.due_date}>
+                                <input type="date" className={inputCls} value={billForm.data.due_date} onChange={e => billForm.setData('due_date', e.target.value)} />
+                            </FG>
+                        </div>
+                        <p className="text-[11px] text-[#6b7280] leading-relaxed">
+                            Billable hours not yet invoiced are grouped into one line per task. The draft invoice opens under the Invoices tab, where you can review and send it.
+                        </p>
                     </div>
                 </Modal>
             )}
@@ -2966,7 +3022,7 @@ export default function Show({ project, canManage, taskCategories = [], activiti
             {tab === 'tasks'     && <TasksTab     project={project} canManage={canManage} taskCategories={taskCategories} />}
             {tab === 'bills'     && <BillsTab     project={project} canManage={canManage} fmt={fmt} />}
             {tab === 'payroll'   && <PayrollTab   project={project} canManage={canManage} fmt={fmt} />}
-            {tab === 'time'      && <TimeTab      project={project} canManage={canManage} />}
+            {tab === 'time'      && <TimeTab      project={project} canManage={canManage} fmt={fmt} />}
             {tab === 'pages'     && <PagesTab     project={project} canManage={canManage} />}
             {tab === 'activity'  && <ActivityTab  activities={activities} />}
         </AppLayout>
