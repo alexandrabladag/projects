@@ -899,11 +899,11 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                                         </Btn>
                                     )}
                                     {canManage && inv.status === 'draft' && (
-                                        <Btn ghost sm onClick={e => { e.stopPropagation(); updateStatus(inv, 'sent'); }}>
-                                            <Send size={13} />
+                                        <Btn ghost sm title="Mark as sent (status only — does not email)" onClick={e => { e.stopPropagation(); updateStatus(inv, 'sent'); }}>
+                                            <Send size={13} /> Mark Sent
                                         </Btn>
                                     )}
-                                    {canManage && (inv.status === 'sent' || (inv.status === 'paid' && !inv.received_amount)) && (
+                                    {canManage && (inv.status === 'draft' || inv.status === 'sent' || (inv.status === 'paid' && !inv.received_amount)) && (
                                         <Btn ghost sm onClick={e => { e.stopPropagation(); setPaymentModal(inv); }}>
                                             <Check size={13} /> {inv.status === 'paid' ? 'Record Payment' : 'Paid'}
                                         </Btn>
