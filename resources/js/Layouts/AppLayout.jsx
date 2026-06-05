@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users, Tag, ListTodo, ReceiptText, TrendingUp, Menu, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users, Tag, ListTodo, ReceiptText, TrendingUp, Bell, Menu, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 // ── Reusable Badge ─────────────────────────────────────────────────────────────
 export function Badge({ status, label }) {
@@ -236,6 +236,92 @@ function Toast() {
     );
 }
 
+// ── Notification Bell ─────────────────────────────────────────────────────────
+function NotificationBell() {
+    const { attention } = usePage().props;
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+
+    useEffect(() => {
+        if (!open) return;
+        const onClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+        const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+        document.addEventListener('mousedown', onClick);
+        document.addEventListener('keydown', onKey);
+        return () => { document.removeEventListener('mousedown', onClick); document.removeEventListener('keydown', onKey); };
+    }, [open]);
+
+    if (!attention) return null; // clients / unauthenticated
+
+    const count = attention.count ?? 0;
+    const groups = attention.groups ?? [];
+    const dotColor = (sev) => (sev === 'danger' ? 'bg-red-500' : 'bg-amber-500');
+
+    return (
+        <div className="relative" ref={ref}>
+            <button
+                onClick={() => setOpen(o => !o)}
+                title="Notifications"
+                className="relative p-2 rounded-lg text-[#4b5563] hover:text-black hover:bg-gray-100 transition-colors"
+            >
+                <Bell size={19} strokeWidth={1.75} />
+                {count > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                        {count > 99 ? '99+' : count}
+                    </span>
+                )}
+            </button>
+
+            {open && (
+                <div className="absolute right-0 mt-2 w-[340px] max-w-[calc(100vw-2rem)] bg-white border border-[#e5e7eb] rounded-xl shadow-[0_8px_30px_rgba(16,24,40,0.12)] z-50 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-[#f3f4f6]">
+                        <span className="text-[13px] font-semibold text-black">Needs attention</span>
+                        {count > 0 && <span className="text-[11px] text-[#6b7280]">{count} item{count === 1 ? '' : 's'}</span>}
+                    </div>
+
+                    <div className="max-h-[60vh] overflow-y-auto">
+                        {groups.length === 0 ? (
+                            <div className="px-4 py-10 text-center">
+                                <CircleCheck size={26} className="text-emerald-500 mx-auto mb-2" />
+                                <div className="text-[13px] text-[#4b5563]">You're all caught up.</div>
+                            </div>
+                        ) : groups.map(g => (
+                            <div key={g.key} className="border-b border-[#f6f7f9] last:border-0">
+                                <div className="px-4 pt-3 pb-1 flex items-center gap-2">
+                                    <span className={`w-1.5 h-1.5 rounded-full ${dotColor(g.severity)}`} />
+                                    <span className="text-[11px] uppercase tracking-[0.5px] font-semibold text-[#6b7280]">{g.label}</span>
+                                    <span className="text-[11px] text-[#9ca3af]">{g.total}</span>
+                                </div>
+                                {g.items.map(it => (
+                                    it.href ? (
+                                        <Link
+                                            key={`${g.key}-${it.id}`}
+                                            href={it.href}
+                                            onClick={() => setOpen(false)}
+                                            className="block px-4 py-2 hover:bg-[#fafbfc] transition-colors"
+                                        >
+                                            <div className="text-[13px] text-black truncate">{it.title}</div>
+                                            <div className="text-[11px] text-[#6b7280] mt-0.5">{it.meta}</div>
+                                        </Link>
+                                    ) : (
+                                        <div key={`${g.key}-${it.id}`} className="px-4 py-2">
+                                            <div className="text-[13px] text-black truncate">{it.title}</div>
+                                            <div className="text-[11px] text-[#6b7280] mt-0.5">{it.meta}</div>
+                                        </div>
+                                    )
+                                ))}
+                                {g.overflow > 0 && (
+                                    <div className="px-4 py-1.5 text-[11px] text-[#9ca3af]">+{g.overflow} more</div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ── Main Layout ────────────────────────────────────────────────────────────────
 export default function AppLayout({ children, title, breadcrumbs = [] }) {
     const { auth, sidebarProjects } = usePage().props;
@@ -280,7 +366,7 @@ export default function AppLayout({ children, title, breadcrumbs = [] }) {
                             )}
                         </div>
                     </div>
-                    <div />
+                    <NotificationBell />
                 </header>
 
                 {/* Page Content */}

@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\Client;
 use App\Models\Company;
 use App\Models\Project;
+use App\Support\AttentionFeed;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
@@ -67,6 +68,12 @@ class HandleInertiaRequests extends Middleware
             'clients' => fn () => $user
                 ? Client::orderBy('name')->get(['id', 'name', 'type', 'contact_name', 'contact_email', 'contact_phone'])
                 : [],
+
+            // Cross-project "needs attention" feed for the topbar bell.
+            // Managers/admins only — derived live from existing records.
+            'attention' => fn () => $user && $user->canManageProjects()
+                ? AttentionFeed::for($user)
+                : null,
 
             // Flash messages from controllers
             'flash' => [
