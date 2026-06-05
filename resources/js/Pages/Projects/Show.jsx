@@ -121,6 +121,18 @@ function OverviewTab({ project, canManage, fmt }) {
     const vendorBills = project.total_bills ?? 0;
     const net = billed - vendorBills;
 
+    // Bills/payroll can be in currencies other than the project's. Show the cost
+    // figures grouped by their actual currency rather than forcing them into one,
+    // so e.g. PHP bills aren't displayed with a $ sign.
+    const projectCurrency = project.currency ?? 'USD';
+    const sumByCurrency = (list) => list.reduce((m, x) => { const c = x.currency ?? projectCurrency; m[c] = (m[c] ?? 0) + parseFloat(x.amount ?? 0); return m; }, {});
+    const fmtByCurrency = (map) => { const e = Object.entries(map); return e.length ? e.map(([c, v]) => formatMoney(v, c)).join(' + ') : fmt(0); };
+    const projectBills = project.bills ?? [];
+    const projectPayroll = project.payroll ?? [];
+    const vendorBillsByCur = sumByCurrency(projectBills);
+    const billsPaidByCur = sumByCurrency(projectBills.filter(b => b.status === 'paid'));
+    const spentByCur = sumByCurrency([...projectBills.filter(b => b.status === 'paid'), ...projectPayroll.filter(p => p.status === 'paid')]);
+
     const phaseIdx = PROJECT_PHASES.findIndex(p => p.name === project.phase);
 
     const health = project.status === 'completed' ? { label: 'Completed', color: '#4f6df5' }
@@ -187,10 +199,10 @@ function OverviewTab({ project, canManage, fmt }) {
                     sub={deadline ? `Due ${fmtDate(deadline)}` : 'No deadline set'} />
                 <Kpi icon={<Wallet size={17} />} accent={budgetColor || '#4f6df5'} value={`${budgetPct}%`}
                     label="Budget Used" bar={budgetPct} barColor={budgetColor || '#4f6df5'}
-                    sub={`${fmt(project.spent)} of ${fmt(project.budget)}`} />
+                    sub={`${fmtByCurrency(spentByCur)} of ${fmt(project.budget)}`} />
                 <Kpi icon={<CircleDollarSign size={17} />} accent={net >= 0 ? '#16a34a' : '#f56060'}
                     value={fmt(net)} label="Net (Billed − Bills)"
-                    sub={`${fmt(billed)} billed · ${fmt(vendorBills)} bills`} />
+                    sub={`${fmt(billed)} billed · ${fmtByCurrency(vendorBillsByCur)} bills`} />
             </div>
 
             {/* Project Lifecycle */}
@@ -256,11 +268,11 @@ function OverviewTab({ project, canManage, fmt }) {
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                                 {[
                                     { l: 'Project Budget', v: fmt(project.budget), serif: true },
-                                    { l: 'Spent (Bills)', v: fmt(project.spent), serif: true, warn: budgetPct > 90 },
+                                    { l: 'Spent (Bills)', v: fmtByCurrency(spentByCur), serif: true, warn: budgetPct > 90 },
                                     { l: 'Billed to Client', v: fmt(project.total_billed) },
                                     { l: 'Received', v: fmt(project.total_paid), green: true },
-                                    { l: 'Vendor Bills', v: fmt(project.total_bills) },
-                                    { l: 'Bills Paid', v: fmt(project.total_bills_paid), green: true },
+                                    { l: 'Vendor Bills', v: fmtByCurrency(vendorBillsByCur) },
+                                    { l: 'Bills Paid', v: fmtByCurrency(billsPaidByCur), green: true },
                                 ].map(({ l, v, serif, warn, green }) => (
                                     <div key={l}>
                                         <div className="text-[10px] tracking-[1.5px] uppercase text-[#4b5563] mb-1">{l}</div>
