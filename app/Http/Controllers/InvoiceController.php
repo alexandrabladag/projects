@@ -63,7 +63,7 @@ class InvoiceController extends Controller
         return back()->with('success', 'Invoice created.');
     }
 
-    public function update(Request $request, Invoice $invoice)
+    public function update(Request $request, Project $project, Invoice $invoice)
     {
         $this->authorize('update', $invoice->project);
 
@@ -142,7 +142,7 @@ class InvoiceController extends Controller
         return back()->with('success', 'Invoice status updated.');
     }
 
-    public function destroy(Invoice $invoice)
+    public function destroy(Project $project, Invoice $invoice)
     {
         $this->authorize('update', $invoice->project);
         $invoice->delete();
