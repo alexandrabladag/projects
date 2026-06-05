@@ -64,11 +64,10 @@ export default function Company({ company }) {
             <Head title="Company Settings" />
 
             <div className="max-w-2xl">
-                <div className="flex items-start gap-3 mb-5">
+                <div className="flex items-center gap-3 mb-5">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-indigo-50 text-[#4f6df5]"><Building2 size={19} /></div>
                     <div>
-                        <h2 className="font-serif text-[20px] font-semibold text-black leading-tight">Company Profile</h2>
-                        <p className="text-[13px] text-[#4b5563] mt-0.5">Your company information appears on invoices, proposals, and documents.</p>
+                        <p className="text-[13px] text-[#4b5563]">Your company information appears on invoices, proposals, and documents.</p>
                     </div>
                 </div>
 

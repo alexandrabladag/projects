@@ -43,11 +43,10 @@ export default function TeamMembers({ members, accounts = [], users = [] }) {
 
             <div className="max-w-3xl">
                 <div className="flex items-start justify-between gap-4 mb-6">
-                    <div className="flex items-start gap-3 min-w-0">
+                    <div className="flex items-center gap-3 min-w-0">
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-indigo-50 text-[#4f6df5]"><Users size={19} /></div>
                         <div>
-                            <h2 className="font-serif text-[20px] font-semibold text-black leading-tight">Team Members</h2>
-                            <p className="text-[13px] text-[#4b5563] mt-0.5">Employees who can be assigned as project leads. Everyone with manage access is listed here.</p>
+                            <p className="text-[13px] text-[#4b5563]">Employees who can be assigned as project leads. Everyone with manage access is listed here.</p>
                         </div>
                     </div>
                     <button onClick={openNew} className="inline-flex items-center gap-1.5 bg-[#4f6df5] hover:bg-[#6380f7] text-white font-medium rounded-lg px-4 py-2 text-[13px] transition-all flex-shrink-0">
