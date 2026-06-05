@@ -78,7 +78,23 @@ class ProjectPageController extends Controller
             // Serve verbatim — do NOT rewrite the markup. Some exports embed an entire
             // HTML template as a JSON string in a <script> block; injecting a tag there
             // would corrupt that JSON. The X-Robots-Tag header already handles noindex.
-            return response($page->content, 200, [
+            //
+            // A small page-title badge is APPENDED at the very end (clear of any embedded
+            // JSON) via a window-level timer that re-asserts it. Bundler-style exports do
+            // document.documentElement.replaceWith(...), wiping injected DOM, so a one-shot
+            // append would vanish; the timer re-adds it after the page renders. json_encode
+            // escapes quotes and "/", so a title containing </script> can't break out.
+            $label = '<script>(function(){var t=' . json_encode($page->title) . ',ID="__page_label";'
+                . 'function e(){if(!document.body||document.getElementById(ID))return;'
+                . 'var d=document.createElement("div");d.id=ID;d.textContent=t;'
+                . 'd.style.cssText="position:fixed;bottom:12px;right:12px;z-index:2147483647;'
+                . 'font:600 12px/1 ui-sans-serif,system-ui,-apple-system,sans-serif;'
+                . 'background:rgba(17,24,39,.82);color:#fff;padding:7px 11px;border-radius:8px;'
+                . 'box-shadow:0 2px 8px rgba(0,0,0,.18);pointer-events:none;letter-spacing:.2px";'
+                . 'document.body.appendChild(d);}'
+                . 'try{document.title=t;}catch(_){}e();setInterval(e,800);})();</script>';
+
+            return response($page->content . $label, 200, [
                 'Content-Type' => 'text/html; charset=UTF-8',
                 'X-Robots-Tag' => 'noindex, nofollow',
             ]);
