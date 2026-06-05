@@ -75,8 +75,10 @@ class ProjectPageController extends Controller
         $isFullHtml = (bool) preg_match('/<!doctype\s+html|<html[\s>]/i', $page->content ?? '');
 
         if ($isFullHtml) {
-            $html = str_replace('<head>', '<head><meta name="robots" content="noindex, nofollow">', $page->content);
-            return response($html, 200, [
+            // Serve verbatim — do NOT rewrite the markup. Some exports embed an entire
+            // HTML template as a JSON string in a <script> block; injecting a tag there
+            // would corrupt that JSON. The X-Robots-Tag header already handles noindex.
+            return response($page->content, 200, [
                 'Content-Type' => 'text/html; charset=UTF-8',
                 'X-Robots-Tag' => 'noindex, nofollow',
             ]);
