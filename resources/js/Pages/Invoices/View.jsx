@@ -4,7 +4,7 @@ import { formatMoney, getCurrency } from '@/Utils/currencies';
 import { Download, ArrowLeft } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
-const fmtDate = (s) => s ? new Date(s).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+const fmtDate = (s) => s ? new Date(s).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
 
 export default function View({ invoice, company, contactEmail }) {
     const pageRef = useRef();
@@ -13,7 +13,10 @@ export default function View({ invoice, company, contactEmail }) {
     const cur = getCurrency(invoice.currency ?? project.currency ?? 'USD');
     const fmt = (n) => formatMoney(n, cur.code);
     const items = invoice.items ?? [];
-    const hasQty = items.some(i => i.quantity > 1);
+
+    const noteLines = (invoice.notes ?? '').split('\n').map(s => s.trim()).filter(Boolean);
+    const hasBank = invoice.bank_name || invoice.bank_account_name || invoice.bank_account_number;
+    const hasPaymentSection = invoice.payment_notes || hasBank || invoice.cheque_payable_to;
 
     const downloadPdf = () => {
         html2pdf().set({
@@ -24,6 +27,19 @@ export default function View({ invoice, company, contactEmail }) {
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         }).from(pageRef.current).save();
     };
+
+    const companyAddress = [
+        company?.address_line_1,
+        [company?.city, company?.state, company?.postal_code].filter(Boolean).join(', '),
+        company?.country,
+    ].filter(Boolean);
+
+    const clientAddress = [
+        client.address_line_1,
+        client.address_line_2,
+        [client.city, client.state, client.postal_code].filter(Boolean).join(', '),
+        client.country,
+    ].filter(Boolean);
 
     return (
         <>
@@ -49,119 +65,155 @@ export default function View({ invoice, company, contactEmail }) {
             </div>
 
             <div className="min-h-screen bg-[#f3f4f6] flex justify-center py-10 px-4">
-                <div ref={pageRef} className="invoice-page bg-white rounded-xl shadow-sm" style={{ width: '210mm', minHeight: '297mm', padding: '16mm' }}>
+                <div ref={pageRef} className="invoice-page bg-white rounded-xl shadow-sm flex flex-col" style={{ width: '210mm', minHeight: '297mm', padding: '16mm' }}>
 
-                    {/* Header — compact row */}
-                    <div className="flex justify-between items-start mb-6">
-                        <div className="flex items-start gap-4">
-                            {company?.logo_path && (
-                                <img src={`/storage/${company.logo_path}`} alt="Logo" className="h-10 flex-shrink-0" />
-                            )}
-                            <div>
-                                <div className="text-[14px] font-bold text-black leading-tight">{company?.name ?? 'Your Company'}</div>
-                                <div className="text-[11px] text-[#4b5563] leading-snug mt-0.5">
-                                    {[
-                                        company?.address_line_1,
-                                        [company?.city, company?.state, company?.postal_code].filter(Boolean).join(', '),
-                                        company?.country,
-                                    ].filter(Boolean).join(' · ')}
-                                </div>
-                                <div className="text-[11px] text-[#4b5563] leading-snug">
-                                    {[contactEmail ?? company?.email, company?.phone, company?.website].filter(Boolean).join(' · ')}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                            <div className="text-[24px] font-extrabold text-[#4f6df5] tracking-tight">INVOICE</div>
-                            <div className="text-[13px] font-mono font-semibold text-black mt-0.5">{invoice.number}</div>
-                        </div>
-                    </div>
-
-                    <div className="h-px bg-[#e5e7eb]" />
-
-                    {/* Info row */}
-                    <div className="flex justify-between items-start py-6">
-                        {/* Bill To */}
+                    {/* Header — logo + INVOICE */}
+                    <div className="flex justify-between items-start">
                         <div>
-                            <div className="text-[9px] tracking-[1.5px] uppercase text-[#6b7280] font-semibold mb-1.5">Bill To</div>
-                            {client.name && <div className="text-[13px] font-bold text-black">{client.name}</div>}
-                            {(project.contact_name || client.contact_name) && (
-                                <div className="text-[12px] text-[#374151]">Attn: {project.contact_name ?? client.contact_name}</div>
+                            {company?.logo_path && (
+                                <img src={`/storage/${company.logo_path}`} alt="Logo" className="h-12 mb-4" />
                             )}
-                            <div className="text-[11px] text-[#4b5563] leading-snug mt-1">
-                                {[
-                                    client.address_line_1,
-                                    client.address_line_2,
-                                    [client.city, client.state, client.postal_code].filter(Boolean).join(', '),
-                                    client.country,
-                                ].filter(Boolean).map((line, i) => <div key={i}>{line}</div>)}
-                                {(client.phone || client.contact_email || client.email) && (
-                                    <div className="mt-0.5">{[client.phone, client.contact_email ?? client.email].filter(Boolean).join(' | ')}</div>
-                                )}
+                        </div>
+                        <div className="text-[22px] font-bold text-[#6b7280] tracking-[2px]">INVOICE</div>
+                    </div>
+
+                    {/* Company identity */}
+                    <div className="mt-2">
+                        <div className="text-[13px] font-bold text-[#374151]">{company?.name ?? 'Your Company'}</div>
+                        {company?.tax_id && <div className="text-[11px] text-[#6b7280] mt-0.5">{company.tax_id}</div>}
+                        <div className="text-[11px] text-[#6b7280] leading-relaxed mt-1.5">
+                            {companyAddress.map((line, i) => <div key={i}>{line}</div>)}
+                        </div>
+                        {(contactEmail || company?.phone) && (
+                            <div className="text-[11px] text-[#6b7280] mt-0.5">
+                                {[contactEmail ?? company?.email, company?.phone].filter(Boolean).join(' · ')}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Bill To + Invoice details */}
+                    <div className="flex justify-between items-start gap-8 mt-8">
+                        <div className="max-w-[60%]">
+                            <div className="flex gap-3">
+                                <div className="text-[12px] text-[#6b7280] pt-0.5 whitespace-nowrap">Bill To</div>
+                                <div>
+                                    {client.name && <div className="text-[12.5px] font-bold text-black leading-snug">{client.name}</div>}
+                                    {(project.contact_name || client.contact_name) && (
+                                        <div className="text-[12.5px] font-bold text-black leading-snug">{project.contact_name ?? client.contact_name}</div>
+                                    )}
+                                    <div className="text-[11px] text-[#4b5563] leading-relaxed mt-0.5">
+                                        {clientAddress.map((line, i) => <div key={i}>{line}</div>)}
+                                        {client.phone && <div>{client.phone}</div>}
+                                        {(client.contact_email || client.email) && <div>{client.contact_email ?? client.email}</div>}
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
-                        {/* Invoice details */}
-                        <div className="text-right">
-                            <table className="ml-auto text-[12px]">
-                                <tbody>
-                                    <tr><td className="text-[#4b5563] pr-4 py-0.5">Date</td><td className="font-medium text-black">{fmtDate(invoice.date)}</td></tr>
-                                    {invoice.due_date && <tr><td className="text-[#4b5563] pr-4 py-0.5">Due Date</td><td className="font-medium text-black">{fmtDate(invoice.due_date)}</td></tr>}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    {/* Project + Payment Stage */}
-                    <div className="bg-[#f8f9fb] rounded-lg px-5 py-3.5 mb-6">
-                        <div className="text-[9px] tracking-[1.5px] uppercase text-[#6b7280] font-semibold mb-1">Project</div>
-                        <div className="text-[14px] font-semibold text-black">{project.name}</div>
-                        {invoice.payment_stage && <div className="text-[12px] text-[#4b5563] italic mt-0.5">{invoice.payment_stage}</div>}
-                    </div>
-
-                    {/* Table */}
-                    <table className="w-full mb-6">
-                        <thead>
-                            <tr className="border-b-2 border-[#4f6df5]">
-                                <th className="text-left text-[11px] font-semibold text-[#374151] uppercase tracking-wide py-2.5">Description</th>
-                                {hasQty && <th className="text-center text-[11px] font-semibold text-[#374151] uppercase tracking-wide py-2.5 w-16">Qty</th>}
-                                {hasQty && <th className="text-right text-[11px] font-semibold text-[#374151] uppercase tracking-wide py-2.5 w-24">Rate</th>}
-                                <th className="text-right text-[11px] font-semibold text-[#374151] uppercase tracking-wide py-2.5 w-32">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {items.map((item, i) => (
-                                <tr key={i} className="border-b border-[#f0f0f0]">
-                                    <td className="py-3 text-[13px] text-black">{item.description}</td>
-                                    {hasQty && <td className="py-3 text-[13px] text-center text-[#4b5563]">{item.quantity}</td>}
-                                    {hasQty && <td className="py-3 text-[13px] text-right text-[#4b5563]">{fmt(item.rate)}</td>}
-                                    <td className="py-3 text-[13px] text-right text-black font-medium">{fmt(item.quantity * item.rate)}</td>
+                        <table className="text-[11.5px]">
+                            <tbody>
+                                <tr>
+                                    <td className="text-[#6b7280] pr-6 py-0.5 align-top font-medium">Invoice #</td>
+                                    <td className="font-bold text-black py-0.5">{invoice.number}</td>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-
-                    {/* Total */}
-                    <div className="flex justify-end mb-8">
-                        <div className="w-64">
-                            <div className="flex justify-between items-center py-3 border-t-2 border-[#4f6df5]">
-                                <span className="text-[12px] font-semibold text-[#374151] uppercase tracking-wide">Total Due ({cur.code})</span>
-                                <span className="text-[18px] font-extrabold text-black">{fmt(invoice.total)}</span>
-                            </div>
-                        </div>
+                                <tr>
+                                    <td className="text-[#6b7280] pr-6 py-0.5 align-top">Date Issued</td>
+                                    <td className="text-[#374151] py-0.5">{fmtDate(invoice.date)}</td>
+                                </tr>
+                                {invoice.due_date && (
+                                    <tr>
+                                        <td className="text-[#6b7280] pr-6 py-0.5 align-top">Due Date</td>
+                                        <td className="text-[#374151] py-0.5">{fmtDate(invoice.due_date)}</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
 
-                    {/* Payment Notes */}
-                    {invoice.payment_notes && (
-                        <div className="bg-[#f8f9fb] rounded-lg px-5 py-4 mb-6">
-                            <div className="text-[9px] tracking-[1.5px] uppercase text-[#6b7280] font-semibold mb-2">Payment Instructions</div>
-                            <div className="text-[12px] text-[#374151] whitespace-pre-line leading-relaxed">{invoice.payment_notes}</div>
+                    <div className="h-px bg-[#e5e7eb] my-7" />
+
+                    {/* Project */}
+                    <div>
+                        <div className="text-[10px] tracking-[1.5px] uppercase text-black font-bold mb-1.5">Project</div>
+                        <div className="text-[13px] text-[#374151]">{project.name}</div>
+                        {invoice.payment_stage && (
+                            <div className="text-[12px] text-[#4b5563] italic mt-1">Payment Stage: {invoice.payment_stage}</div>
+                        )}
+                    </div>
+
+                    {/* Invoice Breakdown */}
+                    <div className="mt-7">
+                        <div className="text-[10px] tracking-[1.5px] uppercase text-black font-bold mb-2.5">Invoice Breakdown</div>
+                        <table className="w-full border border-[#e5e7eb] border-collapse">
+                            <thead>
+                                <tr className="bg-[#f3f4f6]">
+                                    <th className="text-left text-[11.5px] font-bold text-[#374151] px-4 py-2.5 border border-[#e5e7eb]">Description</th>
+                                    <th className="text-right text-[11.5px] font-bold text-[#374151] px-4 py-2.5 border border-[#e5e7eb] w-44">Amount ({cur.code})</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {items.map((item, i) => (
+                                    <tr key={i}>
+                                        <td className="text-[12px] text-[#374151] px-4 py-2.5 border border-[#e5e7eb]">{item.description}</td>
+                                        <td className="text-[12px] text-[#374151] text-right px-4 py-2.5 border border-[#e5e7eb]">{fmt(item.quantity * item.rate)}</td>
+                                    </tr>
+                                ))}
+                                <tr className="bg-[#f3f4f6]">
+                                    <td className="text-[12px] font-bold text-black px-4 py-2.5 border border-[#e5e7eb]">Total Amount Due</td>
+                                    <td className="text-[12.5px] font-bold text-black text-right px-4 py-2.5 border border-[#e5e7eb]">{fmt(invoice.total)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Payment Instructions */}
+                    {hasPaymentSection && (
+                        <div className="mt-7">
+                            <div className="text-[10px] tracking-[1.5px] uppercase text-black font-bold mb-2.5">Payment Instructions</div>
+                            {invoice.payment_notes && (
+                                <div className="text-[12px] text-[#374151] mb-3">{invoice.payment_notes}</div>
+                            )}
+                            {hasBank && (
+                                <table className="w-full border border-[#e5e7eb] border-collapse mb-3">
+                                    <tbody>
+                                        <tr className="bg-[#f3f4f6]">
+                                            <td className="text-[11.5px] font-bold text-[#374151] px-4 py-2 border border-[#e5e7eb] w-52">For Bank Deposits</td>
+                                            <td className="border border-[#e5e7eb]" />
+                                        </tr>
+                                        {invoice.bank_name && <tr><td className="text-[12px] text-[#4b5563] px-4 py-2 border border-[#e5e7eb]">Bank</td><td className="text-[12px] text-[#374151] px-4 py-2 border border-[#e5e7eb]">{invoice.bank_name}</td></tr>}
+                                        {invoice.bank_account_name && <tr><td className="text-[12px] text-[#4b5563] px-4 py-2 border border-[#e5e7eb]">Account Name</td><td className="text-[12px] text-[#374151] px-4 py-2 border border-[#e5e7eb]">{invoice.bank_account_name}</td></tr>}
+                                        {invoice.bank_account_number && <tr><td className="text-[12px] text-[#4b5563] px-4 py-2 border border-[#e5e7eb]">Account Number</td><td className="text-[12px] text-[#374151] px-4 py-2 border border-[#e5e7eb]">{invoice.bank_account_number}</td></tr>}
+                                    </tbody>
+                                </table>
+                            )}
+                            {invoice.cheque_payable_to && (
+                                <table className="w-full border border-[#e5e7eb] border-collapse">
+                                    <tbody>
+                                        <tr className="bg-[#f3f4f6]">
+                                            <td className="text-[11.5px] font-bold text-[#374151] px-4 py-2 border border-[#e5e7eb] w-52">For Cheque Payments</td>
+                                            <td className="border border-[#e5e7eb]" />
+                                        </tr>
+                                        <tr><td className="text-[12px] text-[#4b5563] px-4 py-2 border border-[#e5e7eb]">Payable to</td><td className="text-[12px] text-[#374151] px-4 py-2 border border-[#e5e7eb]">{invoice.cheque_payable_to}</td></tr>
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Notes */}
+                    {noteLines.length > 0 && (
+                        <div className="mt-7">
+                            <div className="text-[10px] tracking-[1.5px] uppercase text-black font-bold mb-2.5">Notes</div>
+                            <ol className="list-decimal pl-5 space-y-1.5">
+                                {noteLines.map((line, i) => (
+                                    <li key={i} className="text-[11.5px] text-[#374151] leading-relaxed pl-1">{line}</li>
+                                ))}
+                            </ol>
                         </div>
                     )}
 
                     {/* Footer */}
-                    <div className="mt-10 pt-4 border-t border-[#e5e7eb] text-center text-[11px] text-[#6b7280]">
-                        {company?.name} {company?.website ? `· ${company.website}` : ''}
+                    <div className="mt-auto pt-10 text-right text-[11px] text-[#6b7280]">
+                        {company?.website}
                     </div>
                 </div>
             </div>

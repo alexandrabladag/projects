@@ -204,6 +204,13 @@ class ProjectController extends Controller
                 ->get(),
             'nextInvoiceNumber'  => $company?->generateNumber('invoice') ?? 'INV-' . date('Y') . '-001',
             'nextProposalNumber' => $company?->generateNumber('proposal') ?? 'PROP-' . date('Y') . '-001',
+            // Company payment defaults to pre-fill new invoices (editable per invoice).
+            'paymentDefaults'    => [
+                'bank_name'           => $company?->bank_name,
+                'bank_account_name'   => $company?->bank_account_name,
+                'bank_account_number' => $company?->bank_account_number,
+                'cheque_payable_to'   => $company?->cheque_payable_to,
+            ],
         ]);
     }
 
@@ -228,7 +235,7 @@ class ProjectController extends Controller
 
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
-            'client'        => 'required|string|max:255',
+            'client'        => 'nullable|string|max:255',
             'contact_name'  => 'nullable|string|max:255',
             'contact_email' => 'nullable|email|max:255',
             'contact_phone' => 'nullable|string|max:50',

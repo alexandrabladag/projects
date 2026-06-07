@@ -28,6 +28,11 @@ class Invoice extends Model
         'received_notes',
         'payment_stage',
         'payment_notes',
+        'bank_name',
+        'bank_account_name',
+        'bank_account_number',
+        'cheque_payable_to',
+        'notes',
         'signed_file_path',
         'signed_file_name',
     ];

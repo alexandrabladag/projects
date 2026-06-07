@@ -17,6 +17,10 @@ export default function Company({ company }) {
         country: company.country ?? '',
         tax_id: company.tax_id ?? '',
         website: company.website ?? '',
+        bank_name: company.bank_name ?? '',
+        bank_account_name: company.bank_account_name ?? '',
+        bank_account_number: company.bank_account_number ?? '',
+        cheque_payable_to: company.cheque_payable_to ?? '',
         logo: null,
         base_currency: company.base_currency ?? 'USD',
         invoice_prefix: company.invoice_prefix ?? 'INV',
@@ -133,6 +137,20 @@ export default function Company({ company }) {
                             {field('State / Province', 'state', 'text', 'State', true)}
                             {field('Postal Code', 'postal_code', 'text', '00000', true)}
                             {field('Country', 'country', 'text', 'Country', true)}
+                        </div>
+                    </div>
+
+                    {/* Payment Details */}
+                    <div className="pt-2">
+                        <div className="text-[11px] tracking-[1px] uppercase text-[#4b5563] font-medium mb-3 flex items-center gap-3">
+                            Payment Details <span className="flex-1 h-px bg-[#e5e7eb]" />
+                        </div>
+                        <p className="text-[12px] text-[#6b7280] mb-4">Shown on invoices under “Payment Instructions”. These pre-fill each new invoice and can be edited per invoice.</p>
+                        <div className="grid grid-cols-2 gap-4">
+                            {field('Bank Name', 'bank_name', 'text', 'e.g. RCBC', true)}
+                            {field('Account Number', 'bank_account_number', 'text', '0000000000', true)}
+                            {field('Account Name', 'bank_account_name', 'text', 'Account holder name', true)}
+                            {field('Cheque Payable To', 'cheque_payable_to', 'text', 'Payee name', true)}
                         </div>
                     </div>
 

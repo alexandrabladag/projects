@@ -12,6 +12,7 @@ class Company extends Model
         'name', 'email', 'phone',
         'address_line_1', 'address_line_2', 'city', 'state', 'postal_code', 'country',
         'tax_id', 'website', 'logo_path', 'base_currency',
+        'bank_name', 'bank_account_name', 'bank_account_number', 'cheque_payable_to',
         'invoice_prefix', 'invoice_format', 'proposal_prefix', 'proposal_format',
         'next_invoice_number', 'next_proposal_number', 'number_padding',
     ];

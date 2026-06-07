@@ -846,7 +846,7 @@ function ProposalModal({ nextNumber, isEdit, project, data, setData, processing,
 
 
 // ── INVOICES TAB ──────────────────────────────────────────────────────────────
-function InvoicesTab({ project, canManage, nextNumber, fmt }) {
+function InvoicesTab({ project, canManage, nextNumber, paymentDefaults = {}, fmt }) {
     const [showModal, setShowModal] = useState(false);
     const [expanded, setExpanded] = useState(null);
     const [paymentModal, setPaymentModal] = useState(null); // invoice object or null
@@ -870,6 +870,12 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
 
     const { data, setData, post, processing, reset, errors } = useForm({
         number: nextNumber ?? '', date: new Date().toISOString().slice(0, 10), due_date: '', description: '',
+        payment_stage: '', payment_notes: '',
+        bank_name: paymentDefaults.bank_name ?? '',
+        bank_account_name: paymentDefaults.bank_account_name ?? '',
+        bank_account_number: paymentDefaults.bank_account_number ?? '',
+        cheque_payable_to: paymentDefaults.cheque_payable_to ?? '',
+        notes: '',
         items: [{ description: '', quantity: 1, rate: '' }],
     });
 
@@ -1024,6 +1030,7 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                             <FG label="Invoice Date"><input className={inputCls} type="date" value={data.date} onChange={e => setData('date', e.target.value)} /></FG>
                             <FG label="Due Date"><input className={inputCls} type="date" value={data.due_date} onChange={e => setData('due_date', e.target.value)} /></FG>
                         </div>
+                        <FG label="Payment Stage"><input className={inputCls} value={data.payment_stage} onChange={e => setData('payment_stage', e.target.value)} placeholder="e.g. Phase III Completion Fee (30% of total project cost)" /></FG>
                         <div className="pt-2">
                             <div className="text-[10px] tracking-[2px] uppercase text-[#4b5563] mb-3 flex items-center gap-3">Line Items<span className="flex-1 h-px bg-[#e5e7eb]" /></div>
                             <div className="grid grid-cols-[1fr_70px_90px_28px] gap-2 text-[10px] uppercase tracking-wide text-[#4b5563] mb-2 px-0.5">
@@ -1042,6 +1049,20 @@ function InvoicesTab({ project, canManage, nextNumber, fmt }) {
                                 <div className="flex gap-8 text-[13.5px]"><span className="text-[#4b5563]">Total</span><span className="font-semibold text-black">{fmt(total)}</span></div>
                             </div>
                         </div>
+
+                        <div className="pt-2">
+                            <div className="text-[10px] tracking-[2px] uppercase text-[#4b5563] mb-3 flex items-center gap-3">Payment Instructions<span className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                            <FG label="Intro Text"><input className={inputCls} value={data.payment_notes} onChange={e => setData('payment_notes', e.target.value)} placeholder="e.g. You may settle this invoice through a Bank Deposit or a Cheque." /></FG>
+                            <div className="grid grid-cols-2 gap-3 mt-3">
+                                <FG label="Bank Name"><input className={inputCls} value={data.bank_name} onChange={e => setData('bank_name', e.target.value)} placeholder="e.g. RCBC" /></FG>
+                                <FG label="Account Number"><input className={inputCls} value={data.bank_account_number} onChange={e => setData('bank_account_number', e.target.value)} placeholder="0000000000" /></FG>
+                                <FG label="Account Name"><input className={inputCls} value={data.bank_account_name} onChange={e => setData('bank_account_name', e.target.value)} placeholder="Account holder name" /></FG>
+                                <FG label="Cheque Payable To"><input className={inputCls} value={data.cheque_payable_to} onChange={e => setData('cheque_payable_to', e.target.value)} placeholder="Payee name" /></FG>
+                            </div>
+                            <p className="text-[11px] text-[#6b7280] mt-1.5">Pre-filled from Company Settings. Edit here to override for this invoice.</p>
+                        </div>
+
+                        <FG label="Notes"><textarea className={inputCls} rows={3} value={data.notes} onChange={e => setData('notes', e.target.value)} placeholder="One note per line — shown as a numbered list on the invoice." /></FG>
                     </div>
                 </Modal>
             )}
@@ -3110,7 +3131,7 @@ function ActivityTab({ activities = [] }) {
 }
 
 // ── MAIN SHOW PAGE ─────────────────────────────────────────────────────────────
-export default function Show({ project, canManage, taskCategories = [], activities = [], nextInvoiceNumber, nextProposalNumber }) {
+export default function Show({ project, canManage, taskCategories = [], activities = [], nextInvoiceNumber, nextProposalNumber, paymentDefaults = {} }) {
     // Keep the active tab in the URL (?tab=…) so a refresh, bookmark, or shared
     // link lands on the same tab. We read it from Inertia's page URL, which is
     // identical on the server and client (unlike window.location.hash).
@@ -3184,7 +3205,7 @@ export default function Show({ project, canManage, taskCategories = [], activiti
             {/* Tab Content */}
             {tab === 'overview'  && <OverviewTab  project={project} canManage={canManage} fmt={fmt} />}
             {tab === 'proposal'  && <ProposalTab  project={project} canManage={canManage} nextNumber={nextProposalNumber} fmt={fmt} />}
-            {tab === 'invoices'  && <InvoicesTab  project={project} canManage={canManage} nextNumber={nextInvoiceNumber} fmt={fmt} />}
+            {tab === 'invoices'  && <InvoicesTab  project={project} canManage={canManage} nextNumber={nextInvoiceNumber} paymentDefaults={paymentDefaults} fmt={fmt} />}
             {tab === 'meetings'  && <MeetingsTab  project={project} canManage={canManage} />}
             {tab === 'documents' && <DocumentsTab project={project} canManage={canManage} />}
             {tab === 'timeline'  && <TimelineTab  project={project} />}

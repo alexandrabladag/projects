@@ -41,11 +41,18 @@ class InvoiceController extends Controller
             'description'   => 'nullable|string|max:255',
             'payment_stage' => 'nullable|string|max:255',
             'payment_notes' => 'nullable|string',
+            'bank_name'            => 'nullable|string|max:255',
+            'bank_account_name'    => 'nullable|string|max:255',
+            'bank_account_number'  => 'nullable|string|max:255',
+            'cheque_payable_to'    => 'nullable|string|max:255',
+            'notes'         => 'nullable|string',
             'items'         => 'required|array|min:1',
             'items.*.description' => 'required|string|max:255',
             'items.*.quantity'    => 'required|integer|min:1',
             'items.*.rate'        => 'required|numeric|min:0',
         ]);
+
+        $company = Company::first();
 
         $invoice = $project->invoices()->create([
             'number'        => $validated['number'],
@@ -54,6 +61,12 @@ class InvoiceController extends Controller
             'description'   => $validated['description'] ?? null,
             'payment_stage' => $validated['payment_stage'] ?? null,
             'payment_notes' => $validated['payment_notes'] ?? null,
+            // Bank/cheque details fall back to the company defaults when left blank.
+            'bank_name'           => ($validated['bank_name'] ?? null) ?: $company?->bank_name,
+            'bank_account_name'   => ($validated['bank_account_name'] ?? null) ?: $company?->bank_account_name,
+            'bank_account_number' => ($validated['bank_account_number'] ?? null) ?: $company?->bank_account_number,
+            'cheque_payable_to'   => ($validated['cheque_payable_to'] ?? null) ?: $company?->cheque_payable_to,
+            'notes'         => $validated['notes'] ?? null,
             'currency'      => $project->currency ?? 'USD',
             'status'        => 'draft',
         ]);
@@ -63,7 +76,6 @@ class InvoiceController extends Controller
         }
 
         // Auto-increment the invoice number
-        $company = Company::first();
         $company?->incrementNumber('invoice');
 
         return back()->with('success', 'Invoice created.');
