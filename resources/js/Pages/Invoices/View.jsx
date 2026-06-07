@@ -106,7 +106,6 @@ export default function View({ invoice, company, contactEmail }) {
                                 <tbody>
                                     <tr><td className="text-[#4b5563] pr-4 py-0.5">Date</td><td className="font-medium text-black">{fmtDate(invoice.date)}</td></tr>
                                     {invoice.due_date && <tr><td className="text-[#4b5563] pr-4 py-0.5">Due Date</td><td className="font-medium text-black">{fmtDate(invoice.due_date)}</td></tr>}
-                                    <tr><td className="text-[#4b5563] pr-4 py-0.5">Status</td><td className="font-medium text-black capitalize">{invoice.status}</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -156,14 +155,6 @@ export default function View({ invoice, company, contactEmail }) {
                         <div className="bg-[#f8f9fb] rounded-lg px-5 py-4 mb-6">
                             <div className="text-[9px] tracking-[1.5px] uppercase text-[#6b7280] font-semibold mb-2">Payment Instructions</div>
                             <div className="text-[12px] text-[#374151] whitespace-pre-line leading-relaxed">{invoice.payment_notes}</div>
-                        </div>
-                    )}
-
-                    {/* Note */}
-                    {invoice.description && (
-                        <div className="border-t border-[#e5e7eb] pt-5">
-                            <div className="text-[9px] tracking-[1.5px] uppercase text-[#6b7280] font-semibold mb-1.5">Note</div>
-                            <div className="text-[12px] text-[#4b5563] leading-relaxed">{invoice.description}</div>
                         </div>
                     )}
 
