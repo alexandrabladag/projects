@@ -17,11 +17,16 @@ class InvoiceController extends Controller
         $project = Project::findOrFail($invoice->project_id);
         $this->authorize('view', $project);
 
-        $invoice->load(['project.clientRecord', 'items']);
+        $invoice->load(['project.clientRecord', 'project.manager:id,name,email', 'items']);
+
+        $company = Company::first();
 
         return Inertia::render('Invoices/View', [
             'invoice' => array_merge($invoice->toArray(), ['total' => $invoice->total]),
-            'company' => Company::first(),
+            'company' => $company,
+            // Sender contact: the project's manager, falling back to the
+            // company's configured email when no manager is assigned.
+            'contactEmail' => $invoice->project->manager?->email ?: $company?->email,
         ]);
     }
 

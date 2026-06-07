@@ -6,7 +6,7 @@ import html2pdf from 'html2pdf.js';
 
 const fmtDate = (s) => s ? new Date(s).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 
-export default function View({ invoice, company }) {
+export default function View({ invoice, company, contactEmail }) {
     const pageRef = useRef();
     const project = invoice.project ?? {};
     const client = project.client_record ?? {};
@@ -66,7 +66,7 @@ export default function View({ invoice, company }) {
                                     ].filter(Boolean).join(' · ')}
                                 </div>
                                 <div className="text-[11px] text-[#4b5563] leading-snug">
-                                    {[company?.email, company?.phone, company?.website].filter(Boolean).join(' · ')}
+                                    {[contactEmail ?? company?.email, company?.phone, company?.website].filter(Boolean).join(' · ')}
                                 </div>
                             </div>
                         </div>
