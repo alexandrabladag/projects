@@ -55,6 +55,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/company', [CompanyController::class, 'edit'])->name('company.edit');
     Route::post('settings/company', [CompanyController::class, 'update'])->name('company.update');
 
+    // Admin-only panel: account management and other admin tools.
+    // Public registration is disabled, so new logins are created here.
+    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/',          [\App\Http\Controllers\AdminController::class, 'index'])->name('dashboard');
+        Route::get('accounts',   [\App\Http\Controllers\UserAccountController::class, 'index'])->name('accounts.index');
+        Route::post('accounts',  [\App\Http\Controllers\UserAccountController::class, 'store'])->name('accounts.store');
+    });
+
     Route::get('settings/team', [\App\Http\Controllers\TeamMemberController::class, 'index'])->name('team.index');
     Route::post('settings/team', [\App\Http\Controllers\TeamMemberController::class, 'store'])->name('team.store');
     Route::put('settings/team/{teamMember}', [\App\Http\Controllers\TeamMemberController::class, 'update'])->name('team.update');

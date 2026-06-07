@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users, Tag, ListTodo, ReceiptText, TrendingUp, Bell, Menu, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Building2, UserCircle, Settings, Plus, CircleCheck, CircleX, X, ArrowLeftRight, Users, Tag, ListTodo, ReceiptText, TrendingUp, Bell, Menu, ChevronsLeft, ChevronsRight, ShieldCheck } from 'lucide-react';
 
 // ── Reusable Badge ─────────────────────────────────────────────────────────────
 export function Badge({ status, label }) {
@@ -38,6 +38,7 @@ export function Badge({ status, label }) {
 function Sidebar({ projects, workspace, user, open, onClose, collapsed, onToggleCollapse }) {
     const { url } = usePage();
     const canManage = (user?.roles ?? []).some(r => r === 'admin' || r === 'manager');
+    const isAdmin = (user?.roles ?? []).some(r => r === 'admin');
 
     const icons = {
         dashboard: <LayoutDashboard size={18} strokeWidth={1.75} />,
@@ -48,6 +49,7 @@ function Sidebar({ projects, workspace, user, open, onClose, collapsed, onToggle
         clients:   <Building2 size={18} strokeWidth={1.75} />,
         profile:   <UserCircle size={18} strokeWidth={1.75} />,
         team:      <Users size={18} strokeWidth={1.75} />,
+        admin:     <ShieldCheck size={18} strokeWidth={1.75} />,
         categories: <Tag size={18} strokeWidth={1.75} />,
         transfer:  <ArrowLeftRight size={18} strokeWidth={1.75} />,
         settings:  <Settings size={18} strokeWidth={1.75} />,
@@ -164,6 +166,7 @@ function Sidebar({ projects, workspace, user, open, onClose, collapsed, onToggle
                 </div>
                 {navItem(route('profile.edit'), 'profile', 'Profile')}
                 {navItem(route('company.edit'), 'settings', 'Company Settings')}
+                {isAdmin && navItem(route('admin.dashboard'), 'admin', 'Admin Panel')}
                 {navItem(route('team.index'), 'team', 'Team Members')}
                 {navItem(route('categories.index'), 'categories', 'Task Categories')}
                 {navItem(route('workspace.transfer'), 'transfer', 'Export & Import')}
