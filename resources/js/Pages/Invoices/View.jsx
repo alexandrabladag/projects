@@ -33,8 +33,9 @@ export default function View({ invoice, company, contactEmail }) {
                 @media print {
                     body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                     .no-print { display: none !important; }
-                    .invoice-page { box-shadow: none !important; margin: 0 !important; padding: 48px !important; }
+                    .invoice-page { box-shadow: none !important; margin: 0 !important; }
                 }
+                @page { size: A4; margin: 0; }
             `}</style>
 
             {/* Toolbar */}
@@ -48,7 +49,7 @@ export default function View({ invoice, company, contactEmail }) {
             </div>
 
             <div className="min-h-screen bg-[#f3f4f6] flex justify-center py-10 px-4">
-                <div ref={pageRef} className="invoice-page bg-white rounded-xl shadow-sm w-full max-w-[800px] p-12">
+                <div ref={pageRef} className="invoice-page bg-white rounded-xl shadow-sm" style={{ width: '210mm', minHeight: '297mm', padding: '16mm' }}>
 
                     {/* Header — compact row */}
                     <div className="flex justify-between items-start mb-6">
