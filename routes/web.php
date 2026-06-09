@@ -28,6 +28,9 @@ Route::get('/', function () {
 Route::get('/p/{code}', [\App\Http\Controllers\PublicPortalController::class, 'show'])->name('portal.public');
 Route::get('/page/{code}', [\App\Http\Controllers\ProjectPageController::class, 'publicView'])->name('pages.public');
 Route::post('/page/{code}', [\App\Http\Controllers\ProjectPageController::class, 'publicView']);
+// Mockup sub-pages & assets (css/js/images) resolve relative to /page/{code}/
+Route::get('/page/{code}/{path}', [\App\Http\Controllers\ProjectPageController::class, 'mockupAsset'])
+    ->where('path', '.*')->name('pages.mockup-asset');
 
 // ── Client Portal (auth) ─────────────────────────────────────────────────────
 Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->group(function () {
@@ -112,6 +115,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('members/{member}',    [\App\Http\Controllers\ProjectMemberController::class, 'destroy'])->name('members.destroy');
 
         Route::post('pages',                 [\App\Http\Controllers\ProjectPageController::class, 'store'])->name('pages.store');
+        Route::post('pages/import-mockup',   [\App\Http\Controllers\ProjectPageController::class, 'importMockup'])->name('pages.import-mockup');
         Route::put('pages/{page}',           [\App\Http\Controllers\ProjectPageController::class, 'update'])->name('pages.update');
         Route::delete('pages/{page}',        [\App\Http\Controllers\ProjectPageController::class, 'destroy'])->name('pages.destroy');
         Route::patch('pages/{page}/share',   [\App\Http\Controllers\ProjectPageController::class, 'toggleShare'])->name('pages.toggle-share');

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ProjectPage extends Model
 {
     use HasFactory;
-    protected $fillable = ['project_id', 'title', 'content', 'share_code', 'is_shared', 'password', 'created_by'];
+    protected $fillable = ['project_id', 'title', 'content', 'mockup_path', 'entry_file', 'share_code', 'is_shared', 'password', 'created_by'];
 
     protected $casts = ['is_shared' => 'boolean'];
 

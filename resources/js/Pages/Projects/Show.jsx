@@ -9,6 +9,7 @@ import {
     FileText, Receipt, CalendarDays, Calendar, FolderOpen, Clock, ListChecks,
     TrendingUp, Wallet, CircleDollarSign, Flag, Activity,
     Trash2, Download, Upload, CheckCircle, XCircle, AlertCircle, Lock, Code, Users, Maximize2, Minimize2, Tag,
+    Package,
 } from 'lucide-react';
 
 const RichEditor = lazy(() => import('@/Components/RichEditor'));
@@ -2895,6 +2896,16 @@ function PagesTab({ project, canManage }) {
         e.target.value = '';
     };
 
+    // Import a multi-page mockup (.zip). The server extracts it and serves it as a
+    // self-contained mini-site, so internal links between pages keep working.
+    const importMockup = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const title = file.name.replace(/\.zip$/i, '');
+        router.post(route('projects.pages.import-mockup', project.id), { title, file }, { forceFormData: true });
+        e.target.value = '';
+    };
+
     const submit = () => {
         if (editingPage) {
             put(route('projects.pages.update', [project.id, editingPage.id]), { onSuccess: () => { setShowEditor(false); setEditingPage(null); } });
@@ -2929,6 +2940,10 @@ function PagesTab({ project, canManage }) {
                             <Upload size={13} /> Import HTML
                             <input type="file" accept=".html,.htm" className="hidden" onChange={importHtmlFile} />
                         </label>
+                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#374151] border border-[#d1d5db] hover:bg-gray-100 cursor-pointer transition-all">
+                            <Package size={13} /> Import Mockup
+                            <input type="file" accept=".zip" className="hidden" onChange={importMockup} />
+                        </label>
                         <Btn primary sm onClick={openNew}><Plus size={13} /> New Page</Btn>
                     </div>
                 )}
@@ -2947,7 +2962,8 @@ function PagesTab({ project, canManage }) {
             {!showEditor && pages.length > 0 && (
                 <div className="grid grid-cols-2 gap-4">
                     {pages.map(page => {
-                        const isHtml = /<!doctype\s+html|<html[\s>]/i.test(page.content ?? '');
+                        const isMockup = !!page.mockup_path;
+                        const isHtml = isMockup || /<!doctype\s+html|<html[\s>]/i.test(page.content ?? '');
                         return (
                             <div key={page.id} className="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden hover:shadow-md hover:border-[#4f6df5]/30 transition-all group">
                                 {/* Preview bar */}
@@ -2956,14 +2972,16 @@ function PagesTab({ project, canManage }) {
                                 <div className="p-5">
                                     <div className="flex items-start gap-3 mb-3">
                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isHtml ? 'bg-violet-50 text-violet-500' : 'bg-indigo-50 text-indigo-500'}`}>
-                                            {isHtml ? <Code size={18} /> : <FileText size={18} />}
+                                            {isMockup ? <Package size={18} /> : isHtml ? <Code size={18} /> : <FileText size={18} />}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="text-[14px] font-bold text-black group-hover:text-[#4f6df5] transition-colors truncate">{page.title}</div>
                                             <div className="text-[11px] text-[#6b7280] mt-0.5 flex items-center gap-1.5">
                                                 {page.creator?.name && <span>{page.creator.name}</span>}
                                                 {page.updated_at && <span>· {new Date(page.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
-                                                {isHtml && <span className="text-[9px] px-1.5 py-0.5 bg-violet-50 text-violet-500 rounded font-medium">HTML</span>}
+                                                {isMockup
+                                                    ? <span className="text-[9px] px-1.5 py-0.5 bg-violet-50 text-violet-500 rounded font-medium">MOCKUP</span>
+                                                    : isHtml && <span className="text-[9px] px-1.5 py-0.5 bg-violet-50 text-violet-500 rounded font-medium">HTML</span>}
                                             </div>
                                         </div>
                                     </div>
@@ -2973,7 +2991,9 @@ function PagesTab({ project, canManage }) {
                                         <div className="text-[12px] text-[#4b5563] line-clamp-2 leading-relaxed mb-3" dangerouslySetInnerHTML={{ __html: page.content.replace(/<[^>]*>/g, ' ').slice(0, 150) }} />
                                     )}
                                     {isHtml && (
-                                        <div className="text-[12px] text-[#4b5563] mb-3 bg-[#fafbfc] rounded-lg px-3 py-2 border border-[#f0f0f0] font-mono line-clamp-2">Full HTML document with styles</div>
+                                        <div className="text-[12px] text-[#4b5563] mb-3 bg-[#fafbfc] rounded-lg px-3 py-2 border border-[#f0f0f0] font-mono line-clamp-2">
+                                            {isMockup ? `Interactive mockup · entry: ${page.entry_file ?? 'index.html'}` : 'Full HTML document with styles'}
+                                        </div>
                                     )}
 
                                     {/* Share link */}
