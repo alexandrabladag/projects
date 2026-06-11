@@ -2901,9 +2901,18 @@ function PagesTab({ project, canManage }) {
     const importMockup = (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        const title = file.name.replace(/\.zip$/i, '');
-        router.post(route('projects.pages.import-mockup', project.id), { title, file }, { forceFormData: true });
         e.target.value = '';
+        // Mirror the server-side validation cap (500MB) so oversized archives get a
+        // clear message instead of a silent redirect.
+        if (file.size > 500 * 1024 * 1024) {
+            alert('That mockup is larger than 500MB. Please reduce the archive size and try again.');
+            return;
+        }
+        const title = file.name.replace(/\.zip$/i, '');
+        router.post(route('projects.pages.import-mockup', project.id), { title, file }, {
+            forceFormData: true,
+            onError: (errors) => alert(errors.file || 'Could not import the mockup. Please try again.'),
+        });
     };
 
     const submit = () => {

@@ -55,7 +55,7 @@ class ProjectPageController extends Controller
 
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
-            'file'  => 'required|file|max:102400', // 100MB
+            'file'  => 'required|file|max:512000', // 500MB
         ]);
 
         $file = $request->file('file');
