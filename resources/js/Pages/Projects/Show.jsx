@@ -2941,6 +2941,7 @@ function PagesTab({ project, canManage }) {
 
     const [fbReplyId, setFbReplyId] = useState(null);
     const [fbReplyText, setFbReplyText] = useState('');
+    const [fbShowResolved, setFbShowResolved] = useState({}); // pageId -> reveal resolved
     const submitReply = (page, fb) => {
         if (!fbReplyText.trim()) return;
         router.post(route('projects.pages.feedback.reply', [project.id, page.id, fb.id]), { body: fbReplyText.replace(/\n/g, '<br>') }, {
@@ -2963,9 +2964,10 @@ function PagesTab({ project, canManage }) {
         }
     };
     const renderFeedbackItem = (page, fb, isReply) => {
+        if (fb.resolved_at && !fbShowResolved[page.id]) return null; // hidden until toggled
         const replies = (page.feedback ?? []).filter(x => x.parent_id === fb.id);
         return (
-            <div key={fb.id} className={`bg-[#f9fafb] border border-[#e5e7eb] rounded-lg px-2.5 py-2 ${fb.resolved_at ? 'opacity-50' : ''}`}>
+            <div key={fb.id} className={`border rounded-lg px-2.5 py-2 ${fb.resolved_at ? 'bg-emerald-50 border-emerald-100' : 'bg-[#f9fafb] border-[#e5e7eb]'}`}>
                 <div className="flex items-center gap-1.5 mb-0.5">
                     <span className="text-[11px] font-semibold text-[#374151]">{fb.author_name || 'Anonymous'}</span>
                     {fb.is_admin && <span className="text-[9px] font-bold text-[#4f6df5] bg-[#eef1fe] rounded px-1.5 py-0.5">Team</span>}
@@ -3111,16 +3113,25 @@ function PagesTab({ project, canManage }) {
                                     )}
 
                                     {/* Client Feedback */}
-                                    {(page.feedback ?? []).length > 0 && (
-                                        <div className="mb-3">
-                                            <div className="text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-1.5 flex items-center gap-1.5">
-                                                <MessageSquare size={11} /> Client Feedback · {page.feedback.length}
+                                    {(page.feedback ?? []).length > 0 && (() => {
+                                        const resolvedCount = page.feedback.filter(fb => fb.resolved_at).length;
+                                        const showRes = !!fbShowResolved[page.id];
+                                        return (
+                                            <div className="mb-3">
+                                                <div className="text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-1.5 flex items-center gap-1.5">
+                                                    <MessageSquare size={11} /> Client Feedback · {page.feedback.length}
+                                                    {resolvedCount > 0 && (
+                                                        <button onClick={() => setFbShowResolved(s => ({ ...s, [page.id]: !showRes }))} className="ml-auto normal-case tracking-normal text-[10px] font-semibold text-[#4f6df5] hover:text-[#6380f7]">
+                                                            {showRes ? 'Hide resolved' : `Show resolved (${resolvedCount})`}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    {page.feedback.filter(fb => !fb.parent_id).map(fb => renderFeedbackItem(page, fb, false))}
+                                                </div>
                                             </div>
-                                            <div className="space-y-1.5">
-                                                {page.feedback.filter(fb => !fb.parent_id).map(fb => renderFeedbackItem(page, fb, false))}
-                                            </div>
-                                        </div>
-                                    )}
+                                        );
+                                    })()}
 
                                     {/* Actions */}
                                     <div className="flex items-center gap-1.5 pt-3 border-t border-[#f0f0f0]">

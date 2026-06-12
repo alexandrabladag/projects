@@ -53,6 +53,7 @@ function FeedbackWidget({ code }) {
     const [editTitle, setEditTitle] = useState('');
     const [savingEdit, setSavingEdit] = useState(false);
     const [postedCode, setPostedCode] = useState(null);
+    const [showResolved, setShowResolved] = useState(false); // resolved hidden until toggled
     const composeRef = useRef();
     const editRef = useRef();
     const editTokRef = useRef(null);
@@ -119,8 +120,10 @@ function FeedbackWidget({ code }) {
     };
 
     // Clients can edit their OWN comments (proven by edit code). Team replies are read-only.
-    const renderCard = (c, isReply) => (
-        <div key={c.id} className={`bg-white border ${isReply ? 'border-[#eef0f3] rounded-[9px] p-[9px_11px] mt-2' : 'border-[#eceef2] rounded-[10px] p-[11px_13px] mb-2'} ${c.resolved_at ? 'opacity-60' : ''}`}>
+    const renderCard = (c, isReply) => {
+      if (c.resolved_at && !showResolved) return null; // hidden until toggled
+      return (
+        <div key={c.id} className={`border ${isReply ? 'border-[#eef0f3] rounded-[9px] p-[9px_11px] mt-2' : 'border-[#eceef2] rounded-[10px] p-[11px_13px] mb-2'} ${c.resolved_at ? 'bg-emerald-50' : 'bg-white'}`}>
             <div className="flex items-center gap-2.5 mb-1.5">
                 <div className={`flex-none ${isReply ? 'w-6 h-6' : 'w-7 h-7'} rounded-full flex items-center justify-center font-bold text-[12px]`} style={{ background: avatarColor(c.author_name)[0], color: avatarColor(c.author_name)[1] }}>
                     {(c.author_name || 'A').charAt(0).toUpperCase()}
@@ -170,15 +173,31 @@ function FeedbackWidget({ code }) {
                 </div>
             )}
         </div>
-    );
+      );
+    };
 
-    const thread = items.length === 0 ? (
-        <div className="text-center text-[#6b7280] py-8">
-            <div className="text-[30px] leading-none mb-2">💬</div>
-            <div className="font-semibold text-[#374151]">No comments yet</div>
-            <div className="text-[12px] text-[#9aa1ad] mt-0.5">Be the first to leave feedback.</div>
-        </div>
-    ) : items.map(c => renderCard(c, false));
+    const countResolved = (list) => (list || []).reduce((n, c) => n + (c.resolved_at ? 1 : 0) + countResolved(c.replies), 0);
+    const resolvedCount = countResolved(items);
+    const cards = items.map(c => renderCard(c, false)).filter(Boolean);
+
+    const thread = (
+        <>
+            {resolvedCount > 0 && (
+                <div className="flex justify-end mb-2">
+                    <button type="button" onClick={() => setShowResolved(v => !v)} className="text-[12px] font-semibold text-[#4f6df5] hover:text-[#6380f7]">
+                        {showResolved ? 'Hide resolved' : `Show resolved (${resolvedCount})`}
+                    </button>
+                </div>
+            )}
+            {cards.length === 0 ? (
+                <div className="text-center text-[#6b7280] py-8">
+                    <div className="text-[30px] leading-none mb-2">💬</div>
+                    <div className="font-semibold text-[#374151]">{resolvedCount > 0 ? 'Nothing open' : 'No comments yet'}</div>
+                    <div className="text-[12px] text-[#9aa1ad] mt-0.5">{resolvedCount > 0 ? 'All feedback here is resolved.' : 'Be the first to leave feedback.'}</div>
+                </div>
+            ) : cards}
+        </>
+    );
 
     const composer = (
         <>

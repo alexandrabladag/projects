@@ -248,6 +248,9 @@ class ProjectPageController extends Controller
         $root = $this->threadRoot($page, $target);
         abort_unless($root->page_commenter_id === $commenter->id, 403);
 
+        // No replies once the branch is resolved.
+        abort_if($target->resolved_at || $root->resolved_at, 403, 'This thread is resolved.');
+
         $validated = $request->validate(['body' => 'required|string|max:20000']);
         $validated['body'] = $this->sanitizeFeedbackHtml($validated['body']);
         if (trim(strip_tags($validated['body'])) === '') {
@@ -394,9 +397,34 @@ class ProjectPageController extends Controller
         $this->authorize('update', $project);
         abort_unless($feedback->project_page_id === $page->id && $page->project_id === $project->id, 404);
 
-        $feedback->update(['resolved_at' => $feedback->resolved_at ? null : now()]);
+        // Resolving (or reopening) cascades to the whole subtree, so a resolved branch stays
+        // consistent — every reply under it is resolved too and clients can't keep replying.
+        $value = $feedback->resolved_at ? null : now();
+        $page->feedback()->whereIn('id', $this->subtreeIds($page, $feedback->id))
+            ->update(['resolved_at' => $value]);
 
         return back();
+    }
+
+    // Collects the id of a comment plus every descendant reply (depth-first, cycle-guarded).
+    private function subtreeIds(ProjectPage $page, int $rootId): array
+    {
+        $childrenOf = $page->feedback()->get(['id', 'parent_id'])->groupBy('parent_id');
+
+        $ids = [];
+        $stack = [$rootId];
+        while ($stack && count($ids) < 5000) {
+            $id = array_pop($stack);
+            if (in_array($id, $ids, true)) {
+                continue;
+            }
+            $ids[] = $id;
+            foreach ($childrenOf->get($id) ?? [] as $child) {
+                $stack[] = $child->id;
+            }
+        }
+
+        return $ids;
     }
 
     public function deleteFeedback(Project $project, ProjectPage $page, PageFeedback $feedback)
@@ -546,9 +574,22 @@ class ProjectPageController extends Controller
     // attributes (kills on*/style/href injection), so stored comments are safe to render.
     private function sanitizeFeedbackHtml(string $html): string
     {
-        $html = strip_tags($html, '<b><strong><i><em><u><ul><ol><li><br><p>');
+        // Browsers wrap each line/paragraph of a contenteditable in <div>/<p>. strip_tags
+        // would delete those without a separator and glue the lines together, so turn each
+        // block boundary into a <br> first. The opening tag marks the line break (Chrome
+        // leaves the first line bare and wraps only subsequent lines); the closing tag drops.
+        $html = preg_replace('#<(?:div|p)\b[^>]*>#i', '<br>', $html);
+        $html = preg_replace('#</(?:div|p)>#i', '', $html);
+
+        $html = strip_tags($html, '<b><strong><i><em><u><ul><ol><li><br>');
         // Remove every attribute from the surviving opening tags.
         $html = preg_replace('/<([a-z0-9]+)\b[^>]*>/i', '<$1>', $html);
+
+        // Collapse long runs of <br> and trim leading/trailing breaks.
+        $html = preg_replace('#(?:<br\s*/?>\s*){3,}#i', '<br><br>', $html);
+        $html = preg_replace('#^(?:\s|<br\s*/?>)+#i', '', $html);
+        $html = preg_replace('#(?:\s|<br\s*/?>)+$#i', '', $html);
+
         return trim($html);
     }
 
@@ -563,7 +604,15 @@ class ProjectPageController extends Controller
         $js = <<<'JS'
 (function(){
   if (window.__pf_init) return; window.__pf_init = true;
-  var BASE = "__BASE__", AUTH = BASE.replace(/\/feedback$/,'/auth'), Z = 2147483647, open = false, full = false;
+  var BASE = "__BASE__", AUTH = BASE.replace(/\/feedback$/,'/auth'), Z = 2147483647, open = false;
+  // Full-screen is a sticky view preference so a reload keeps the same layout.
+  var full = (function(){ try{ return localStorage.getItem('pf_full')==='1'; }catch(_){ return false; } })();
+  var showResolved = false, currentItems = []; // resolved comments are hidden until toggled on
+  var FOCUS = null; // comment id to scroll to + highlight after the next render
+  // Deep-link helpers: #feedback keeps the drawer open across reloads; #fb-<id> also focuses
+  // a specific comment. replaceState keeps the hash in the URL without spamming history.
+  function hashId(){ var m=(location.hash||'').match(/^#fb-(\d+)$/); return m?parseInt(m[1],10):null; }
+  function setHash(h){ try{ history.replaceState(null,'', h?('#'+h):(location.pathname+location.search)); }catch(_){ if(h) location.hash=h; } }
   var FONT = "13px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif";
   var INP = 'width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:9px 11px;margin-bottom:8px;font:'+FONT;
   function el(tag, css, text){ var e=document.createElement(tag); if(css)e.style.cssText=css; if(text!=null)e.textContent=text; return e; }
@@ -581,7 +630,7 @@ class ProjectPageController extends Controller
   function authHeaders(extra){ var h=extra||{}, a=auth(); if(a&&a.token) h['Authorization']='Bearer '+a.token; return h; }
 
   // Shared styles — placeholder + list indentation for both the editor and rendered bodies.
-  var st = el('style'); st.textContent='.pf-ed:empty:before{content:attr(data-ph);color:#9ca3af}.pf-ed:focus{outline:none}.pf-ed ul,.pf-body ul{list-style:disc;padding-left:20px;margin:4px 0}.pf-ed ol,.pf-body ol{list-style:decimal;padding-left:20px;margin:4px 0}.pf-body p,.pf-ed p{margin:4px 0}';
+  var st = el('style'); st.textContent='.pf-ed:empty:before{content:attr(data-ph);color:#9ca3af}.pf-ed:focus{outline:none}.pf-ed ul,.pf-body ul{list-style:disc;padding-left:20px;margin:4px 0}.pf-ed ol,.pf-body ol{list-style:decimal;padding-left:20px;margin:4px 0}.pf-body p,.pf-ed p{margin:4px 0}.pf-focus{box-shadow:0 0 0 2px #4f6df5;transition:box-shadow .2s}';
   (document.head||document.documentElement).appendChild(st);
 
   // Rich-text editor factory (toolbar + contenteditable) — reused for compose and edit.
@@ -634,19 +683,26 @@ class ProjectPageController extends Controller
   maxbtn.type='button'; maxbtn.setAttribute('aria-label','Toggle full screen');
   var ICON_MAX='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
   var ICON_MIN='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
-  maxbtn.innerHTML=ICON_MAX;
-  maxbtn.onclick=function(){ full=!full; maxbtn.innerHTML=full?ICON_MIN:ICON_MAX; applyLayout(); };
+  maxbtn.innerHTML=full?ICON_MIN:ICON_MAX;
+  maxbtn.onclick=function(){ full=!full; try{ localStorage.setItem('pf_full', full?'1':'0'); }catch(_){} maxbtn.innerHTML=full?ICON_MIN:ICON_MAX; applyLayout(); };
   var close = el('button','border:0;background:transparent;color:#fff;cursor:pointer;font:400 22px/1 system-ui;padding:0 2px;opacity:.8');
   close.type='button'; close.setAttribute('aria-label','Close'); close.innerHTML='&times;';
-  close.onclick=function(){ setOpen(false); };
+  close.onclick=function(){ setOpen(false); setHash(null); };
   ctrls.appendChild(maxbtn); ctrls.appendChild(close);
   head.appendChild(ctrls);
+  // Thin toolbar above the list — holds the "Show resolved" toggle (shown only when there
+  // are resolved comments to reveal).
+  var resBar = el('div','flex:0 0 auto;display:none;align-items:center;justify-content:flex-end;padding:7px 16px;background:#fff;border-bottom:1px solid #f1f1f1');
+  var resToggle = el('button','border:0;background:transparent;color:#4f6df5;cursor:pointer;font:600 12px ui-sans-serif,system-ui,sans-serif;padding:0;display:inline-flex;align-items:center;gap:5px');
+  resToggle.type='button';
+  resToggle.onclick=function(){ showResolved=!showResolved; render(currentItems); };
+  resBar.appendChild(resToggle);
   var list = el('div','flex:1 1 auto;overflow:auto;padding:14px 16px;background:#f9fafb');
   // Footer region — holds either the composer (signed in) or the sign-in/register panel.
   var form = el('div','flex:0 0 auto;padding:14px 16px;border-top:1px solid #eee;background:#fff');
   var body = el('div','flex:1 1 auto;display:flex;min-height:0');
   body.appendChild(list); body.appendChild(form);
-  panel.appendChild(head); panel.appendChild(body);
+  panel.appendChild(head); panel.appendChild(resBar); panel.appendChild(body);
 
   function setOpen(v){ open=v; applyLayout(); }
   function load(){ fetch(BASE,{headers:{'Accept':'application/json'}}).then(function(r){return r.json();}).then(render).catch(function(){}); }
@@ -706,10 +762,19 @@ class ProjectPageController extends Controller
   // Builds one comment card. Clients can edit their OWN comments, and reply directly under a
   // team member's reply when they own the thread (canReply, passed down for reply cards).
   function buildCard(c, isReply, canReply){
+    if(c.resolved_at && !showResolved) return null; // hidden unless "Show resolved" is on
     var nm = (c.author_name||'Anonymous'); var col = hashColor(nm);
+    var rbg = c.resolved_at ? '#ecfdf5' : '#fff'; // resolved → green tint instead of fading
     var card = el('div', isReply
-      ? 'background:#fff;border:1px solid #eef0f3;border-radius:9px;padding:9px 11px;margin-top:8px'+(c.resolved_at?';opacity:.6':'')
-      : 'background:#fff;border:1px solid #eceef2;border-radius:10px;padding:11px 13px;margin-bottom:8px'+(c.resolved_at?';opacity:.6':''));
+      ? 'background:'+rbg+';border:1px solid #eef0f3;border-radius:9px;padding:9px 11px;margin-top:8px'
+      : 'background:'+rbg+';border:1px solid #eceef2;border-radius:10px;padding:11px 13px;margin-bottom:8px');
+    card.id = 'pf-card-'+c.id;
+    // Click a comment to deep-link it (#fb-<id>) so a reload reopens here. Ignore clicks on
+    // controls/editors; stopPropagation so the innermost (clicked) card wins over its parents.
+    card.addEventListener('click', function(ev){
+      if(ev.target.closest('button,a,input,textarea,[contenteditable]')) return;
+      ev.stopPropagation(); setHash('fb-'+c.id);
+    });
     var top = el('div','display:flex;align-items:center;gap:9px;margin-bottom:7px');
     var sz = isReply ? 24 : 28;
     top.appendChild(el('div','flex:0 0 auto;width:'+sz+'px;height:'+sz+'px;border-radius:50%;background:'+col[0]+';color:'+col[1]+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px', nm.charAt(0).toUpperCase()));
@@ -729,13 +794,14 @@ class ProjectPageController extends Controller
     var bd = el('div'); bd.className='pf-body'; bd.style.cssText='font-size:13px;color:#374151;line-height:1.55;word-break:break-word'; bd.innerHTML=c.body; card.appendChild(bd);
     var me = auth();
     var mine = !c.is_admin && me && c.page_commenter_id && c.page_commenter_id===me.id;
-    if(mine){
+    // Resolved comments are read-only for clients — no editing or replying once closed.
+    if(mine && !c.resolved_at){
       var acts = el('div','margin-top:9px;display:flex;gap:8px');
       acts.appendChild(actionBtn(PENCIL+' Edit', function(){ startEdit(card, c); }));
       card.appendChild(acts);
     }
     // Reply control on a team member's reply — only for the client who owns the thread.
-    if(isReply && c.is_admin && canReply){
+    if(isReply && c.is_admin && canReply && !c.resolved_at){
       var ra = el('div','margin-top:9px');
       ra.appendChild(actionBtn(REPLY+' Reply', function(){ startReply(card, c); }));
       card.appendChild(ra);
@@ -745,21 +811,38 @@ class ProjectPageController extends Controller
     var replies = c.replies||[];
     if(replies.length){
       var ownThread = isReply ? canReply : mine;
-      var repliesWrap = el('div','margin-top:9px;padding-left:13px;border-left:2px solid #eef0f3');
-      replies.forEach(function(r){ repliesWrap.appendChild(buildCard(r, true, ownThread)); });
-      card.appendChild(repliesWrap);
+      var repliesWrap = el('div','margin-top:9px;padding-left:13px;border-left:2px solid #eef0f3'), any=false;
+      replies.forEach(function(r){ var rc=buildCard(r, true, ownThread); if(rc){ repliesWrap.appendChild(rc); any=true; } });
+      if(any) card.appendChild(repliesWrap);
     }
     return card;
   }
 
+  // Counts resolved comments anywhere in the tree (drives the toggle's visibility/label).
+  function countResolved(items){ var n=0; (items||[]).forEach(function(c){ if(c.resolved_at) n++; n+=countResolved(c.replies); }); return n; }
+
   function render(items){
+    currentItems = items || [];
     list.innerHTML='';
-    if(!items || !items.length){
+    var nRes = countResolved(currentItems);
+    if(nRes){ resBar.style.display='flex'; resToggle.textContent = showResolved ? 'Hide resolved' : ('Show resolved ('+nRes+')'); }
+    else { resBar.style.display='none'; showResolved=false; }
+    var cards = currentItems.map(function(c){ return buildCard(c, false); }).filter(Boolean);
+    if(!cards.length){
       var empty = el('div','text-align:center;color:#6b7280;padding:30px 10px');
-      empty.innerHTML='<div style="font-size:30px;line-height:1;margin-bottom:8px">\u{1F4AC}</div><div style="font-weight:600;color:#374151">No comments yet</div><div style="font-size:12px;margin-top:3px;color:#9aa1ad">Be the first to leave feedback.</div>';
+      empty.innerHTML='<div style="font-size:30px;line-height:1;margin-bottom:8px">\u{1F4AC}</div><div style="font-weight:600;color:#374151">'+(nRes&&!showResolved?'Nothing open':'No comments yet')+'</div><div style="font-size:12px;margin-top:3px;color:#9aa1ad">'+(nRes&&!showResolved?'All feedback here is resolved.':'Be the first to leave feedback.')+'</div>';
       list.appendChild(empty); return;
     }
-    items.forEach(function(c){ list.appendChild(buildCard(c, false)); });
+    cards.forEach(function(card){ list.appendChild(card); });
+
+    // Scroll to + highlight the deep-linked comment once it's in the DOM. If it's resolved
+    // and currently hidden, reveal resolved and re-render so the target can be found.
+    if(FOCUS!=null){
+      var node = document.getElementById('pf-card-'+FOCUS);
+      if(node){ FOCUS=null; node.scrollIntoView({block:'center'}); node.classList.add('pf-focus'); setTimeout(function(){ node.classList.remove('pf-focus'); }, 2200); }
+      else if(!showResolved && nRes){ showResolved=true; render(currentItems); }
+      else { FOCUS=null; }
+    }
   }
   // Composer shown when signed in: who-you-are bar + title + rich editor + send.
   function buildComposer(){
@@ -823,11 +906,14 @@ class ProjectPageController extends Controller
 
   function renderForm(){ form.innerHTML=''; if(auth()) buildComposer(); else buildAuth(); }
 
-  btn.onclick=function(){ setOpen(!open); if(open) load(); };
+  btn.onclick=function(){ setOpen(!open); if(open){ if(!hashId()) setHash('feedback'); load(); } else { setHash(null); } };
 
   renderForm();
   function mount(){ if(!document.body) return; if(!btn.isConnected) document.body.appendChild(btn); if(!panel.isConnected) document.body.appendChild(panel); }
   mount(); setInterval(mount,800);
+
+  // Reopen on reload when the URL carries our hash (and focus the linked comment, if any).
+  (function(){ var id=hashId(); if(id!=null){ FOCUS=id; setOpen(true); load(); } else if((location.hash||'')==='#feedback'){ setOpen(true); load(); } })();
 })();
 JS;
 
