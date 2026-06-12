@@ -3,11 +3,13 @@
 namespace App\Support;
 
 use App\Models\Invoice;
+use App\Models\PageFeedback;
 use App\Models\Project;
 use App\Models\Proposal;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 // Builds the cross-project "needs attention" feed that powers the topbar
 // notification bell. Everything is derived live from existing records — there
@@ -24,6 +26,7 @@ class AttentionFeed
         $projectIds = Project::forUser($user)->pluck('id');
 
         $groups = array_values(array_filter([
+            self::clientFeedback($projectIds),
             self::overdueInvoices($projectIds, $today),
             self::dueSoonInvoices($projectIds, $today, $soon),
             self::overdueTasks($projectIds, $today),
@@ -57,6 +60,27 @@ class AttentionFeed
     private static function days(Carbon $today, $date): int
     {
         return (int) $today->diffInDays($date, false);
+    }
+
+    // Unresolved comments left by clients on shared pages. They clear from the feed once a
+    // team member resolves the thread (resolve cascades to the whole branch). Client root
+    // comments store is_admin = null and client replies store false; only team replies are true.
+    private static function clientFeedback($projectIds): ?array
+    {
+        $items = PageFeedback::whereNull('resolved_at')
+            ->where(fn ($q) => $q->whereNull('is_admin')->orWhere('is_admin', false))
+            ->whereHas('page', fn ($q) => $q->whereIn('project_id', $projectIds))
+            ->with('page:id,title,project_id')
+            ->latest()
+            ->get()
+            ->map(fn ($f) => [
+                'id'    => $f->id,
+                'title' => Str::limit(trim(strip_tags($f->body)), 60) ?: 'New comment',
+                'meta'  => ($f->author_name ?: 'Client') . ' · ' . ($f->page?->title ?? 'Page'),
+                'href'  => $f->page?->project_id ? route('projects.show', $f->page->project_id) . '?tab=pages' : null,
+            ]);
+
+        return self::group('client_feedback', 'Client feedback', 'info', $items);
     }
 
     private static function overdueInvoices($projectIds, Carbon $today): ?array

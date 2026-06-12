@@ -258,7 +258,7 @@ function NotificationBell() {
 
     const count = attention.count ?? 0;
     const groups = attention.groups ?? [];
-    const dotColor = (sev) => (sev === 'danger' ? 'bg-red-500' : 'bg-amber-500');
+    const dotColor = (sev) => (sev === 'danger' ? 'bg-red-500' : sev === 'info' ? 'bg-indigo-500' : 'bg-amber-500');
 
     return (
         <div className="relative" ref={ref}>
