@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { Head } from '@inertiajs/react';
-import { MessageSquare, Maximize2, Minimize2, FileText, Pencil } from 'lucide-react';
+import { MessageSquare, Maximize2, Minimize2, FileText, Pencil, Reply } from 'lucide-react';
 
 // Stable avatar color per author name.
 const AVATAR_COLORS = [['#eef1fe', '#4f6df5'], ['#fef3c7', '#b45309'], ['#dcfce7', '#15803d'], ['#fee2e2', '#b91c1c'], ['#f3e8ff', '#7e22ce'], ['#cffafe', '#0e7490'], ['#ffe4e6', '#be123c'], ['#e0e7ff', '#4338ca']];
@@ -38,145 +38,219 @@ function Toolbar({ edRef }) {
     );
 }
 
-// Floating, toggleable client-feedback drawer — mirrors the one injected into raw
-// mockup HTML, but as a React component for simple-content pages.
-function FeedbackWidget({ code }) {
+// Floating, toggleable client-feedback drawer — mirrors the one injected into raw mockup
+// HTML, but as a React component for simple-content pages. Account-based (project-scoped),
+// with nested replies, resolve hiding, and #fb-<id> deep-links that survive a reload.
+function FeedbackWidget({ code, projectId }) {
     const base = `/page/${code}/feedback`;
+    const authUrl = `/page/${code}/auth`;
+    const authKey = `pf_auth_p${projectId}`;
+
     const [open, setOpen] = useState(false);
+    const [full, setFull] = useState(() => { try { return localStorage.getItem('pf_full') === '1'; } catch (e) { return false; } });
     const [items, setItems] = useState([]);
-    const [name, setName] = useState('');
+    const [auth, setAuthState] = useState(() => { try { return JSON.parse(localStorage.getItem(authKey) || 'null'); } catch (e) { return null; } });
+
     const [title, setTitle] = useState('');
     const [sending, setSending] = useState(false);
-    const [full, setFull] = useState(false);
-    const [nameErr, setNameErr] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [editTitle, setEditTitle] = useState('');
     const [savingEdit, setSavingEdit] = useState(false);
-    const [postedCode, setPostedCode] = useState(null);
+    const [replyingId, setReplyingId] = useState(null);
+    const [replyBusy, setReplyBusy] = useState(false);
     const [showResolved, setShowResolved] = useState(false); // resolved hidden until toggled
+    const [focusId, setFocusId] = useState(null);            // deep-linked comment to highlight
+
+    // Sign-in / register form state.
+    const [authMode, setAuthMode] = useState('login');
+    const [authName, setAuthName] = useState('');
+    const [authEmail, setAuthEmail] = useState('');
+    const [authPass, setAuthPass] = useState('');
+    const [authErr, setAuthErr] = useState('');
+    const [authBusy, setAuthBusy] = useState(false);
+
     const composeRef = useRef();
     const editRef = useRef();
-    const editTokRef = useRef(null);
+    const replyRef = useRef();
 
     const fmtDateTime = (s) => { try { return new Date(s).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch (e) { return ''; } };
+    const flatten = (list) => (list || []).reduce((a, c) => a.concat(c, flatten(c.replies)), []);
+    const countResolved = (list) => (list || []).reduce((n, c) => n + (c.resolved_at ? 1 : 0) + countResolved(c.replies), 0);
 
-    // Per-comment edit codes this browser knows (author edits seamlessly here; other devices re-enter the code).
-    const tokKey = `pf_tok_${code}`;
-    const getToks = () => { try { return JSON.parse(localStorage.getItem(tokKey) || '{}'); } catch (e) { return {}; } };
-    const ownTok = (id) => getToks()[id];
-    const setTok = (id, t) => { const m = getToks(); m[id] = t; try { localStorage.setItem(tokKey, JSON.stringify(m)); } catch (e) {} };
+    const setAuth = (a) => { setAuthState(a); try { a ? localStorage.setItem(authKey, JSON.stringify(a)) : localStorage.removeItem(authKey); } catch (e) {} };
+    const authHeaders = (extra) => { const h = extra || {}; if (auth?.token) h['Authorization'] = 'Bearer ' + auth.token; return h; };
 
-    const load = () => {
-        fetch(base, { headers: { Accept: 'application/json' } })
-            .then(r => r.json()).then(setItems).catch(() => {});
-    };
-    const toggle = () => { const next = !open; setOpen(next); if (next) load(); };
+    const load = () => { fetch(base, { headers: { Accept: 'application/json' } }).then(r => r.json()).then(setItems).catch(() => {}); };
+
+    // Deep-link: #feedback keeps the drawer open across reloads; #fb-<id> also focuses a comment.
+    const setHash = (h) => { try { history.replaceState(null, '', h ? '#' + h : location.pathname + location.search); } catch (e) { if (h) location.hash = h; } };
+    const toggle = () => { const next = !open; setOpen(next); if (next) { if (!/^#fb-\d+$/.test(location.hash)) setHash('feedback'); load(); } else setHash(null); };
+    const closeDrawer = () => { setOpen(false); setHash(null); };
+    const toggleFull = () => { setFull(f => { const v = !f; try { localStorage.setItem('pf_full', v ? '1' : '0'); } catch (e) {} return v; }); };
+
+    // Reopen on reload when the URL carries our hash.
+    useEffect(() => {
+        const m = (location.hash || '').match(/^#fb-(\d+)$/);
+        if (m) { setFocusId(parseInt(m[1], 10)); setOpen(true); load(); }
+        else if (location.hash === '#feedback') { setOpen(true); load(); }
+    }, []);
 
     // Populate & focus the edit editor when a comment enters edit mode.
     useEffect(() => {
         if (editingId && editRef.current) {
-            const c = items.flatMap(x => [x, ...(x.replies || [])]).find(x => x.id === editingId);
+            const c = flatten(items).find(x => x.id === editingId);
             editRef.current.innerHTML = c?.body || '';
             editRef.current.focus();
         }
     }, [editingId]);
+    useEffect(() => { if (replyingId && replyRef.current) replyRef.current.focus(); }, [replyingId]);
+
+    // Scroll to + highlight the deep-linked comment; reveal resolved if it's hidden.
+    useEffect(() => {
+        if (focusId == null || !open) return;
+        const node = document.getElementById('pf-card-' + focusId);
+        if (node) {
+            node.scrollIntoView({ block: 'center' });
+            node.classList.add('pf-focus');
+            const t = setTimeout(() => node.classList.remove('pf-focus'), 2200);
+            setFocusId(null);
+            return () => clearTimeout(t);
+        } else if (!showResolved && countResolved(items) > 0) {
+            setShowResolved(true);
+        }
+    }, [items, focusId, open, showResolved]);
+
+    const submitAuth = () => {
+        const email = authEmail.trim(), pass = authPass, nm = authName.trim();
+        if (!email || !pass || (authMode === 'register' && !nm)) { setAuthErr('Please fill in all fields.'); return; }
+        setAuthBusy(true); setAuthErr('');
+        const payload = authMode === 'login' ? { email, password: pass } : { name: nm, email, password: pass };
+        fetch(`${authUrl}/${authMode}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(payload) })
+            .then(r => r.json().then(j => ({ ok: r.ok, j })))
+            .then(({ ok, j }) => {
+                if (!ok) { const e = j?.errors; setAuthErr(e ? e[Object.keys(e)[0]][0] : (j?.message || 'Something went wrong.')); return; }
+                setAuth({ token: j.token, id: j.commenter.id, name: j.commenter.name, email: j.commenter.email });
+                setAuthPass(''); load();
+            })
+            .catch(() => setAuthErr('Network error. Please try again.'))
+            .finally(() => setAuthBusy(false));
+    };
 
     const send = () => {
-        if (!name.trim()) { setNameErr(true); return; }
         const ed = composeRef.current;
         if (!ed || !ed.textContent.trim()) return;
         setSending(true);
-        fetch(base, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-            body: JSON.stringify({ body: ed.innerHTML, author_name: name.trim(), title: title.trim(), page_path: window.location.pathname }),
-        })
-            .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-            .then(res => { if (res?.id && res?.edit_token) { setTok(res.id, res.edit_token); setPostedCode(res.edit_token); } if (composeRef.current) composeRef.current.innerHTML = ''; setTitle(''); load(); })
-            .catch(() => alert('Could not send feedback. Please try again.'))
+        fetch(base, { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json', Accept: 'application/json' }), body: JSON.stringify({ body: ed.innerHTML, title: title.trim(), page_path: window.location.pathname }) })
+            .then(r => { if (r.status === 401) throw new Error('auth'); if (!r.ok) throw new Error(); return r.json(); })
+            .then(() => { if (composeRef.current) composeRef.current.innerHTML = ''; setTitle(''); load(); })
+            .catch(e => { if (e.message === 'auth') { setAuth(null); alert('Your session expired — please sign in again.'); } else alert('Could not send feedback. Please try again.'); })
             .finally(() => setSending(false));
     };
 
-    const beginEdit = (c) => {
-        let tk = ownTok(c.id);
-        if (!tk) { tk = window.prompt('Enter the edit code you received when you posted this comment:'); if (!tk) return; tk = tk.trim(); }
-        editTokRef.current = tk;
-        setEditTitle(c.title || '');
-        setEditingId(c.id);
-    };
+    const beginEdit = (c) => { setReplyingId(null); setEditTitle(c.title || ''); setEditingId(c.id); };
     const saveEdit = (c) => {
         const ed = editRef.current;
         if (!ed || !ed.textContent.trim()) return;
         setSavingEdit(true);
-        fetch(`${base}/${c.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-            body: JSON.stringify({ body: ed.innerHTML, title: editTitle.trim(), edit_token: editTokRef.current }),
-        })
-            .then(r => { if (r.status === 403) throw new Error('bad'); if (!r.ok) throw new Error(); return r.json(); })
-            .then(() => { setTok(c.id, editTokRef.current); setEditingId(null); load(); })
-            .catch(e => alert(e.message === 'bad' ? 'That edit code is incorrect.' : 'Could not save changes.'))
+        fetch(`${base}/${c.id}`, { method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json', Accept: 'application/json' }), body: JSON.stringify({ body: ed.innerHTML, title: editTitle.trim() }) })
+            .then(r => { if (r.status === 401) throw new Error('auth'); if (r.status === 403) throw new Error('forbidden'); if (!r.ok) throw new Error(); return r.json(); })
+            .then(() => { setEditingId(null); load(); })
+            .catch(e => alert(e.message === 'auth' ? 'Please sign in again to edit.' : e.message === 'forbidden' ? 'You can only edit your own comments.' : 'Could not save changes.'))
             .finally(() => setSavingEdit(false));
     };
 
-    // Clients can edit their OWN comments (proven by edit code). Team replies are read-only.
-    const renderCard = (c, isReply) => {
-      if (c.resolved_at && !showResolved) return null; // hidden until toggled
-      return (
-        <div key={c.id} className={`border ${isReply ? 'border-[#eef0f3] rounded-[9px] p-[9px_11px] mt-2' : 'border-[#eceef2] rounded-[10px] p-[11px_13px] mb-2'} ${c.resolved_at ? 'bg-emerald-50' : 'bg-white'}`}>
-            <div className="flex items-center gap-2.5 mb-1.5">
-                <div className={`flex-none ${isReply ? 'w-6 h-6' : 'w-7 h-7'} rounded-full flex items-center justify-center font-bold text-[12px]`} style={{ background: avatarColor(c.author_name)[0], color: avatarColor(c.author_name)[1] }}>
-                    {(c.author_name || 'A').charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-semibold text-[13px] text-[#111827] leading-tight">{c.author_name || 'Anonymous'}</span>
-                        {c.is_admin && <span className="text-[10px] font-bold text-[#4f6df5] bg-[#eef1fe] rounded-md px-1.5 py-0.5">Team</span>}
-                    </div>
-                    <div className="text-[11px] text-[#9aa1ad] leading-tight">#{c.id} · {c.created_at && fmtDateTime(c.created_at)}</div>
-                    {c.updated_at && c.updated_at !== c.created_at && (
-                        <div className="text-[11px] italic text-[#9aa1ad] leading-tight">Edited {fmtDateTime(c.updated_at)}</div>
-                    )}
-                </div>
-                {c.resolved_at && <span className="flex-none text-[10px] font-semibold text-[#059669] bg-[#ecfdf5] rounded-md px-2 py-0.5">Resolved</span>}
-            </div>
-            {!isReply && pageLabel(c.page_path) && (
-                <div className="inline-flex items-center gap-1 font-mono font-semibold text-[11px] text-[#6b7280] bg-[#f3f4f6] rounded-md px-2 py-0.5 mb-1.5 max-w-full truncate">
-                    <FileText size={11} /> {pageLabel(c.page_path)}
-                </div>
-            )}
-            {editingId === c.id ? (
-                <div>
-                    <input value={editTitle} onChange={e => setEditTitle(e.target.value)} placeholder="Add feedback title" className="w-full border border-[#d1d5db] rounded-lg px-3 py-2 mb-2 text-[13px]" />
-                    <Toolbar edRef={editRef} />
-                    <div ref={editRef} contentEditable suppressContentEditableWarning data-ph="Write your feedback…"
-                        className="pf-ed w-full border border-[#d1d5db] rounded-lg px-3 py-2.5 text-[13px] min-h-[120px] max-h-[40vh] overflow-auto text-left focus:outline-none focus:border-[#4f6df5]" />
-                    <div className="flex gap-2 mt-2">
-                        <button onClick={() => saveEdit(c)} disabled={savingEdit} className="flex-1 bg-[#4f6df5] text-white font-semibold py-2 rounded-lg disabled:opacity-60">{savingEdit ? 'Saving…' : 'Save'}</button>
-                        <button onClick={() => setEditingId(null)} className="border border-[#d1d5db] text-[#374151] font-semibold py-2 px-3.5 rounded-lg">Cancel</button>
-                    </div>
-                </div>
-            ) : (
-                <>
-                    {c.title && <div className="font-semibold text-[12.5px] text-[#4f6df5] mb-1">{c.title}</div>}
-                    <div className="pf-body text-[13px] text-[#374151] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: c.body }} />
-                    {!c.is_admin && ownTok(c.id) && (
-                        <button type="button" onClick={() => beginEdit(c)} className="mt-2.5 inline-flex items-center gap-1.5 border border-[#d1d5db] rounded-md px-3 py-1.5 text-[12px] font-semibold text-[#374151] hover:bg-gray-50">
-                            <Pencil size={12} /> Edit
-                        </button>
-                    )}
-                </>
-            )}
-            {!isReply && (c.replies || []).length > 0 && (
-                <div className="mt-2.5 pl-3.5 border-l-2 border-[#eef0f3]">
-                    {(c.replies || []).map(r => renderCard(r, true))}
-                </div>
-            )}
-        </div>
-      );
+    const sendReply = (c) => {
+        const ed = replyRef.current;
+        if (!ed || !ed.textContent.trim()) return;
+        setReplyBusy(true);
+        fetch(`${base}/${c.id}/reply`, { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json', Accept: 'application/json' }), body: JSON.stringify({ body: ed.innerHTML }) })
+            .then(r => { if (r.status === 401) throw new Error('auth'); if (r.status === 403) throw new Error('forbidden'); if (!r.ok) throw new Error(); return r.json(); })
+            .then(() => { setReplyingId(null); load(); })
+            .catch(e => alert(e.message === 'auth' ? 'Please sign in again to reply.' : e.message === 'forbidden' ? 'You can only reply in your own thread.' : 'Could not send reply.'))
+            .finally(() => setReplyBusy(false));
     };
 
-    const countResolved = (list) => (list || []).reduce((n, c) => n + (c.resolved_at ? 1 : 0) + countResolved(c.replies), 0);
+    // Click a comment to deep-link it; ignore clicks on controls/editors.
+    const cardClick = (c, ev) => {
+        if (ev.target.closest('button,a,input,textarea,[contenteditable]')) return;
+        ev.stopPropagation(); setHash('fb-' + c.id);
+    };
+
+    // Clients edit their OWN comments and reply under a team reply within a thread they own.
+    const renderCard = (c, isReply, canReply) => {
+        if (c.resolved_at && !showResolved) return null; // hidden until toggled
+        const mine = !c.is_admin && auth && c.page_commenter_id === auth.id;
+        const ownThread = isReply ? canReply : mine;
+        return (
+            <div key={c.id} id={`pf-card-${c.id}`} onClick={e => cardClick(c, e)} className={`border ${isReply ? 'border-[#eef0f3] rounded-[9px] p-[9px_11px] mt-2' : 'border-[#eceef2] rounded-[10px] p-[11px_13px] mb-2'} ${c.resolved_at ? 'bg-emerald-50' : 'bg-white'}`}>
+                <div className="flex items-center gap-2.5 mb-1.5">
+                    <div className={`flex-none ${isReply ? 'w-6 h-6' : 'w-7 h-7'} rounded-full flex items-center justify-center font-bold text-[12px]`} style={{ background: avatarColor(c.author_name)[0], color: avatarColor(c.author_name)[1] }}>
+                        {(c.author_name || 'A').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-semibold text-[13px] text-[#111827] leading-tight">{c.author_name || 'Anonymous'}</span>
+                            {c.is_admin && <span className="text-[10px] font-bold text-[#4f6df5] bg-[#eef1fe] rounded-md px-1.5 py-0.5">Team</span>}
+                        </div>
+                        <div className="text-[11px] text-[#9aa1ad] leading-tight">#{c.id} · {c.created_at && fmtDateTime(c.created_at)}</div>
+                        {c.updated_at && c.updated_at !== c.created_at && (
+                            <div className="text-[11px] italic text-[#9aa1ad] leading-tight">Edited {fmtDateTime(c.updated_at)}</div>
+                        )}
+                    </div>
+                    {c.resolved_at && <span className="flex-none text-[10px] font-semibold text-[#059669] bg-[#ecfdf5] rounded-md px-2 py-0.5">Resolved</span>}
+                </div>
+                {!isReply && pageLabel(c.page_path) && (
+                    <div className="inline-flex items-center gap-1 font-mono font-semibold text-[11px] text-[#6b7280] bg-[#f3f4f6] rounded-md px-2 py-0.5 mb-1.5 max-w-full truncate">
+                        <FileText size={11} /> {pageLabel(c.page_path)}
+                    </div>
+                )}
+                {editingId === c.id ? (
+                    <div>
+                        <input value={editTitle} onChange={e => setEditTitle(e.target.value)} placeholder="Add feedback title" className="w-full border border-[#d1d5db] rounded-lg px-3 py-2 mb-2 text-[13px]" />
+                        <Toolbar edRef={editRef} />
+                        <div ref={editRef} contentEditable suppressContentEditableWarning data-ph="Write your feedback…"
+                            className="pf-ed w-full border border-[#d1d5db] rounded-lg px-3 py-2.5 text-[13px] min-h-[120px] max-h-[40vh] overflow-auto text-left focus:outline-none focus:border-[#4f6df5]" />
+                        <div className="flex gap-2 mt-2">
+                            <button onClick={() => saveEdit(c)} disabled={savingEdit} className="flex-1 bg-[#4f6df5] text-white font-semibold py-2 rounded-lg disabled:opacity-60">{savingEdit ? 'Saving…' : 'Save'}</button>
+                            <button onClick={() => setEditingId(null)} className="border border-[#d1d5db] text-[#374151] font-semibold py-2 px-3.5 rounded-lg">Cancel</button>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        {c.title && <div className="font-semibold text-[12.5px] text-[#4f6df5] mb-1">{c.title}</div>}
+                        <div className="pf-body text-[13px] text-[#374151] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: c.body }} />
+                        {mine && !c.resolved_at && (
+                            <button type="button" onClick={() => beginEdit(c)} className="mt-2.5 inline-flex items-center gap-1.5 border border-[#d1d5db] rounded-md px-3 py-1.5 text-[12px] font-semibold text-[#374151] hover:bg-gray-50">
+                                <Pencil size={12} /> Edit
+                            </button>
+                        )}
+                        {isReply && c.is_admin && canReply && !c.resolved_at && (
+                            <button type="button" onClick={() => { setEditingId(null); setReplyingId(c.id); }} className="mt-2.5 inline-flex items-center gap-1.5 border border-[#d1d5db] rounded-md px-3 py-1.5 text-[12px] font-semibold text-[#374151] hover:bg-gray-50">
+                                <Reply size={12} /> Reply
+                            </button>
+                        )}
+                    </>
+                )}
+                {replyingId === c.id && (
+                    <div className="mt-2.5">
+                        <Toolbar edRef={replyRef} />
+                        <div ref={replyRef} contentEditable suppressContentEditableWarning data-ph="Write a reply…"
+                            className="pf-ed w-full border border-[#d1d5db] rounded-lg px-3 py-2.5 text-[13px] min-h-[84px] max-h-[40vh] overflow-auto text-left focus:outline-none focus:border-[#4f6df5]" />
+                        <div className="flex gap-2 mt-2">
+                            <button onClick={() => sendReply(c)} disabled={replyBusy} className="flex-1 bg-[#4f6df5] text-white font-semibold py-2 rounded-lg disabled:opacity-60">{replyBusy ? 'Sending…' : 'Send reply'}</button>
+                            <button onClick={() => setReplyingId(null)} className="border border-[#d1d5db] text-[#374151] font-semibold py-2 px-3.5 rounded-lg">Cancel</button>
+                        </div>
+                    </div>
+                )}
+                {(c.replies || []).length > 0 && (
+                    <div className="mt-2.5 pl-3.5 border-l-2 border-[#eef0f3]">
+                        {(c.replies || []).map(r => renderCard(r, true, ownThread))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     const resolvedCount = countResolved(items);
     const cards = items.map(c => renderCard(c, false)).filter(Boolean);
 
@@ -201,7 +275,10 @@ function FeedbackWidget({ code }) {
 
     const composer = (
         <>
-            <input value={name} onChange={e => { setName(e.target.value); setNameErr(false); }} placeholder="Your name" className={`w-full border rounded-lg px-3 py-2 mb-2 text-[13px] ${nameErr ? 'border-red-500' : 'border-[#d1d5db]'}`} />
+            <div className="flex items-center justify-between mb-2.5 text-[12px] text-[#6b7280]">
+                <span>Commenting as {auth?.name}</span>
+                <button type="button" onClick={() => setAuth(null)} className="font-semibold text-[#4f6df5]">Log out</button>
+            </div>
             <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Add feedback title" className="w-full border border-[#d1d5db] rounded-lg px-3 py-2 mb-2 text-[13px]" />
             <Toolbar edRef={composeRef} />
             <div ref={composeRef} contentEditable suppressContentEditableWarning data-ph="Write your feedback…"
@@ -209,14 +286,28 @@ function FeedbackWidget({ code }) {
             <button onClick={send} disabled={sending} className="mt-2.5 w-full bg-[#4f6df5] text-white font-semibold py-2.5 rounded-lg disabled:opacity-60">
                 {sending ? 'Sending…' : 'Send feedback'}
             </button>
-            {postedCode && (
-                <div className="mt-2.5 p-2.5 border border-[#c7d2fe] bg-[#eef2ff] rounded-lg text-[13px]">
-                    Posted! Your edit code is <b className="font-mono tracking-wider">{postedCode}</b>.
-                    <div className="text-[#4b5563]">Save it to edit this comment later — or from another device.</div>
-                </div>
-            )}
         </>
     );
+
+    const authPanel = (
+        <>
+            <div className="font-semibold text-[14px] text-[#111827] mb-0.5">{authMode === 'login' ? 'Client sign in' : 'Create a client account'}</div>
+            <div className="text-[12px] text-[#6b7280] mb-3">Clients sign in to leave feedback on this project’s pages.</div>
+            {authMode === 'register' && <input value={authName} onChange={e => setAuthName(e.target.value)} placeholder="Your name" className="w-full border border-[#d1d5db] rounded-lg px-3 py-2 mb-2 text-[13px]" />}
+            <input type="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="Email" className="w-full border border-[#d1d5db] rounded-lg px-3 py-2 mb-2 text-[13px]" />
+            <input type="password" value={authPass} onChange={e => setAuthPass(e.target.value)} placeholder={authMode === 'login' ? 'Password' : 'Password (min 6 characters)'} className="w-full border border-[#d1d5db] rounded-lg px-3 py-2 mb-2 text-[13px]" />
+            {authErr && <div className="text-[12px] text-red-600 mb-2">{authErr}</div>}
+            <button onClick={submitAuth} disabled={authBusy} className="w-full bg-[#4f6df5] text-white font-semibold py-2.5 rounded-lg disabled:opacity-60">
+                {authBusy ? 'Please wait…' : (authMode === 'login' ? 'Sign in' : 'Create account & continue')}
+            </button>
+            <div className="text-center text-[12px] text-[#6b7280] mt-2.5">
+                {authMode === 'login' ? 'No account yet? ' : 'Already have an account? '}
+                <button type="button" onClick={() => { setAuthMode(m => m === 'login' ? 'register' : 'login'); setAuthErr(''); }} className="font-semibold text-[#4f6df5]">{authMode === 'login' ? 'Create one' : 'Sign in'}</button>
+            </div>
+        </>
+    );
+
+    const footer = auth ? composer : authPanel;
 
     return (
         <>
@@ -228,21 +319,21 @@ function FeedbackWidget({ code }) {
                     <div className="flex-none flex items-center justify-between gap-2.5 px-[18px] py-[15px] bg-[#111827] text-white font-semibold text-[15px]">
                         <span>Leave feedback</span>
                         <div className="flex items-center gap-2">
-                            <button type="button" onClick={() => setFull(f => !f)} aria-label="Toggle full screen" className="text-white/80 hover:text-white">
+                            <button type="button" onClick={toggleFull} aria-label="Toggle full screen" className="text-white/80 hover:text-white">
                                 {full ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                             </button>
-                            <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-white/80 hover:text-white text-[22px] leading-none px-0.5">&times;</button>
+                            <button type="button" onClick={closeDrawer} aria-label="Close" className="text-white/80 hover:text-white text-[22px] leading-none px-0.5">&times;</button>
                         </div>
                     </div>
                     {full ? (
                         <div className="flex-1 flex min-h-0">
                             <div className="flex-1 overflow-auto px-7 py-4 bg-[#f9fafb]">{thread}</div>
-                            <div className="w-[440px] max-w-[42%] flex-none overflow-auto border-l border-[#eee] px-5 py-4 bg-white">{composer}</div>
+                            <div className="w-[440px] max-w-[42%] flex-none overflow-auto border-l border-[#eee] px-5 py-4 bg-white">{footer}</div>
                         </div>
                     ) : (
                         <>
                             <div className="flex-1 overflow-auto px-4 py-3.5 bg-[#f9fafb]">{thread}</div>
-                            <div className="flex-none border-t border-[#eee] px-4 py-3.5 bg-white">{composer}</div>
+                            <div className="flex-none border-t border-[#eee] px-4 py-3.5 bg-white">{footer}</div>
                         </>
                     )}
                     <style>{`
@@ -250,6 +341,7 @@ function FeedbackWidget({ code }) {
                         .pf-ed ul,.pf-body ul{list-style:disc;padding-left:20px;margin:4px 0}
                         .pf-ed ol,.pf-body ol{list-style:decimal;padding-left:20px;margin:4px 0}
                         .pf-body p,.pf-ed p{margin:4px 0}
+                        .pf-focus{box-shadow:0 0 0 2px #4f6df5}
                     `}</style>
                 </div>
             )}
@@ -348,7 +440,7 @@ export default function PublicPage({ page, company }) {
                     )}
                 </main>
 
-                {page.share_code && <FeedbackWidget code={page.share_code} />}
+                {page.share_code && <FeedbackWidget code={page.share_code} projectId={page.project_id} />}
             </div>
 
             <style>{`
