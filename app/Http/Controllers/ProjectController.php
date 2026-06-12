@@ -167,7 +167,7 @@ class ProjectController extends Controller
             'payroll.teamMember',
             'timeEntries.teamMember:id,name', 'timeEntries.task:id,title',
             'members.client', 'members.teamMember:id,name,role',
-            'pages.creator', 'pages.documents.uploader',
+            'pages.creator', 'pages.documents.uploader', 'pages.feedback',
         ]);
 
         // Append computed attributes

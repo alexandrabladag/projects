@@ -28,6 +28,14 @@ Route::get('/', function () {
 Route::get('/p/{code}', [\App\Http\Controllers\PublicPortalController::class, 'show'])->name('portal.public');
 Route::get('/page/{code}', [\App\Http\Controllers\ProjectPageController::class, 'publicView'])->name('pages.public');
 Route::post('/page/{code}', [\App\Http\Controllers\ProjectPageController::class, 'publicView']);
+// Lightweight commenter accounts for leaving feedback (no team auth) — before the catch-all.
+Route::post('/page/{code}/auth/register', [\App\Http\Controllers\ProjectPageController::class, 'registerCommenter'])->name('pages.commenter.register');
+Route::post('/page/{code}/auth/login',    [\App\Http\Controllers\ProjectPageController::class, 'loginCommenter'])->name('pages.commenter.login');
+// Client feedback on a shared page — must precede the {path} catch-all below or the GET is swallowed.
+Route::get('/page/{code}/feedback',  [\App\Http\Controllers\ProjectPageController::class, 'listFeedback'])->name('pages.feedback.list');
+Route::post('/page/{code}/feedback', [\App\Http\Controllers\ProjectPageController::class, 'storeFeedback'])->name('pages.feedback.store');
+Route::put('/page/{code}/feedback/{feedback}', [\App\Http\Controllers\ProjectPageController::class, 'updateFeedback'])->name('pages.feedback.public-update');
+Route::post('/page/{code}/feedback/{feedback}/reply', [\App\Http\Controllers\ProjectPageController::class, 'replyToFeedback'])->name('pages.feedback.public-reply');
 // Mockup sub-pages & assets (css/js/images) resolve relative to /page/{code}/
 Route::get('/page/{code}/{path}', [\App\Http\Controllers\ProjectPageController::class, 'mockupAsset'])
     ->where('path', '.*')->name('pages.mockup-asset');
@@ -119,6 +127,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('pages/{page}',           [\App\Http\Controllers\ProjectPageController::class, 'update'])->name('pages.update');
         Route::delete('pages/{page}',        [\App\Http\Controllers\ProjectPageController::class, 'destroy'])->name('pages.destroy');
         Route::patch('pages/{page}/share',   [\App\Http\Controllers\ProjectPageController::class, 'toggleShare'])->name('pages.toggle-share');
+        Route::post('pages/{page}/feedback/{feedback}/reply', [\App\Http\Controllers\ProjectPageController::class, 'replyFeedback'])->name('pages.feedback.reply');
+        Route::patch('pages/{page}/feedback/{feedback}/resolve', [\App\Http\Controllers\ProjectPageController::class, 'resolveFeedback'])->name('pages.feedback.resolve');
+        Route::delete('pages/{page}/feedback/{feedback}',        [\App\Http\Controllers\ProjectPageController::class, 'deleteFeedback'])->name('pages.feedback.destroy');
 
         Route::post('bills',                 [\App\Http\Controllers\BillController::class, 'store'])->name('bills.store');
 

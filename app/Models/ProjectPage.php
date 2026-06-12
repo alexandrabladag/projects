@@ -27,4 +27,9 @@ class ProjectPage extends Model
     {
         return $this->hasMany(Document::class, 'page_id');
     }
+
+    public function feedback()
+    {
+        return $this->hasMany(PageFeedback::class)->latest();
+    }
 }

@@ -23,6 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'role'       => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         ]);
+
+        // Public client-feedback endpoint on shared mockups — the raw mockup HTML carries
+        // no CSRF token, so exempt it (the unguessable share code is the only credential).
+        $middleware->validateCsrfTokens(except: ['page/*/feedback', 'page/*/feedback/*', 'page/*/auth/*']);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

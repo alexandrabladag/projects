@@ -9,7 +9,7 @@ import {
     FileText, Receipt, CalendarDays, Calendar, FolderOpen, Clock, ListChecks,
     TrendingUp, Wallet, CircleDollarSign, Flag, Activity,
     Trash2, Download, Upload, CheckCircle, XCircle, AlertCircle, Lock, Code, Users, Maximize2, Minimize2, Tag,
-    Package,
+    Package, MessageSquare, CornerDownRight,
 } from 'lucide-react';
 
 const RichEditor = lazy(() => import('@/Components/RichEditor'));
@@ -2939,8 +2939,82 @@ function PagesTab({ project, canManage }) {
         setTimeout(() => setCopied(null), 2000);
     };
 
+    const [fbReplyId, setFbReplyId] = useState(null);
+    const [fbReplyText, setFbReplyText] = useState('');
+    const submitReply = (page, fb) => {
+        if (!fbReplyText.trim()) return;
+        router.post(route('projects.pages.feedback.reply', [project.id, page.id, fb.id]), { body: fbReplyText.replace(/\n/g, '<br>') }, {
+            preserveScroll: true,
+            onSuccess: () => { setFbReplyId(null); setFbReplyText(''); },
+        });
+    };
+    const feedbackPageLabel = (p) => {
+        if (!p) return '';
+        const seg = p.split('?')[0].split('#')[0].replace(/\/+$/, '').split('/').filter(Boolean).pop() || '';
+        if (!seg || seg.toLowerCase() === 'index.html' || /^[a-f0-9]{12}$/.test(seg)) return 'Home';
+        try { return decodeURIComponent(seg); } catch (e) { return seg; }
+    };
+    const resolveFeedback = (page, fb) => {
+        router.patch(route('projects.pages.feedback.resolve', [project.id, page.id, fb.id]), {}, { preserveScroll: true });
+    };
+    const deleteFeedback = async (page, fb) => {
+        if (await confirm({ title: 'Delete this feedback?', message: 'This comment will be permanently removed.', danger: true })) {
+            router.delete(route('projects.pages.feedback.destroy', [project.id, page.id, fb.id]), { preserveScroll: true });
+        }
+    };
+    const renderFeedbackItem = (page, fb, isReply) => {
+        const replies = (page.feedback ?? []).filter(x => x.parent_id === fb.id);
+        return (
+            <div key={fb.id} className={`bg-[#f9fafb] border border-[#e5e7eb] rounded-lg px-2.5 py-2 ${fb.resolved_at ? 'opacity-50' : ''}`}>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-[11px] font-semibold text-[#374151]">{fb.author_name || 'Anonymous'}</span>
+                    {fb.is_admin && <span className="text-[9px] font-bold text-[#4f6df5] bg-[#eef1fe] rounded px-1.5 py-0.5">Team</span>}
+                    <span className="text-[9px] text-[#9aa1ad]">#{fb.id}</span>
+                    <span className="text-[9px] text-[#6b7280]">{fb.created_at && new Date(fb.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                    {fb.updated_at && fb.updated_at !== fb.created_at && <span className="text-[9px] italic text-[#9aa1ad]">edited</span>}
+                    {fb.resolved_at && <span className="text-[9px] px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded font-medium">Resolved</span>}
+                    <div className="flex-1" />
+                    {canManage && (
+                        <>
+                            <button onClick={() => resolveFeedback(page, fb)} title={fb.resolved_at ? 'Reopen' : 'Resolve'} className="text-[#6b7280] hover:text-emerald-500 transition-colors"><CheckCircle size={12} /></button>
+                            <button onClick={() => deleteFeedback(page, fb)} title="Delete" className="text-[#6b7280] hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
+                        </>
+                    )}
+                </div>
+                {!isReply && feedbackPageLabel(fb.page_path) && (
+                    <div className="inline-flex items-center gap-1 font-mono text-[9px] text-[#6b7280] bg-gray-100 rounded px-1.5 py-0.5 mb-0.5 max-w-full truncate">
+                        <FileText size={9} /> {feedbackPageLabel(fb.page_path)}
+                    </div>
+                )}
+                {fb.title && <div className="text-[11px] font-semibold text-[#4f6df5] mb-0.5">{fb.title}</div>}
+                <div className="pf-body text-[11px] text-[#4b5563] break-words" dangerouslySetInnerHTML={{ __html: fb.body }} />
+                {replies.length > 0 && (
+                    <div className="mt-1.5 pl-2.5 border-l-2 border-[#e5e7eb] space-y-1.5">
+                        {replies.map(r => renderFeedbackItem(page, r, true))}
+                    </div>
+                )}
+                {canManage && (
+                    fbReplyId === fb.id ? (
+                        <div className="mt-2">
+                            <textarea value={fbReplyText} onChange={e => setFbReplyText(e.target.value)} autoFocus placeholder="Write a reply…" rows={3} className="w-full border border-[#d1d5db] rounded-lg px-2.5 py-1.5 text-[11px] resize-y" />
+                            <div className="flex gap-1.5 mt-1">
+                                <button onClick={() => submitReply(page, fb)} className="px-3 py-1 rounded-md bg-[#4f6df5] text-white text-[11px] font-semibold">Reply</button>
+                                <button onClick={() => { setFbReplyId(null); setFbReplyText(''); }} className="px-3 py-1 rounded-md border border-[#d1d5db] text-[#374151] text-[11px] font-semibold">Cancel</button>
+                            </div>
+                        </div>
+                    ) : (
+                        <button onClick={() => { setFbReplyText(''); setFbReplyId(fb.id); }} className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[#4f6df5]">
+                            <CornerDownRight size={11} /> Reply
+                        </button>
+                    )
+                )}
+            </div>
+        );
+    };
+
     return (
         <>
+            <style>{`.pf-body ul{list-style:disc;padding-left:18px;margin:2px 0}.pf-body ol{list-style:decimal;padding-left:18px;margin:2px 0}.pf-body p{margin:2px 0}`}</style>
             <div className="flex justify-between items-center mb-5">
                 <h3 className="text-[17px] font-bold">Pages</h3>
                 {canManage && (
@@ -3032,6 +3106,18 @@ function PagesTab({ project, canManage }) {
                                                         {canManage && <button onClick={() => deletePageDoc(doc)} className="text-[#6b7280] hover:text-red-400 transition-colors"><Trash2 size={12} /></button>}
                                                     </div>
                                                 ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Client Feedback */}
+                                    {(page.feedback ?? []).length > 0 && (
+                                        <div className="mb-3">
+                                            <div className="text-[10px] tracking-[1.2px] uppercase text-[#6b7280] font-medium mb-1.5 flex items-center gap-1.5">
+                                                <MessageSquare size={11} /> Client Feedback · {page.feedback.length}
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                {page.feedback.filter(fb => !fb.parent_id).map(fb => renderFeedbackItem(page, fb, false))}
                                             </div>
                                         </div>
                                     )}
